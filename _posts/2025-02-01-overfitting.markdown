@@ -7,5 +7,4 @@ author: William
 tags: Philosophy
 ---
 
-In machine learning, models will sometimes memorize parts of the dataset during training rather than learning patterns that generalize beyond the examples it was presented.
-Statisticians refer to this phenomenon as "overfitting", where 
+Coming soon!
