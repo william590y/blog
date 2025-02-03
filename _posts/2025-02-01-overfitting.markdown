@@ -37,7 +37,7 @@ I am going to give what I will call an elementary demonstration. But elementary 
 
 <p style="text-align: center;">⁂</p>
 
-Another fascinating case study into overfitting in humans is given by the amazingly titled [Fuck Nuance](https://kieranhealy.org/files/papers/fuck-nuance.pdf) by Kieran Healey (yes, this is a real peer-reviewed paper). In the paper, Healey argues that contemporary literature in sociology is obsessed with criticizing concepts for their simplicity and failure to capture the complexities of a phenomenon:
+Another fascinating case study into overfitting in humans is given in the amazingly titled [Fuck Nuance](https://kieranhealy.org/files/papers/fuck-nuance.pdf) by Kieran Healey (yes, this is a real peer-reviewed paper). In the paper, Healey argues that contemporary literature in sociology is obsessed with criticizing concepts for their simplicity and failure to capture the complexities of a phenomenon:
 
 <blockquote>
 the nuance-promoting theorist says, “But isn’t it more complicated than that?” or “Isn’t it really both/and?” or “Aren’t these phenomena mutually constitutive?” or “Aren’t you leaving out [something]?” or “How does the theory deal with agency,
@@ -51,7 +51,7 @@ Healey's thesis reminds me a lot of a common mantra in statistics: [All models a
 
 In the social sciences, phenomena tend to be far more stochastic and multifactorial compared to the natural sciences. This has lead many in the "soft sciences" to try to [emulate their "harder science" counterparts](https://en.wikipedia.org/wiki/Physics_envy). One major difference between these fields is that compared to a discipline like physics, where something very close to a rigorous mathematical understanding of every facet of a phenomenon is possible, sociology can only provide qualitative descriptions of small parts of a bigger picture.
 
-However, trying to have a framework simultaneously account for sexuality, race, gender, etc. as well as the original phenomenon often stulfities our theory with vagueness and undermines its ability to generalize beyond particular situations. This temptation to try to incorporate more and more parameters at the expense of its explanatory power seems like a textbook example of overfitting: the complexity of our hypothesis has exceeded what can be inferred from our dataset, leading to a loss in predictive power.
+However, trying to have a framework simultaneously account for sexuality, race, gender, etc. as well as the original phenomenon often stultifies our theory with vagueness and undermines its ability to generalize beyond particular situations. This temptation to try to incorporate more and more parameters at the expense of its explanatory power seems like a textbook example of overfitting: the complexity of our hypothesis has exceeded what can be inferred from our dataset, leading to a loss in predictive power.
 
 <p style="text-align: center;">⁂</p>
 
