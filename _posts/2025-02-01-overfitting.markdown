@@ -27,7 +27,7 @@ Instructors will often give students the same problem with different numbers or 
 
 In a world where large language models are [saturating benchmarks](https://agi.safe.ai/) faster than they can come out, the ability to think outside the box and generate novel ideas is more important than ever. We are doing students a disservice if we provide them with an education that puts them in the same class as generative AI.
 
-I think this style of education is why students frequently [struggle in physics courses](https://mazur.harvard.edu/files/mazur/files/rep_644.pdf). For many students, this is the first time they have encountered a subject that is fundamentally resistant to memorization, where blind memorization of formulae without conceptual understanding doesn't work. 
+I think this style of education is why students frequently [struggle in physics courses](https://mazur.harvard.edu/files/mazur/files/rep_644.pdf). For many students, this is the first time they have encountered a subject that is fundamentally resistant to memorization, where blind application of formulae without conceptual understanding doesn't work. 
 
 The first time I picked up a [good physics textbook](https://davidmorin.physics.fas.harvard.edu/books/classical-mechanics/), I remember being struck by the level of mutual respect between the author and the reader. I was so used to the patronizing style of most texts from high school where entire chapters are devoted to covering a single unmotivated formula that I found the willingness of the author to derive results from scratch and then trust me to deduce their consequences refreshing. This kind of approach that respects the student was best put by physicist [Richard Feynman](https://www.youtube.com/watch?v=xdIjYBtnvZU):
 
