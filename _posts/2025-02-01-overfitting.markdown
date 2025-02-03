@@ -12,7 +12,7 @@ It's not just statistical models that fail to generalize, but humans too.
 
 <!--more-->
 
-In machine learning, models will sometimes memorize parts of the training dataset instead of learning patterns that generalize beyond the examples it was presented. Statisticians refer to this phenomenon as [overfitting](https://en.wikipedia.org/wiki/Overfitting). One thing I've noticed is that this fixation on specific examples and failure to generalize is far from just a technical quirk of statistical modeling but something humans do frequently as well.
+In machine learning, models will sometimes memorize parts of the training dataset instead of learning patterns that generalize beyond the examples it was presented. Statisticians refer to this phenomenon as [overfitting](https://en.wikipedia.org/wiki/Overfitting). One thing I've noticed is that this fixation on specific examples and failure to generalize is not just a technical quirk of statistical modeling but something humans do as well.
 
 <figure style="text-align: center;">
   <img src="{{ '/assets/images/overfit.png' | relative_url }}" width="70%" alt="description">
