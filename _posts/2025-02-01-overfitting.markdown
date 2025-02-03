@@ -37,7 +37,7 @@ I am going to give what I will call an elementary demonstration. But elementary 
 
 <p style="text-align: center;">⁂</p>
 
-Another interesting case study into overfitting in humans is given by the amazingly titled [Fuck Nuance](https://kieranhealy.org/files/papers/fuck-nuance.pdf) by Kieran Healey (yes, this is a real peer-reviewed paper). In the paper, Healey argues that contemporary literature in sociology is obsessed with criticizing concepts for their simplicity and failure to capture the complexities of a phenomenon:
+Another fascinating case study into overfitting in humans is given by the amazingly titled [Fuck Nuance](https://kieranhealy.org/files/papers/fuck-nuance.pdf) by Kieran Healey (yes, this is a real peer-reviewed paper). In the paper, Healey argues that contemporary literature in sociology is obsessed with criticizing concepts for their simplicity and failure to capture the complexities of a phenomenon:
 
 <blockquote>
 the nuance-promoting theorist says, “But isn’t it more complicated than that?” or “Isn’t it really both/and?” or “Aren’t these phenomena mutually constitutive?” or “Aren’t you leaving out [something]?” or “How does the theory deal with agency,
