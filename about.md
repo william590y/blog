@@ -19,4 +19,3 @@ A picture of me can be found [here.]({{ site.baseurl }}/assets/images/face.jpg)
 In my free time, I enjoy [breakdancing](https://www.instagram.com/azero_cornell/) and [playing piano.](https://youtu.be/KoBqZwfsIN8?si=eVidFBej88HQKo5k)
 
 The best way to reach me is by email: [wjl86@cornell.edu](wjl86@cornell.edu). You can also check out what I'm currently working on at [https://github.com/william590y.](https://github.com/william590y)
-
