@@ -5,6 +5,8 @@ date:   2025-02-02 08:30:27 -0500
 categories: jekyll update
 author: William
 tags: Philosophy
+permalink: overfitting
+description: a comparison of machine learning models and human behavior
 excerpt_separator: <!--more-->
 ---
 

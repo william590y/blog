@@ -35,6 +35,8 @@ permalink:  /:year-:month-:day/:title
 paginate:   5
 plugins:
   - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
 collections:
   pages:
     output: true
