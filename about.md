@@ -3,16 +3,16 @@ layout: post
 title: "About"
 author: "William"
 permalink: /about/
-date:   2025-02- 08:30:27 -0500
+date:   2025-02-15 08:30:27 -0500
 ---
 
 Hi there! I am an undergraduate at Cornell University studying Computer Science and Applied Physics.
 
 I am interested in machine learning, scientific computing, and fundamental physics.
 
-Last summer, I analyzed particle accelerator data from [CHESS](https://www.chess.cornell.edu/) with professor [Carl Franck.](https://franckgroup.lassp.cornell.edu/)
-
 I'm fortunate to work with [John Thickstun](https://johnthickstun.com/).
+
+Last summer, I analyzed particle accelerator data from [CHESS](https://www.chess.cornell.edu/) with [Carl Franck.](https://franckgroup.lassp.cornell.edu/)
 
 A picture of me can be found [here.]({{ site.baseurl }}/assets/images/face.jpg)
 
