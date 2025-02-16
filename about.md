@@ -12,7 +12,7 @@ I am interested in machine learning, scientific computing, and fundamental physi
 
 Last summer, I analyzed particle accelerator data from [CHESS](https://www.chess.cornell.edu/) with professor [Carl Franck.](https://franckgroup.lassp.cornell.edu/)
 
-I'm fortunate to work with [John Thickstun](https://johnthickstun.com/)
+I'm fortunate to work with [John Thickstun](https://johnthickstun.com/).
 
 A picture of me can be found [here.]({{ site.baseurl }}/assets/images/face.jpg)
 
