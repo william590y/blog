@@ -58,3 +58,9 @@ collections:
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  math_engine: mathjax
+  math_engine_opts: {}
