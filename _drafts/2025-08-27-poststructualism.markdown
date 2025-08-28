@@ -10,14 +10,12 @@ description: an obituary for the turing test and what it means for us
 excerpt_separator: <!--more-->
 ---
 
-An obituary for the Turing Test
-
+an obituary for the turing test and what it means for us
 <!--more-->
 
 <blockquote>
-If they find a parrot who could answer to everything, I would claim it to be an intelligent being without hesitation
-- Denis Diderot
+If they find a parrot who could answer to everything, I would claim it to be an intelligent being without hesitation <br />
+
+-Denis Diderot (1746)
 </blockquote>
-
-
 
