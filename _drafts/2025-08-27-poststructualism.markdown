@@ -10,7 +10,7 @@ description: an obituary for the turing test and what it means for us
 excerpt_separator: <!--more-->
 ---
 
-an obituary for the turing test and what it means for us
+an obituary for the Turing test and what it means for us
 <!--more-->
 
 <blockquote>
@@ -19,3 +19,4 @@ If they find a parrot who could answer to everything, I would claim it to be an 
 -Denis Diderot (1746)
 </blockquote>
 
+ 
