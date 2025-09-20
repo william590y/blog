@@ -36,7 +36,7 @@ It is quite rare that philosophical questions are resolved by empirical answers.
 -Locke (1689)
  </blockquote>
 
-This question was considered a major point of contention between [rationalists and empiricists](https://plato.stanford.edu/entries/rationalism-empiricism/), who argued that knowledge came from logical reasoning or sense data respectively. It was resolved [in favor of the empiricists](https://pubmed.ncbi.nlm.nih.gov/21478887/) in 2003 when neuroscience professor Pawan Sinha restored vision to subjects with total congenital blindness and tested subjects to see if they could distinguish objects visually as well as by touch. In the visual domain, the subjects performed barely better than guessing.
+This question was a major point of contention between [rationalists and empiricists](https://plato.stanford.edu/entries/rationalism-empiricism/), who argued that knowledge came from logical reasoning or sense data respectively. It was resolved [in favor of the empiricists](https://pubmed.ncbi.nlm.nih.gov/21478887/) in 2003 when neuroscience professor Pawan Sinha restored vision to subjects with total congenital blindness and tested subjects to see if they could distinguish objects visually as well as by touch. In the visual domain, the subjects performed barely better than guessing.
 
 In hindsight, this result makes a large degree of intuitive sense from the hyper-empiricist standpoint of statistical learning theory. How would a person with newly restored vision after years of blindness have any intuition about what their senses are indicating? But it is also easy to see how absent this framework, such a question poses quite the dilemma.
 
