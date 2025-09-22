@@ -69,7 +69,7 @@ I often think of language models as hyperreal entities, who have no direct acces
 <figure style="text-align: center;">
   <img src="{{ '/assets/images/associations.png' | relative_url }}" width="100%" alt="description">
   <figcaption style="font-style: italic;">
-    Figure 1. Depiction of word frequencies of token sequencies optimized to output a given word. Apologies on behalf of the internet for the regrettable state of the word girl. 
+    Figure 1. Depiction of word frequencies in token sequences optimized to output a given word. Apologies on behalf of the internet for the regrettable state of the word girl. 
     Credit: <a href="https://www.lesswrong.com/posts/aPeJE8bSo6rAFoLqg/solidgoldmagikarp-plus-prompt-generation" target="_blank" rel="noopener">Jessica Rumbelow and mwatkins</a>
   </figcaption>
 </figure>
