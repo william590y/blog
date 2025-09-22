@@ -78,7 +78,7 @@ Baudrillard's vision of a world increasingly dominated by the sign has come to f
 
 <p style="text-align: center;">⁂</p>
 
-One text I feel is worth revisiting in light of language modeling is *The Death of the Author* by Roland Barthes. Barthes argues against giving any weight to the intentions or interpretation of the author when trying to discern the ultimate meaning of a text. To him, the meaning of the text is constructed from the experience of the reader, who creates meaning out of their interaction with the words of the page.
+One text I feel is worth revisiting in light of language modeling is *The Death of the Author* by Roland Barthes. Barthes argues against giving any weight to the intentions or interpretation of the author when trying to discern the ultimate meaning of a text. To him, the meaning of the text is constructed from the experience of the reader, who creates meaning out of their interaction with the words on the page.
 
 In his view, we ought not to give any preference toward the intepretation of the author when conducting this construction process. Just as a reader can be incorrect about the text (such as when I assert "*Harry Potter is a story about robots*"), the author can also be wrong were they to assert something equally ludicrous. Why does the fact that a sentence came out of the mouth of the author give it any special status, when they are just one of many readers?
 
