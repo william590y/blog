@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Score Infilling Visualizer</title>
+<style>
+  :root {
+    --bg: #14161a; --panel: #1d2026; --grid: #2a2e36; --beat: #343943;
+    --text: #d6d9de; --muted: #8a8f98;
+    --gt: #3fd08c; --pred: #ff9c41; --perf: #5aa9ff; --perf-prefix: #3a566e;
+    --cand: #ff5db1; --sel: #ffe14d; --miss: #e05d5d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding-bottom: 74px; background: var(--bg); color: var(--text);
+         font: 13px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+           border-bottom: 1px solid var(--grid); position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  header h1 { font-size: 15px; margin: 0 12px 0 0; font-weight: 600; }
+  select, button { background: var(--panel); color: var(--text); border: 1px solid var(--grid);
+                   border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer; }
+  button:hover, select:hover { border-color: var(--muted); }
+  .legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .key { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+  .swatch { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+  .lbl { color: var(--muted); }
+  #meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+  .panel { margin: 12px 16px; background: var(--panel); border: 1px solid var(--grid);
+           border-radius: 10px; overflow: hidden; }
+  .panel h2 { font-size: 12px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase;
+              color: var(--muted); margin: 0; padding: 8px 12px 0; display: flex; gap: 10px; align-items: baseline;}
+  .panel h2 .hint { font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .rollwrap { overflow-x: auto; }
+  .engraved-sheet { background: #fdfcf8; color: #111; border-radius: 8px; margin: 8px 12px 12px;
+                    padding: 10px 14px; overflow-x: auto; min-height: 56px; }
+  .engraved-sheet svg { max-width: 100%; height: auto; }
+  svg { display: block; }
+  #candinfo { padding: 10px 14px; font-size: 12px; }
+  #candinfo table { border-collapse: collapse; width: 100%; }
+  #candinfo th, #candinfo td { text-align: left; padding: 3px 10px 3px 0; color: var(--text); }
+  /* Wrapper so an over-wide table scrolls inside the pane instead of spilling
+     past the viewport edge. */
+  #f1Wrap { overflow-x: auto; }
+  #f1Table, #f1PieceTable { border-collapse: collapse; width: 100%; font-size: 11px;
+             white-space: nowrap; }
+  #f1Table th, #f1PieceTable th { text-align: right; padding: 2px 0 2px 6px; font-weight: 500; opacity: .7; }
+  #f1Table td, #f1PieceTable td { text-align: right; padding: 2px 0 2px 6px; font-variant-numeric: tabular-nums; }
+  #f1Table td.mdl, #f1PieceTable td.mdl { text-align: left; opacity: .8; padding-left: 0; width: 1%; }
+  #f1Table td.unavail, #f1PieceTable td.unavail { opacity: .35; }
+  #f1Note { overflow-wrap: anywhere; }
+  #candinfo th { color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--grid); }
+  #candinfo .bar { height: 8px; background: var(--cand); border-radius: 3px; display: inline-block; vertical-align: middle; }
+  #candinfo tr.cand-row { cursor: pointer; }
+  #candinfo tr.cand-row:hover, #candinfo tr.cand-row.hl { background: rgba(255,225,77,0.08); }
+  .note { cursor: pointer; }
+  .fadeout { opacity: 0.07 !important; }
+  .semifade { opacity: 0.25 !important; }
+  #empty { position: fixed; inset: 0; z-index: 20; margin: 0;
+           display: flex; align-items: center; justify-content: center;
+           background: var(--bg); padding: 40px; text-align: center; color: var(--muted); }
+  #staleWarn { display: none; margin: 10px 16px 0; padding: 10px 12px; border-radius: 8px;
+               background: rgba(224,93,93,0.12); border: 1px solid var(--miss); color: var(--text); }
+  button.playing { border-color: var(--sel); color: var(--sel); }
+  .playhead { stroke: var(--sel); stroke-width: 2; pointer-events: none; }
+  #audioStatus { color: var(--muted); font-size: 12px; min-width: 110px; }
+  #audioStatus.err { color: var(--miss); }
+
+  #sequenceDock { position: fixed; left: 0; right: 0; bottom: 0; margin: 0;
+                  border-left: 0; border-right: 0; border-bottom: 0; border-radius: 10px 10px 0 0;
+                  z-index: 7; box-shadow: 0 -8px 22px rgba(0,0,0,0.28); }
+  #sequenceDock h2 { padding-top: 6px; }
+  #minimap { display: flex; flex-wrap: nowrap; gap: 1px; padding: 6px 12px 9px; overflow-x: auto; }
+  #minimap .sq { width: 6px; height: 12px; min-width: 3px; flex: 1 1 3px; max-width: 8px;
+                 border-radius: 1px; cursor: pointer; }
+  #minimap .sq:hover { outline: 2px solid var(--sel); }
+
+  #pplSection { margin-bottom: 86px; }
+  #pplLegend { display: flex; gap: 14px; padding: 6px 12px 0; font-size: 11px; color: var(--muted); }
+  #pplLegend .key { font-size: 11px; }
+  #pplWrap { padding: 4px 8px 10px; overflow-x: auto; }
+  #pplChart { display: block; min-width: 100%; }
+  #pplEmpty { display: none; padding: 8px 12px 10px; font-size: 11px; color: var(--muted);
+              border-top: 1px solid var(--grid); }
+  #pplTip { position: fixed; display: none; pointer-events: none; z-index: 8;
+            background: rgba(20,22,26,0.94); border: 1px solid var(--grid); border-radius: 6px;
+            padding: 5px 8px; font-size: 11px; color: var(--text); white-space: nowrap; }
+
+  #rankPane { position: fixed; right: 8px; top: 320px; bottom: 80px; width: 46px;
+              display: none; flex-direction: column; align-items: center; gap: 6px;
+              background: var(--panel); border: 1px solid var(--grid); border-radius: 10px;
+              padding: 10px 4px; z-index: 6; }
+  #rankPane .lbl { font-size: 10px; text-align: center; line-height: 1.2; }
+  #rankSlider { writing-mode: vertical-lr; direction: rtl; flex: 1; width: 22px; }
+  #rankVal { font-size: 12px; color: var(--sel); font-weight: 600; }
+
+  /* Width must fit the F1 table's four columns ("ours (LoRA)" + three "100.0%"
+     cells); the pane is anchored to the right edge, so anything wider than this
+     overflows off-screen rather than into the page. max-width keeps it usable on
+     a narrow viewport, where the table scrolls instead of being clipped. */
+  #accPane { position: fixed; right: 8px; top: 128px; width: 248px;
+             max-width: calc(100vw - 16px);
+             max-height: calc(100vh - 140px);
+             overflow-y: auto;
+             background: var(--panel); border: 1px solid var(--grid); border-radius: 10px;
+             padding: 8px 8px; z-index: 6; font-size: 11px; }
+  #accPane.heat-open { max-height: calc(100vh - 140px - 210px); }
+  #accPane .row { display: flex; justify-content: space-between; margin-top: 3px; }
+  #accPane b { color: var(--sel); }
+  #accPane b.gt-higher { color: var(--miss); }
+  #accPane b.gen-higher { color: var(--gt); }
+  #accPane hr { border: none; border-top: 1px solid var(--grid); margin: 7px 0 5px; }
+  #accPane .unavail { color: var(--muted); font-style: italic; }
+
+  /* Vertical log-entropy color scale — bottom-right, above the sequence dock. */
+  #entropyScalePane { position: fixed; right: 8px; bottom: 86px; top: auto; width: 72px;
+                      display: none; flex-direction: column; align-items: center; gap: 4px;
+                      background: var(--panel); border: 1px solid var(--grid); border-radius: 10px;
+                      padding: 8px 6px 10px; z-index: 7; font-size: 10px; color: var(--muted); }
+  #entropyScalePane.rgb-mode { width: 118px; align-items: stretch; }
+  #entropyScalePane .ttl { text-align: center; line-height: 1.25; color: var(--muted); }
+  #entropyScalePane .ttl b { color: var(--text); font-weight: 600; }
+  #entropyScaleBody { position: relative; width: 100%; height: 160px; margin-top: 2px; }
+  #entropyScalePane.rgb-mode #entropyScaleBody { display: none; }
+  #entropyScaleBar { position: absolute; left: 4px; top: 0; bottom: 0; width: 14px;
+                     border-radius: 3px; border: 1px solid var(--grid);
+                     background: linear-gradient(180deg, #b40426 0%, #f7e55c 35%, #1bd0d5 65%, #3b4cc0 100%); }
+  #entropyScaleTicks { position: absolute; left: 22px; right: 0; top: 0; bottom: 0; }
+  #entropyScaleTicks .tick { position: absolute; left: 0; right: 0; transform: translateY(-50%);
+                             font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #entropyScaleTicks .tick::before { content: ''; position: absolute; left: -8px; top: 50%;
+                                     width: 6px; height: 1px; background: var(--grid); }
+  #entropyScaleNote { text-align: center; font-size: 9px; line-height: 1.3; margin-top: 2px; }
+  #entropyRgbLegend { display: none; flex-direction: column; gap: 6px; margin-top: 4px; font-size: 10px; }
+  #entropyScalePane.rgb-mode #entropyRgbLegend { display: flex; }
+  #entropyRgbLegend .rgb-row { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+  #entropyRgbLegend .rgb-swatch { width: 12px; height: 12px; border-radius: 2px; flex: 0 0 auto;
+                                 border: 1px solid var(--grid); }
+  #entropyRgbLegend .rgb-lbl { flex: 1; color: var(--muted); }
+  #entropyRgbLegend .rgb-range { font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Score Infilling Visualizer</h1>
+  <span class="lbl">window</span>
+  <select id="exampleSel"></select>
+  <button id="rolloutModeBtn" style="margin-left:8px;padding:4px 12px;background:#2a78d6;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600"
+    title="open the FULL-SONG rollout viewer for this window's performance (ours + pitch-forced + Beyer + Zeng vs ground truth)">&#127925; rollout mode</button>
+  <span class="lbl">stream</span>
+  <select id="streamSel" title="Unfiltered = raw performance including notes the aligner dropped (performer mistakes)">
+    <option value="raw" selected>unfiltered (raw)</option>
+    <option value="filtered">filtered (model input)</option>
+  </select>
+  <span class="lbl">ours</span>
+  <select id="oursSel" title="Which of our checkpoints fills the Ours piano roll, F1 row, entropy heatmap, and perplexity. Paper 1 / paper 2 stay as comparison rows.">
+    <option value="rollouts" selected>FT (non-masked)</option>
+    <option value="rollouts_lora">LoRA (non-masked)</option>
+    <option value="rollouts_masked">masked 20k</option>
+    <option value="rollouts_masked_40k">masked 40k (best onset)</option>
+    <option value="rollouts_masked_40k_final">masked 40k (final)</option>
+  </select>
+  <label class="key" title="Drop in the ground-truth score note for the window's first slot instead of the model's own guess, then let the rest of the rollout respond autoregressively">
+    <input type="checkbox" id="seedGt"> seed first note (GT)
+  </label>
+  <span class="lbl">view</span>
+  <select id="viewMode" title="Switch between piano-roll, staff-style, and engraved sheet display">
+    <option value="piano" selected>piano roll</option>
+    <option value="sheet">sheet music</option>
+    <option value="engraved">sheet music (engraved)</option>
+  </select>
+  <label class="key" title="Horizontal time scale for the score and performance displays">
+    t-scale <input type="range" id="timeScale" min="45" max="220" step="5" value="90" style="vertical-align:middle">
+    <span id="timeScaleVal" style="min-width:46px; display:inline-block">90 px/s</span>
+  </label>
+  <button type="button" id="clearBtn" title="Clear the selected performance note">clear selection</button>
+  <label class="key" title="Keep the most probable candidates until their cumulative probability reaches this fraction">
+    top-p <input type="range" id="topP" min="1" max="100" step="1" value="90" style="vertical-align:middle">
+    <span id="topPVal" style="min-width:34px; display:inline-block">90%</span>
+  </label>
+  <label class="key"><input type="checkbox" id="showGt" checked> <span class="swatch" style="background:var(--gt)"></span> ground-truth score</label>
+  <label class="key"><input type="checkbox" id="showPred" checked> <span class="swatch" style="background:var(--pred)"></span> predicted score (AR rollout)</label>
+  <label class="key" title="Color each predicted triplet by log-entropy. Channel: onset / duration / pitch / all (Σ), or RGB (R=onset, G=pitch, B=duration; each channel normalized within the window).">
+    <input type="checkbox" id="entropyHeat"> color pred by log-entropy
+  </label>
+  <span class="lbl" id="entropyChanLbl" style="display:none">channel</span>
+  <select id="entropyChan" style="display:none" title="Which score-token entropy drives the heatmap">
+    <option value="triplet" selected>all (Σ)</option>
+    <option value="time">onset</option>
+    <option value="dur">duration</option>
+    <option value="pitch">pitch</option>
+    <option value="rgb">RGB (R=onset, G=pitch, B=dur)</option>
+  </select>
+  <label class="key" id="entropyMonoLbl" style="display:none"
+         title="Red log-entropy ramp (scalar channels only): low entropy = dark/deep red, high = bright red. Disabled in RGB mode.">
+    <input type="checkbox" id="entropyMono"> monochrome
+  </label>
+  <span id="entropyLegend" class="key" style="display:none" title="Predicted-note log-entropy heatmap">
+    <span class="swatch" id="entropyLegendSwatch" style="background:linear-gradient(90deg,#3b4cc0,#f7e55c,#b40426); width:48px"></span>
+    <span class="lbl">low → high</span>
+  </span>
+  <span class="lbl">audio</span>
+  <button type="button" id="playPerf" title="Play conditioning performance (current stream)">play performance</button>
+  <button type="button" id="playGt" title="Play ground-truth score">play ground truth</button>
+  <button type="button" id="playPred" title="Play model prediction">play prediction</button>
+  <button type="button" id="stopPlay" title="Stop playback">stop</button>
+  <span id="audioStatus" role="status" aria-live="polite"></span>
+  <span class="key"><span class="swatch" style="background:var(--perf)"></span> performance</span>
+  <span class="key"><span class="swatch" style="background:var(--miss)"></span> unmatched (mistake)</span>
+  <span class="key"><span class="swatch" style="background:transparent;border:2px solid var(--miss)"></span> generated pitch error</span>
+  <span class="key"><span class="swatch" style="background:var(--cand)"></span> slot candidates</span>
+  <span id="meta"></span>
+</header>
+
+<div id="staleWarn"></div>
+
+<div class="panel" id="scorePanel">
+  <h2>Ours <span class="hint" id="oursHint">(0.5 s beat grid — GT vs the selected checkpoint's autoregressive rollout; a selected performance note shows its own slot's candidate distribution, conditioned on the rollout so far)</span></h2>
+  <div class="rollwrap"><svg id="scoreRoll"></svg></div>
+</div>
+
+<div class="panel" id="engravedPanel" style="display:none">
+  <h2>Score — real sheet music <span class="hint" id="engravedRealHint"></span></h2>
+  <div id="engravedReal" class="engraved-sheet"></div>
+  <h2 style="margin-top:14px">Predicted score — engraved rollout <span class="hint" id="engravedPredHint">(the selected AR rollout snapped to a 1/12-beat grid, typeset in the piece's real meter and key with barlines on the real downbeat phase; falls back to exact-grid 4/4 when no meter mapping exists)</span></h2>
+  <div id="engravedPred" class="engraved-sheet"></div>
+</div>
+
+<div class="panel" id="rerankSweepPanel">
+  <h2>Rerank baseline sweep <span class="hint">(beam-5 decode of &alpha;&middot;log p<sub>FT</sub> + (1&minus;&alpha;)&middot;log p<sub>base</sub> under run_paper_split_v2/checkpoint-2500, raw performance input; the slider selects &alpha;)</span></h2>
+  <div class="lbl" style="padding:4px 10px">&alpha; = <b id="rerankAlphaVal">0.5</b> &nbsp; &beta; = <b id="rerankBetaVal">0.5</b>
+    <input type="range" id="rerankAlpha" min="0" max="4" step="1" value="2" style="width:200px;vertical-align:middle;margin-left:10px">
+  </div>
+  <div class="rollwrap"><svg id="rerankSweepRoll"></svg></div>
+  <div class="lbl" id="rerankSweepNote" style="padding:0 10px 8px"></div>
+</div>
+
+<div class="panel" id="rerankPanel">
+  <h2>Reranked decode <span class="hint">(beam search maximizing &alpha;&middot;log p<sub>FT</sub> + &beta;&middot;log p<sub>base</sub> + &gamma;&middot;q<sub>&phi;</sub> — GT vs the selected candidate)</span></h2>
+  <div class="rollwrap"><svg id="rerankRoll"></svg></div>
+  <div class="lbl" id="rerankNote" style="padding:0 10px 8px"></div>
+</div>
+
+<div class="panel" id="paper1Panel">
+  <h2>Paper 1 — Zeng+ (ICLR 2026) <span class="hint">(joint APT/EPR, released weights — GT vs its transcription of this window)</span></h2>
+  <div class="rollwrap"><svg id="paper1Roll"></svg></div>
+  <div class="lbl" id="paper1Note" style="padding:0 10px 8px"></div>
+</div>
+
+<div class="panel" id="paper2Panel">
+  <h2>Paper 2 — Beyer &amp; Dai (ISMIR 2024) <span class="hint">(MIDI2ScoreTransformer, released weights — GT vs its transcription of this window)</span></h2>
+  <div class="rollwrap"><svg id="paper2Roll"></svg></div>
+  <div class="lbl" id="paper2Note" style="padding:0 10px 8px"></div>
+</div>
+
+<div class="panel">
+  <h2>Performance <span class="hint">(real time — click a note to see the model's distribution for ITS quantized score note)</span></h2>
+  <div class="rollwrap"><svg id="perfRoll"></svg></div>
+</div>
+
+<div class="panel">
+  <h2>Selected prediction</h2>
+  <div id="candinfo"><span class="lbl">No performance note selected.</span></div>
+</div>
+
+<div class="panel" id="sequenceDock">
+  <h2>Sequence map <span class="hint">(one square per triplet in interleaving order — hover to locate; prefix pairs, then score/control pairs)</span></h2>
+  <div id="minimap"></div>
+</div>
+
+<div class="panel" id="pplSection">
+  <h2>Perplexity <span class="hint">(greedy AR token confidence by score slot)</span></h2>
+  <div id="pplLegend">
+    <span class="key"><span class="swatch" style="background:var(--pred)"></span> onset perplexity</span>
+    <span class="key"><span class="swatch" style="background:var(--perf)"></span> duration perplexity</span>
+    <span class="key"><span class="swatch" style="background:var(--cand)"></span> pitch perplexity</span>
+    <span class="lbl">(log y-axis; lower is more confident; sequence PPL gen vs GT is in the right-hand panel)</span>
+  </div>
+  <div id="pplWrap"><svg id="pplChart"></svg></div>
+  <div id="pplEmpty">Perplexity trace unavailable — regenerate <code>data.js</code> with the latest <code>precompute_visualizer.py</code>.</div>
+</div>
+
+<div id="pplTip"></div>
+
+<div id="accPane">
+  <div class="lbl">rollout accuracy</div>
+  <div class="row"><span>onset</span><b id="accOnset">–</b></div>
+  <div class="row"><span>dur</span><b id="accDur">–</b></div>
+  <div class="row"><span>pitch</span><b id="accPitch">–</b></div>
+  <div class="lbl" id="accCount" style="margin-top:5px"></div>
+  <hr>
+  <div class="lbl" title="Sequence perplexity under the selected model: exp(mean NLL) over score onset/duration/pitch tokens. Generated = the AR rollout's own score stream; ground truth = teacher-forced GT score stream. Same performance controls in both walks. Lower is more probable under the model.">seq PPL (model)</div>
+  <div class="row"><span>generated</span><b id="pplGen">–</b></div>
+  <div class="row"><span>ground truth</span><b id="pplGt">–</b></div>
+  <div class="lbl" id="pplSeqNote" style="margin-top:5px"></div>
+  <hr>
+  <div class="lbl" title="Macro-mean note-level F1 across all pieces shared by the compared models, using unfiltered performance input and no GT seeding. Three matching criteria: onset+pitch exact, onset+pitch+duration exact, and onset+pitch with a +-1 bin onset tolerance. 'Ours' follows the top ours checkpoint control.">Mean F1 vs GT (all pieces)</div>
+  <div class="lbl" style="margin:2px 0 4px">
+    <label title="ORACLE DIAGNOSTIC: show the pitch-forced rollout for the ours row (wrong argmax pitches replaced by the slot's GT pitch during decoding; filtered variant only). Not a method -- it reads GT.">
+      <input id="pfOurs" type="checkbox"> pitch-force ours</label>
+    &nbsp;
+    <a id="fullsongLink" href="fullsong.html" target="_blank"
+       title="jump from windowed mode to the FULL-SONG rollout of this window's performance (ours + Beyer + Zeng, test+val). Needs data_fullsong.js (visualizer/build_fullsong_payload.py)."
+       style="color:#8ab4f8">full rollout &#8599;</a>
+  </div>
+  <div class="lbl" style="margin:2px 0 4px">
+    metric: <select id="f1MetricMode" title="standard = the three exact/tolerance criteria. scale &amp; IOI = beat-scale-forgiving variants: max over ASAP beat-unit ratios of onset±1+pitch F1; the same matcher on (interarrival, pitch) events; and the interarrival scale-max. Hover a cell for the best scale r. CAVEAT: max over 13 scales inflates every row equally -- compare rows to each other, not across modes.">
+      <option value="standard" selected>standard (on+pit / +dur / ±1)</option>
+      <option value="scaleioi">scale &amp; IOI (±1 s-max / IOI ±1 / IOI s-max)</option>
+    </select>
+  </div>
+  <div id="f1Wrap">
+  <table id="f1Table">
+    <thead><tr><th></th><th id="f1HeadA" title="pitch and onset must match exactly">on+pit</th><th id="f1HeadB" title="pitch, onset and duration must all match exactly">+dur</th><th id="f1HeadC" title="pitch matches, onset may differ by up to 1 bin">&plusmn;1</th></tr></thead>
+    <tbody>
+      <tr><td class="mdl" id="f1NameOurs">ours</td><td id="f1OursA">–</td><td id="f1OursB">–</td><td id="f1OursC">–</td></tr>
+      <tr><td class="mdl" title="one draw from the FT model at temperature 1.0 (constrained), no selection">ft sample</td><td id="f1FtSampleA">–</td><td id="f1FtSampleB">–</td><td id="f1FtSampleC">–</td></tr>
+      <tr><td class="mdl" id="f1NameRerankBase" title="alpha/beta baseline beam decode; follows the sweep slider">rr base</td><td id="f1RerankBaseA">–</td><td id="f1RerankBaseB">–</td><td id="f1RerankBaseC">–</td></tr>
+      <tr><td class="mdl" title="native N-best selection: 8 sampled + 1 greedy candidates, fitted objective picks one">rr sample</td><td id="f1RerankSampleA">–</td><td id="f1RerankSampleB">–</td><td id="f1RerankSampleC">–</td></tr>
+      <tr><td class="mdl" title="candidate-consensus (MBR): argmax of mean pairwise F1 against the other 8 candidates, no GT used">mbr</td><td id="f1MbrA">–</td><td id="f1MbrB">–</td><td id="f1MbrC">–</td></tr>
+      <tr><td class="mdl" title="selection by the pairwise-trained (margin-weighted RankNet) reranker's score alone">rr pairwise</td><td id="f1PwA">–</td><td id="f1PwB">–</td><td id="f1PwC">–</td></tr>
+      <tr><td class="mdl" title="pairwise reranker retrained on the 32-candidate augmented (transpose + tempo) pools">rr pairwise32</td><td id="f1Pw32A">–</td><td id="f1Pw32B">–</td><td id="f1Pw32C">–</td></tr>
+      <tr><td class="mdl" title="listwise soft-CE reranker (softmax over F1 at tau_R=0.05) trained on the 32-candidate augmented pools">rr listwise32</td><td id="f1Lw32A">–</td><td id="f1Lw32B">–</td><td id="f1Lw32C">–</td></tr>
+      <tr><td class="mdl" title="pairwise32 reranker whose encoder also sees per-token log p under the FT and base models">rr pairwise32+tokfeat</td><td id="f1Pwf32A">–</td><td id="f1Pwf32B">–</td><td id="f1Pwf32C">–</td></tr>
+      <tr><td class="mdl" title="knockout tournament with an order-symmetrised pairwise-input comparator (PairJudge RM, arXiv 2501.13007)">rr tournament</td><td id="f1TourA">–</td><td id="f1TourB">–</td><td id="f1TourC">–</td></tr>
+      <tr><td class="mdl" title="listwise Fusion-in-Decoder over 5 candidates at a time + m-ary tournament sort (arXiv 2402.15838)">rr listT5</td><td id="f1Lt5A">–</td><td id="f1Lt5B">–</td><td id="f1Lt5C">–</td></tr>
+      <tr><td class="mdl" title="generative verifier: argmax p(YES) as next-token prediction (arXiv 2408.15240)">rr genRM</td><td id="f1GenA">–</td><td id="f1GenB">–</td><td id="f1GenC">–</td></tr>
+      <tr><td class="mdl" title="pool oracle: same 9 candidates, pick the best onset±1+pitch F1 (selection ceiling)">rr oracle</td><td id="f1RerankSampleOrcA">–</td><td id="f1RerankSampleOrcB">–</td><td id="f1RerankSampleOrcC">–</td></tr>
+      <tr><td class="mdl">paper 1</td><td id="f1P1A">–</td><td id="f1P1B">–</td><td id="f1P1C">–</td></tr>
+      <tr><td class="mdl">paper 2</td><td id="f1P2A">–</td><td id="f1P2B">–</td><td id="f1P2C">–</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="lbl" id="f1Note" style="margin-top:5px"></div>
+  <div class="lbl" style="margin-top:8px" title="Note-level F1 for the piece of the currently selected window, same unfiltered unseeded protocol as the mean table. Windows from the same piece are averaged. 'Ours' follows the top ours checkpoint control.">This piece F1</div>
+  <div id="f1PieceWrap">
+  <table id="f1PieceTable">
+    <thead><tr><th></th><th id="f1PieceHeadA" title="pitch and onset must match exactly">on+pit</th><th id="f1PieceHeadB" title="pitch, onset and duration must all match exactly">+dur</th><th id="f1PieceHeadC" title="pitch matches, onset may differ by up to 1 bin">&plusmn;1</th></tr></thead>
+    <tbody>
+      <tr><td class="mdl" id="f1PieceNameOurs">ours</td><td id="f1PieceOursA">–</td><td id="f1PieceOursB">–</td><td id="f1PieceOursC">–</td></tr>
+      <tr><td class="mdl" title="one draw from the FT model at temperature 1.0 (constrained), no selection">ft sample</td><td id="f1PieceFtSampleA">–</td><td id="f1PieceFtSampleB">–</td><td id="f1PieceFtSampleC">–</td></tr>
+      <tr><td class="mdl" id="f1PieceNameRerankBase" title="alpha/beta baseline beam decode; follows the sweep slider">rr base</td><td id="f1PieceRerankBaseA">–</td><td id="f1PieceRerankBaseB">–</td><td id="f1PieceRerankBaseC">–</td></tr>
+      <tr><td class="mdl" title="native N-best selection: 8 sampled + 1 greedy candidates, fitted objective picks one">rr sample</td><td id="f1PieceRerankSampleA">–</td><td id="f1PieceRerankSampleB">–</td><td id="f1PieceRerankSampleC">–</td></tr>
+      <tr><td class="mdl" title="candidate-consensus (MBR): argmax of mean pairwise F1 against the other 8 candidates, no GT used">mbr</td><td id="f1PieceMbrA">–</td><td id="f1PieceMbrB">–</td><td id="f1PieceMbrC">–</td></tr>
+      <tr><td class="mdl" title="selection by the pairwise-trained (margin-weighted RankNet) reranker's score alone">rr pairwise</td><td id="f1PiecePwA">–</td><td id="f1PiecePwB">–</td><td id="f1PiecePwC">–</td></tr>
+      <tr><td class="mdl" title="pairwise reranker retrained on the 32-candidate augmented (transpose + tempo) pools">rr pairwise32</td><td id="f1PiecePw32A">–</td><td id="f1PiecePw32B">–</td><td id="f1PiecePw32C">–</td></tr>
+      <tr><td class="mdl" title="listwise soft-CE reranker (softmax over F1 at tau_R=0.05) trained on the 32-candidate augmented pools">rr listwise32</td><td id="f1PieceLw32A">–</td><td id="f1PieceLw32B">–</td><td id="f1PieceLw32C">–</td></tr>
+      <tr><td class="mdl" title="pairwise32 reranker whose encoder also sees per-token log p under the FT and base models">rr pairwise32+tokfeat</td><td id="f1PiecePwf32A">–</td><td id="f1PiecePwf32B">–</td><td id="f1PiecePwf32C">–</td></tr>
+      <tr><td class="mdl" title="knockout tournament with an order-symmetrised pairwise-input comparator (PairJudge RM, arXiv 2501.13007)">rr tournament</td><td id="f1PieceTourA">–</td><td id="f1PieceTourB">–</td><td id="f1PieceTourC">–</td></tr>
+      <tr><td class="mdl" title="listwise Fusion-in-Decoder over 5 candidates at a time + m-ary tournament sort (arXiv 2402.15838)">rr listT5</td><td id="f1PieceLt5A">–</td><td id="f1PieceLt5B">–</td><td id="f1PieceLt5C">–</td></tr>
+      <tr><td class="mdl" title="generative verifier: argmax p(YES) as next-token prediction (arXiv 2408.15240)">rr genRM</td><td id="f1PieceGenA">–</td><td id="f1PieceGenB">–</td><td id="f1PieceGenC">–</td></tr>
+      <tr><td class="mdl" title="pool oracle: same 9 candidates, pick the best onset±1+pitch F1 (selection ceiling)">rr oracle</td><td id="f1PieceRerankSampleOrcA">–</td><td id="f1PieceRerankSampleOrcB">–</td><td id="f1PieceRerankSampleOrcC">–</td></tr>
+      <tr><td class="mdl">paper 1</td><td id="f1PieceP1A">–</td><td id="f1PieceP1B">–</td><td id="f1PieceP1C">–</td></tr>
+      <tr><td class="mdl">paper 2</td><td id="f1PieceP2A">–</td><td id="f1PieceP2B">–</td><td id="f1PieceP2C">–</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div id="entropyScalePane" aria-hidden="true">
+  <div class="ttl">log-entropy<br><b id="entropyScaleChan">all</b></div>
+  <div id="entropyScaleBody">
+    <div id="entropyScaleBar"></div>
+    <div id="entropyScaleTicks"></div>
+  </div>
+  <div id="entropyRgbLegend">
+    <div class="rgb-row"><span class="rgb-swatch" style="background:#ff4040"></span><span class="rgb-lbl">R onset</span><span class="rgb-range" id="entropyRgbR">–</span></div>
+    <div class="rgb-row"><span class="rgb-swatch" style="background:#40ff40"></span><span class="rgb-lbl">G pitch</span><span class="rgb-range" id="entropyRgbG">–</span></div>
+    <div class="rgb-row"><span class="rgb-swatch" style="background:#4040ff"></span><span class="rgb-lbl">B dur</span><span class="rgb-range" id="entropyRgbB">–</span></div>
+  </div>
+  <div class="lbl" id="entropyScaleNote">nats (log H)</div>
+</div>
+
+<div id="rankPane">
+  <span class="lbl">rank<br>(by prob)</span>
+  <span id="rankVal">1</span>
+  <input type="range" id="rankSlider" min="1" max="1" step="1" value="1">
+</div>
+
+<div id="empty">Loading visualizer data…</div>
+
+<script src="osmd.min.js"></script>
+<script src="sheet_xml.js?v=20260719a1"></script>
+<script src="scores_xml.js?v=20260719a1"></script>
+<script src="data_slim.js?v=202608171420"></script>
+<script>
+(() => {
+  const DATA = window.VISUALIZER_DATA;
+  const activeScores = window.VISUALIZER_SCORES;
+  const beatSeconds = 0.5;
+  const emptyEl = document.getElementById('empty');
+  if (!DATA || !DATA.examples || !Object.keys(DATA.examples).length) {
+    emptyEl.style.display = 'flex';
+    emptyEl.innerHTML = 'No data loaded — run <code>precompute_visualizer.py</code> then <code>split_visualizer_payload.py</code> to generate <code>data_slim.js</code> next to this file.';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  // Plain-integer keys would otherwise be reordered ascending by JS's own
+  // key-enumeration rules, breaking "new windows appended after old ones" --
+  // example_order (when present) is the authoritative dropdown/display order.
+  const orderedIds = DATA.example_order || Object.keys(DATA.examples);
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const PITCH_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const pname = p => p == null ? 'REST' : PITCH_NAMES[p % 12] + (Math.floor(p / 12) - 1);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  function normalizeRawBranchesOf(rawRollout, rawNotes) {
+    if (!rawRollout?.branches || !rawNotes) return;
+    const normalized = {};
+    Object.values(rawRollout.branches).forEach(branch => {
+      const slot = Number(branch.slot);
+      if (!Number.isInteger(slot) || slot < 0 || slot >= rawNotes.length) return;
+      normalized[String(slot)] = {
+        ...branch,
+        gt_slot: rawNotes[slot].j ?? null,
+        raw_index: slot,
+      };
+    });
+    rawRollout.branches = normalized;
+  }
+
+  function normalizeRawBranches(example) {
+    normalizeRawBranchesOf(example?.rollouts?.raw, example?.raw_notes);
+    normalizeRawBranchesOf(example?.rollouts?.raw_seeded, example?.raw_notes);
+    normalizeRawBranchesOf(example?.rollouts_lora?.raw, example?.raw_notes);
+    normalizeRawBranchesOf(example?.rollouts_lora?.raw_seeded, example?.raw_notes);
+    normalizeRawBranchesOf(example?.rollouts_masked?.raw, example?.raw_notes);
+    normalizeRawBranchesOf(example?.rollouts_masked?.raw_seeded, example?.raw_notes);
+    normalizeRawBranchesOf(example?.rollouts_masked_40k?.raw, example?.raw_notes);
+    normalizeRawBranchesOf(example?.rollouts_masked_40k?.raw_seeded, example?.raw_notes);
+    normalizeRawBranchesOf(example?.rollouts_masked_40k_final?.raw, example?.raw_notes);
+    normalizeRawBranchesOf(example?.rollouts_masked_40k_final?.raw_seeded, example?.raw_notes);
+  }
+
+  Object.values(DATA.examples).forEach(normalizeRawBranches);
+
+  const sel = document.getElementById('exampleSel');
+  for (const id of orderedIds) {
+    const o = document.createElement('option');
+    const piece = DATA.examples[id].piece;
+    o.value = id;
+    o.textContent = 'window ' + id + (piece ? ' — ' + piece.split('/').slice(0, -1).join('/') : '');
+    sel.appendChild(o);
+  }
+
+  const staleWarn = document.getElementById('staleWarn');
+  const firstEx = DATA.examples[orderedIds[0]];
+  const hasDualRollouts = ex => {
+    const roots = ex?.[oursSource().group];
+    return !!(roots?.filtered && roots?.raw);
+  };
+  if ((DATA.format < 2 || DATA.format > 4) || DATA.logits_conditioning !== 'autoregressive_rollout') {
+    staleWarn.style.display = 'block';
+    staleWarn.innerHTML =
+      '<b>Stale data.js</b> — regenerate with <code>precompute_visualizer.py</code> (format 4). ' +
+      'Hard-refresh (Ctrl+Shift+R). Format 4 adds GT-seeded rollouts; format 3 adds separate ' +
+      'filtered/raw AR rollouts; format 2 only toggles the performance display.';
+  } else if (DATA.format === 2) {
+    staleWarn.style.display = 'block';
+    staleWarn.innerHTML =
+      '<b>Format-2 data</b> — stream toggle only changes the performance panel. ' +
+      'Re-run precompute for format 4 to switch orange predictions between filtered/raw and use ' +
+      'the seed-first-note toggle.';
+  } else if (DATA.format === 3) {
+    staleWarn.style.display = 'block';
+    staleWarn.innerHTML =
+      '<b>Format-3 data</b> — no GT-seeded rollouts. Re-run precompute for format 4 to use the ' +
+      '"seed first note (GT)" toggle.';
+  }
+
+  let ex = null;
+  let selectedKey = null;
+  let displayedCands = [];
+  let candEls = [];
+  let hoverRank = null;
+
+  const ROWH = 7, PAD_L = 46, PAD_T = 14, PAD_B = 22, STAFF_STEP = 5;
+  const BINS_PER_SEC = 100;
+
+  const streamSel = document.getElementById('streamSel');
+  const oursSel = document.getElementById('oursSel');
+  const viewModeSel = document.getElementById('viewMode');
+  const timeScaleSlider = document.getElementById('timeScale');
+  const timeScaleVal = document.getElementById('timeScaleVal');
+  const metaEl = document.getElementById('meta');
+  let pxps = parseInt(timeScaleSlider.value, 10);
+
+  const OURS_SOURCES = [
+    {
+      group: 'rollouts',
+      label: 'FT (non-masked)',
+      short: 'ours (FT)',
+      ckptKey: 'checkpoint',
+      hint: 'paper-split full fine-tune',
+    },
+    {
+      group: 'rollouts_lora',
+      label: 'LoRA (non-masked)',
+      short: 'ours (LoRA)',
+      ckptKey: 'lora_checkpoint',
+      hint: 'paper-split LoRA r512',
+    },
+    {
+      group: 'rollouts_masked',
+      label: 'masked 20k',
+      short: 'ours (masked 20k)',
+      ckptKey: 'checkpoint_masked',
+      hint: 'score-token-only loss, checkpoint-20000',
+    },
+    {
+      group: 'rollouts_masked_40k',
+      label: 'masked 40k (best onset)',
+      short: 'ours (masked 40k)',
+      ckptKey: 'checkpoint_masked_40k',
+      hint: 'score-token-only loss, checkpoint-7500 (best AR onset)',
+    },
+    {
+      group: 'rollouts_masked_40k_final',
+      label: 'masked 40k (final)',
+      short: 'ours (masked 40k final)',
+      ckptKey: 'checkpoint_masked_40k_final',
+      hint: 'score-token-only loss, checkpoint-40000',
+    },
+  ];
+
+  function oursSource() {
+    const base = OURS_SOURCES.find(s => s.group === oursSel.value) || OURS_SOURCES[0];
+    // Pitch-forcing toggle: reroute EVERY consumer of the 'ours' row to the
+    // oracle-diagnostic group. Filtered variant only (the slot-aligned GT
+    // pitch the forcing substitutes exists only in the filtered packing).
+    const pf = document.getElementById('pfOurs');
+    if (pf && pf.checked)
+      return Object.assign({}, base, { group: 'rollouts_pitch_forced',
+        label: (base.label || 'ours') + ' +PF',
+        short: (base.short || 'ours') + '+PF' });
+    return base;
+  }
+
+  function oursCheckpoint() {
+    const src = oursSource();
+    return DATA[src.ckptKey] || src.label;
+  }
+
+  function isSheetMode() {
+    return viewModeSel.value === 'sheet';
+  }
+
+  function isEngravedMode() {
+    return viewModeSel.value === 'engraved';
+  }
+
+  function rolloutsRoot() {
+    const group = oursSource().group;
+    return (ex && ex[group]) ? ex[group] : null;
+  }
+
+  function usingRawRollout() {
+    return streamSel.value === 'raw' && !!rolloutsRoot()?.raw;
+  }
+
+  function seedRequested() {
+    return document.getElementById('seedGt').checked;
+  }
+
+  function currentRollout() {
+    if (!ex) return null;
+    const roots = rolloutsRoot();
+    if (usingRawRollout()) {
+      if (seedRequested() && roots.raw_seeded) return roots.raw_seeded;
+      return roots.raw;
+    }
+    if (roots?.filtered) {
+      if (seedRequested() && roots.filtered_seeded) return roots.filtered_seeded;
+      return roots.filtered;
+    }
+    return { pred_score: ex.pred_score, branches: ex.branches };
+  }
+
+  function updateSeedToggle() {
+    const seedGt = document.getElementById('seedGt');
+    const roots = rolloutsRoot();
+    const available = usingRawRollout() ? !!roots?.raw_seeded : !!roots?.filtered_seeded;
+    seedGt.disabled = !available;
+    seedGt.title = available
+      ? "Drop in the ground-truth score note for the window's first slot instead of the model's own guess"
+      : 'GT-seeded rollout unavailable for this example/stream — re-run precompute for format 4';
+  }
+
+  function updateOursToggle() {
+    const present = new Set();
+    for (const example of Object.values(DATA.examples)) {
+      for (const src of OURS_SOURCES) {
+        if (example[src.group]) present.add(src.group);
+      }
+    }
+    for (const opt of oursSel.options) {
+      const src = OURS_SOURCES.find(s => s.group === opt.value);
+      const available = present.has(opt.value);
+      opt.disabled = !available;
+      const ckpt = src && DATA[src.ckptKey];
+      opt.textContent = available
+        ? src.label
+        : `${src ? src.label : opt.value} (missing)`;
+      opt.title = available && ckpt ? ckpt : (available ? src.hint : 'not in this data.js');
+    }
+    if (oursSel.selectedOptions[0]?.disabled) {
+      const fallback = OURS_SOURCES.find(s => present.has(s.group));
+      if (fallback) oursSel.value = fallback.group;
+    }
+    const hint = document.getElementById('oursHint');
+    if (hint) {
+      const src = oursSource();
+      const ckpt = oursCheckpoint();
+      const roll = ex ? currentRollout() : null;
+      const heat = roll?.log_entropy ? 'entropy heatmap from stored log-entropy' : 'no entropy arrays for this variant';
+      hint.textContent =
+        `(${src.hint} — ${ckpt} · 0.5 s beat grid · GT vs predicted vs performance · ${heat})`;
+    }
+  }
+
+  function noteSelectionKey(n) {
+    if (usingRawRollout() && n.r != null) return String(n.r);
+    if (n.j != null) return String(n.j);
+    return null;
+  }
+
+  function branchForNote(n) {
+    const key = noteSelectionKey(n);
+    const branches = currentRollout()?.branches;
+    return key != null && branches ? (branches[key] || null) : null;
+  }
+
+  function hasScoreSlotForNote(n) {
+    if (branchForNote(n) != null) return true;
+    const key = noteSelectionKey(n);
+    if (key == null) return false;
+    const branches = currentRollout()?.branches;
+    const branchesReady = !!(branches && Object.keys(branches).length);
+    if (branchesReady) return false;
+    if (usingRawRollout()) return n.r != null || n.j != null;
+    return n.j != null;
+  }
+
+  function rawNoteForFilteredIndex(j) {
+    if (!ex.raw_notes) return null;
+    return ex.raw_notes.find(n => n.j === j);
+  }
+
+  function selectionKeyForFilteredIndex(j) {
+    if (usingRawRollout()) {
+      const n = rawNoteForFilteredIndex(j);
+      if (n) return String(n.r);
+    }
+    return String(j);
+  }
+
+  function scoreSlotForNote(n) {
+    const branch = branchForNote(n);
+    return branch ? branch.slot : null;
+  }
+
+  function currentPerfNotes() {
+    if (streamSel.value === 'raw' && ex.raw_notes) return ex.raw_notes;
+    return ex.perf_notes.map((n, j) => ({ ...n, j }));
+  }
+
+  function updateStreamOptions() {
+    if (!ex) return;
+    const filteredN = ex.perf_notes.length;
+    const rawN = ex.raw_notes ? ex.raw_notes.length : filteredN;
+    const mistakes = ex.raw_notes ? ex.raw_notes.filter(n => n.j == null).length : 0;
+    streamSel.options[0].textContent =
+      `unfiltered (raw, ${rawN} notes${mistakes ? `, ${mistakes} unmatched` : ''})`;
+    streamSel.options[1].textContent = `filtered (model input, ${filteredN} notes)`;
+    if (ex.raw_notes) {
+      streamSel.disabled = false;
+      if (streamSel.value !== 'raw' && streamSel.value !== 'filtered') streamSel.value = 'raw';
+    }
+  }
+
+  // Macro-mean note-level F1 over pieces shared by the compared models. Use only
+  // the unseeded raw rollout: it has the same meaning for every model and avoids
+  // letting the currently selected stream/window change a corpus-level result.
+  // When a future dataset contains multiple windows from one piece, average those
+  // windows first so every piece still receives equal weight. "ours" follows the
+  // top ours-source control; the two paper rows are fixed.
+  const F1_CELLS = {
+    ours:   ['f1OursA', 'f1OursB', 'f1OursC'],
+    ftsample: ['f1FtSampleA', 'f1FtSampleB', 'f1FtSampleC'],
+    rerankbase: ['f1RerankBaseA', 'f1RerankBaseB', 'f1RerankBaseC'],
+    reranksample: ['f1RerankSampleA', 'f1RerankSampleB', 'f1RerankSampleC'],
+    mbr: ['f1MbrA', 'f1MbrB', 'f1MbrC'],
+    rrpairwise: ['f1PwA', 'f1PwB', 'f1PwC'],
+    rrpairwise32: ['f1Pw32A', 'f1Pw32B', 'f1Pw32C'],
+    rrlistwise32: ['f1Lw32A', 'f1Lw32B', 'f1Lw32C'],
+    rrpairwise32feat: ['f1Pwf32A', 'f1Pwf32B', 'f1Pwf32C'],
+    rrtournament: ['f1TourA', 'f1TourB', 'f1TourC'],
+    rrlistt5: ['f1Lt5A', 'f1Lt5B', 'f1Lt5C'],
+    rrgenrm: ['f1GenA', 'f1GenB', 'f1GenC'],
+    reranksampleoracle: ['f1RerankSampleOrcA', 'f1RerankSampleOrcB', 'f1RerankSampleOrcC'],
+    paper1: ['f1P1A', 'f1P1B', 'f1P1C'],
+    paper2: ['f1P2A', 'f1P2B', 'f1P2C'],
+  };
+  const F1_PIECE_CELLS = {
+    ours:   ['f1PieceOursA', 'f1PieceOursB', 'f1PieceOursC'],
+    ftsample: ['f1PieceFtSampleA', 'f1PieceFtSampleB', 'f1PieceFtSampleC'],
+    rerankbase: ['f1PieceRerankBaseA', 'f1PieceRerankBaseB', 'f1PieceRerankBaseC'],
+    reranksample: ['f1PieceRerankSampleA', 'f1PieceRerankSampleB', 'f1PieceRerankSampleC'],
+    mbr: ['f1PieceMbrA', 'f1PieceMbrB', 'f1PieceMbrC'],
+    rrpairwise: ['f1PiecePwA', 'f1PiecePwB', 'f1PiecePwC'],
+    rrpairwise32: ['f1PiecePw32A', 'f1PiecePw32B', 'f1PiecePw32C'],
+    rrlistwise32: ['f1PieceLw32A', 'f1PieceLw32B', 'f1PieceLw32C'],
+    rrpairwise32feat: ['f1PiecePwf32A', 'f1PiecePwf32B', 'f1PiecePwf32C'],
+    rrtournament: ['f1PieceTourA', 'f1PieceTourB', 'f1PieceTourC'],
+    rrlistt5: ['f1PieceLt5A', 'f1PieceLt5B', 'f1PieceLt5C'],
+    rrgenrm: ['f1PieceGenA', 'f1PieceGenB', 'f1PieceGenC'],
+    reranksampleoracle: ['f1PieceRerankSampleOrcA', 'f1PieceRerankSampleOrcB', 'f1PieceRerankSampleOrcC'],
+    paper1: ['f1PieceP1A', 'f1PieceP1B', 'f1PieceP1C'],
+    paper2: ['f1PieceP2A', 'f1PieceP2B', 'f1PieceP2C'],
+  };
+  const F1_ROW_KEYS = ['ours', 'ftsample', 'rerankbase', 'reranksample', 'mbr', 'rrpairwise', 'rrpairwise32', 'rrlistwise32', 'rrpairwise32feat', 'rrtournament', 'rrlistt5', 'rrgenrm', 'reranksampleoracle', 'paper1', 'paper2'];
+  const F1_METRIC_MODES = {
+    standard: {
+      keys: ['onset_pitch', 'onset_pitch_dur', 'onset_pitch_tol1'],
+      heads: [['on+pit', 'pitch and onset must match exactly'],
+              ['+dur', 'pitch, onset and duration must all match exactly'],
+              ['\u00b11', 'pitch matches, onset may differ by up to 1 bin']],
+    },
+    scaleioi: {
+      keys: ['tol1_scalemax', 'tol1_ioi', 'tol1_ioi_scalemax'],
+      heads: [['\u00b11 s-max', 'onset\u00b11+pitch F1, maxed over ASAP beat-unit ratios (hover cells for the winning scale r)'],
+              ['IOI \u00b11', 'onset\u00b11+pitch matcher on (interarrival, pitch) events: rhythm-shape credit without absolute alignment'],
+              ['IOI s-max', 'interarrival variant, maxed over beat-unit ratios']],
+    },
+  };
+  let F1_KEYS = F1_METRIC_MODES.standard.keys;
+
+  function setF1MetricMode(mode) {
+    const m = F1_METRIC_MODES[mode] || F1_METRIC_MODES.standard;
+    F1_KEYS = m.keys;
+    [['f1HeadA', 'f1HeadB', 'f1HeadC'],
+     ['f1PieceHeadA', 'f1PieceHeadB', 'f1PieceHeadC']].forEach(ids => {
+      ids.forEach((id, i) => {
+        const th = document.getElementById(id);
+        if (th) { th.textContent = m.heads[i][0]; th.title = m.heads[i][1]; }
+      });
+    });
+    updateF1Panel();
+  }
+
+  function setF1Row(which, f1, cells = F1_CELLS) {
+    cells[which].forEach((id, i) => {
+      const cell = document.getElementById(id);
+      if (!cell) return;
+      const v = f1 && f1[F1_KEYS[i]];
+      cell.textContent = v ? (v.f1 * 100).toFixed(1) + '%' : '–';
+      cell.title = v && v.r != null ? 'best scale r=' + (+v.r).toFixed(3) : '';
+      cell.classList.toggle('unavail', !v);
+    });
+  }
+
+  function f1ByPiece(rolloutForExample) {
+    const out = new Map();
+    for (const [id, example] of Object.entries(DATA.examples)) {
+      const f1 = rolloutForExample(example)?.f1;
+      if (!f1) continue;
+      const piece = example.piece || id;
+      if (!out.has(piece)) out.set(piece, []);
+      out.get(piece).push(f1);
+    }
+    return out;
+  }
+
+  function pieceMeanF1(windows) {
+    const result = {};
+    for (const key of F1_KEYS) {
+      const values = (windows || []).map(f1 => f1[key]?.f1).filter(Number.isFinite);
+      if (values.length)
+        result[key] = { f1: values.reduce((sum, value) => sum + value, 0) / values.length };
+    }
+    return result;
+  }
+
+  function macroMeanF1(byPiece, pieces) {
+    const result = {};
+    for (const key of F1_KEYS) {
+      const pieceMeans = [];
+      for (const piece of pieces) {
+        const mean = pieceMeanF1(byPiece.get(piece) || [])[key];
+        if (mean) pieceMeans.push(mean.f1);
+      }
+      if (pieceMeans.length)
+        result[key] = { f1: pieceMeans.reduce((sum, value) => sum + value, 0) / pieceMeans.length };
+    }
+    return result;
+  }
+
+  function updateF1Panel() {
+    const src = oursSource();
+    for (const id of ['f1NameOurs', 'f1PieceNameOurs']) {
+      const nameCell = document.getElementById(id);
+      if (nameCell) nameCell.textContent = src.short;
+    }
+    for (const id of ['f1NameRerankBase', 'f1PieceNameRerankBase']) {
+      const nameCell = document.getElementById(id);
+      if (nameCell) nameCell.textContent = `rr α=${(sweepAlphaPct() / 100).toFixed(1)}`;
+    }
+
+    const groups = {
+      ours: f1ByPiece(example => example[src.group]?.raw
+                      || example[src.group]?.filtered),
+      ftsample: f1ByPiece(example => example.rollouts_sample_t1?.raw
+                          || example.rollouts_sample_t1?.filtered),
+      rerankbase: f1ByPiece(example => example[sweepGroupName()]?.raw
+                            || example[sweepGroupName()]?.filtered),
+      mbr: f1ByPiece(example => example.rollouts_mbr?.raw
+                     || example.rollouts_mbr?.filtered),
+      rrpairwise: f1ByPiece(example => example.rollouts_rerank_pairwise?.raw
+                            || example.rollouts_rerank_pairwise?.filtered),
+      rrpairwise32: f1ByPiece(example => example.rollouts_rerank_pairwise32?.raw
+                              || example.rollouts_rerank_pairwise32?.filtered),
+      rrlistwise32: f1ByPiece(example => example.rollouts_rerank_listwise32?.raw
+                              || example.rollouts_rerank_listwise32?.filtered),
+      rrpairwise32feat: f1ByPiece(example => example.rollouts_rerank_pairwise32feat?.raw
+                    || example.rollouts_rerank_pairwise32feat?.filtered),
+      rrtournament: f1ByPiece(example => example.rollouts_rerank_tournament?.raw
+                    || example.rollouts_rerank_tournament?.filtered),
+      rrlistt5: f1ByPiece(example => example.rollouts_rerank_listt5?.raw
+                    || example.rollouts_rerank_listt5?.filtered),
+      rrgenrm: f1ByPiece(example => example.rollouts_rerank_genrm?.raw
+                    || example.rollouts_rerank_genrm?.filtered),
+      reranksample: f1ByPiece(example => example.rollouts_rerank_sample?.raw
+                              || example.rollouts_rerank_sample?.filtered),
+      reranksampleoracle: f1ByPiece(example => example.rollouts_rerank_sample_oracle?.raw
+                                    || example.rollouts_rerank_sample_oracle?.filtered),
+      // Each paper model transcribes the original full performance MIDI. Its one
+      // result is stored under `filtered` only because it has no raw/seed variants.
+      paper1: f1ByPiece(example => example.rollouts_paper1?.filtered),
+      paper2: f1ByPiece(example => example.rollouts_paper2?.filtered),
+    };
+    let common = new Set(groups.ours.keys());
+    const required = [groups.paper1, groups.paper2];
+    for (const byPiece of required)
+      common = new Set([...common].filter(piece => byPiece.has(piece)));
+    // Stable piece order: follow example_order, then any leftover.
+    const seen = new Set();
+    const pieces = [];
+    for (const id of orderedIds) {
+      const piece = DATA.examples[id]?.piece || id;
+      if (common.has(piece) && !seen.has(piece)) {
+        seen.add(piece);
+        pieces.push(piece);
+      }
+    }
+    for (const piece of common) {
+      if (!seen.has(piece)) pieces.push(piece);
+    }
+
+    for (const which of F1_ROW_KEYS)
+      setF1Row(which, macroMeanF1(groups[which], pieces));
+
+    const note = document.getElementById('f1Note');
+    if (note) {
+      const allPieces = new Set(Object.entries(DATA.examples).map(([id, example]) => example.piece || id));
+      note.textContent = pieces.length
+        ? `macro-average · unfiltered, unseeded · n=${pieces.length}/${allPieces.size} pieces`
+        : 'no pieces have F1 for all compared models';
+      note.classList.toggle('unavail', !pieces.length || pieces.length < allPieces.size);
+    }
+
+    const curPiece = ex ? (ex.piece || sel.value) : null;
+    for (const which of F1_ROW_KEYS) {
+      const f1 = curPiece
+        ? pieceMeanF1(groups[which].get(curPiece) || [])
+        : {};
+      setF1Row(which, f1, F1_PIECE_CELLS);
+    }
+  }
+
+  function fmtSeqPpl(v) {
+    if (v == null || !isFinite(v)) return '–';
+    if (v >= 100) return v.toFixed(1);
+    if (v >= 10) return v.toFixed(2);
+    return v.toFixed(3);
+  }
+
+  function geometricMeanPpl(ppl) {
+    if (!ppl) return null;
+    const vals = [];
+    for (const key of ['time', 'dur', 'pitch']) {
+      const arr = ppl[key];
+      if (!arr) continue;
+      for (const v of arr) {
+        if (v != null && isFinite(v) && v > 0) vals.push(v);
+      }
+    }
+    if (!vals.length) return null;
+    // seq PPL = exp(mean NLL) = geometric mean of per-token exp(NLL).
+    const meanLog = vals.reduce((s, v) => s + Math.log(v), 0) / vals.length;
+    return { ppl: Math.exp(meanLog), n_tokens: vals.length };
+  }
+
+  function sequencePplOf(rollout) {
+    const seq = rollout?.sequence_perplexity;
+    if (seq && seq.generated != null && isFinite(seq.generated)
+        && seq.ground_truth != null && isFinite(seq.ground_truth)) {
+      return seq;
+    }
+    const derived = geometricMeanPpl(rollout?.perplexity);
+    if (!derived && !(seq && seq.generated != null)) return null;
+    return {
+      generated: (seq && seq.generated != null) ? seq.generated : derived.ppl,
+      ground_truth: (seq && seq.ground_truth != null) ? seq.ground_truth : null,
+      derived: !(seq && seq.generated != null && seq.ground_truth != null),
+      n_tokens_generated: derived ? derived.n_tokens : seq?.n_tokens_generated,
+    };
+  }
+
+  function updateSequencePpl() {
+    const pplGen = document.getElementById('pplGen');
+    const pplGt = document.getElementById('pplGt');
+    const note = document.getElementById('pplSeqNote');
+    pplGen.classList.remove('gt-higher', 'gen-higher');
+    pplGt.classList.remove('gt-higher', 'gen-higher');
+    const rollout = currentRollout();
+    const seq = sequencePplOf(rollout);
+    if (!seq || seq.generated == null) {
+      pplGen.textContent = pplGt.textContent = '–';
+      note.textContent = 'no token PPL on this rollout';
+      return;
+    }
+    pplGen.textContent = fmtSeqPpl(seq.generated);
+    pplGt.textContent = seq.ground_truth != null ? fmtSeqPpl(seq.ground_truth) : '–';
+    if (seq.ground_truth == null) {
+      note.textContent = seq.derived
+        ? 'generated = geo-mean of AR token PPL · GT seq PPL not scored for this checkpoint'
+        : 'GT seq PPL not scored for this checkpoint';
+      return;
+    }
+    if (seq.ground_truth > seq.generated) {
+      pplGt.classList.add('gt-higher');
+      const ratio = seq.ratio_gt_over_gen != null
+        ? ` (${seq.ratio_gt_over_gen.toFixed(2)}× gen)`
+        : '';
+      note.textContent = `GT higher PPL${ratio}`;
+    } else if (seq.ground_truth < seq.generated) {
+      pplGen.classList.add('gen-higher');
+      note.textContent = 'generated higher PPL';
+    } else {
+      note.textContent = 'equal sequence PPL';
+    }
+  }
+
+  function updateAccuracy() {
+    const accOnset = document.getElementById('accOnset');
+    const accDur = document.getElementById('accDur');
+    const accPitch = document.getElementById('accPitch');
+    const accCount = document.getElementById('accCount');
+    if (!ex) {
+      accOnset.textContent = accDur.textContent = accPitch.textContent = '–';
+      accCount.textContent = '';
+      updateSequencePpl();
+      updateF1Panel();
+      return;
+    }
+    const rollout = currentRollout();
+    let total = 0, onsetC = 0, durC = 0, pitchC = 0;
+    Object.values(rollout.branches || {}).forEach(b => {
+      if (b.gt_slot == null) return;
+      const gt = ex.gt_score[b.gt_slot];
+      const pred = rollout.pred_score[b.slot];
+      if (!gt || !pred) return;
+      total++;
+      if (pred.t === gt.t) onsetC++;
+      if (pred.d === gt.d) durC++;
+      if (pred.p === gt.p) pitchC++;
+    });
+    updateSequencePpl();
+    updateF1Panel();
+    if (!total) {
+      accOnset.textContent = accDur.textContent = accPitch.textContent = '–';
+      accCount.textContent = 'no scored slots';
+      return;
+    }
+    accOnset.textContent = (100 * onsetC / total).toFixed(1) + '%';
+    accDur.textContent = (100 * durC / total).toFixed(1) + '%';
+    accPitch.textContent = (100 * pitchC / total).toFixed(1) + '%';
+    accCount.textContent = `${total} scored slots`;
+  }
+
+  function updateMeta() {
+    if (!ex) return;
+    const stream = streamSel.value === 'raw' && ex.raw_notes ? 'unfiltered' : 'filtered';
+    const notes = currentPerfNotes();
+    const mistakes = notes.filter(n => n.j == null).length;
+    const modelDesc = oursCheckpoint();
+    const src = oursSource();
+    const rollout = currentRollout();
+    const hasPpl = !!(rollout?.perplexity && rollout.perplexity.time
+      && rollout.perplexity.time.some(v => v != null));
+    metaEl.textContent =
+      `ours: ${src.label}  ·  checkpoint: ${modelDesc}  ·  stream: ${stream} (${notes.length} notes` +
+      `${mistakes ? `, ${mistakes} unmatched` : ''})  ·  rollout: ${usingRawRollout() ? 'raw controls' : 'filtered controls'}` +
+      `${seedRequested() ? ' (GT-seeded)' : ''}` +
+      `  ·  PPL: ${hasPpl ? 'token' : 'none'}${rollout?.sequence_perplexity?.ground_truth != null ? '+seq' : (hasPpl ? ' (gen derived)' : '')}` +
+      `  ·  view: ${isEngravedMode() ? 'engraved' : isSheetMode() ? 'sheet' : 'piano'} @ ${pxps}px/s` +
+      `${hasDualRollouts(ex) ? '' : ' (re-run precompute for dual rollouts)'}`;
+  }
+
+  const playBtns = {
+    perf: document.getElementById('playPerf'),
+    gt: document.getElementById('playGt'),
+    pred: document.getElementById('playPred'),
+  };
+  const audioStatusEl = document.getElementById('audioStatus');
+  let audioCtx = null;
+  let activeVoices = [];
+  let playRaf = null;
+  let playingMode = null;
+  let playheadScore = null;
+  let playheadPerf = null;
+
+  function setAudioStatus(message, isError = false) {
+    audioStatusEl.textContent = message;
+    audioStatusEl.classList.toggle('err', isError);
+  }
+
+  async function ensureAudio() {
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor) throw new Error('Web Audio is not available in this browser.');
+    if (!audioCtx) audioCtx = new AudioCtor();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    if (audioCtx.state !== 'running') throw new Error(`Audio context is ${audioCtx.state}.`);
+    return audioCtx;
+  }
+
+  function stopPlayback(clearStatus = true) {
+    playingMode = null;
+    activeVoices.forEach(v => { try { v.stop(); } catch (_) {} });
+    activeVoices = [];
+    if (playRaf) cancelAnimationFrame(playRaf);
+    playRaf = null;
+    Object.values(playBtns).forEach(b => b.classList.remove('playing'));
+    [playheadScore, playheadPerf].forEach(ph => {
+      if (ph && ph.parentNode) ph.parentNode.removeChild(ph);
+    });
+    playheadScore = playheadPerf = null;
+    if (clearStatus) setAudioStatus('');
+  }
+
+  function makePlayhead(svg) {
+    const ph = document.createElementNS(NS, 'line');
+    ph.setAttribute('class', 'playhead');
+    ph.setAttribute('y1', 0);
+    ph.setAttribute('y2', svg.getAttribute('height'));
+    svg.appendChild(ph);
+    return ph;
+  }
+
+  function updatePlayhead(elapsedSec) {
+    const x = xOf(elapsedSec * BINS_PER_SEC);
+    [playheadScore, playheadPerf].forEach(ph => {
+      if (!ph) return;
+      ph.setAttribute('x1', x);
+      ph.setAttribute('x2', x);
+    });
+  }
+
+  function scheduleNote(ctx, when, durSec, midi, gain = 0.2) {
+    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+    const osc = ctx.createOscillator();
+    const env = ctx.createGain();
+    const atk = Math.min(0.01, durSec * 0.15);
+    const rel = Math.min(0.08, durSec * 0.2);
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    env.gain.setValueAtTime(0, when);
+    env.gain.linearRampToValueAtTime(gain, when + atk);
+    env.gain.setValueAtTime(gain * 0.75, when + Math.max(atk, durSec - rel));
+    env.gain.exponentialRampToValueAtTime(0.0001, when + durSec);
+    osc.connect(env);
+    env.connect(ctx.destination);
+    osc.start(when);
+    osc.stop(when + durSec + 0.05);
+    activeVoices.push(osc);
+  }
+
+  async function playNotes(mode, notes) {
+    const list = notes.filter(n => n && n.p != null);
+    if (!list.length) {
+      setAudioStatus('No notes to play.', true);
+      return;
+    }
+    stopPlayback(false);
+    playingMode = mode;
+    playBtns[mode].classList.add('playing');
+    setAudioStatus('Starting audio...');
+    let ctx;
+    try {
+      ctx = await ensureAudio();
+    } catch (err) {
+      stopPlayback(false);
+      setAudioStatus(err?.message || 'Audio failed to start.', true);
+      return;
+    }
+    const t0 = ctx.currentTime + 0.05;
+    let endSec = 0;
+    const vel = mode === 'perf' ? 0.24 : 0.32;
+    for (const n of list) {
+      const onset = n.t / BINS_PER_SEC;
+      const dur = Math.max(n.d / BINS_PER_SEC, 0.04);
+      endSec = Math.max(endSec, onset + dur);
+      scheduleNote(ctx, t0 + onset, dur, n.p, vel);
+    }
+    setAudioStatus(`Playing ${list.length} notes.`);
+    playheadScore = makePlayhead(scoreSvg);
+    playheadPerf = makePlayhead(perfSvg);
+    const wallStart = performance.now();
+    const tick = () => {
+      if (!playingMode) return;
+      const elapsed = (performance.now() - wallStart) / 1000;
+      updatePlayhead(elapsed);
+      if (elapsed < endSec + 0.05) playRaf = requestAnimationFrame(tick);
+      else stopPlayback();
+    };
+    playRaf = requestAnimationFrame(tick);
+  }
+
+  async function playMode(mode) {
+    if (!ex) return;
+    if (mode === 'perf') await playNotes('perf', currentPerfNotes());
+    else if (mode === 'gt') await playNotes('gt', ex.gt_score);
+    else if (mode === 'pred') await playNotes('pred', currentRollout().pred_score);
+  }
+
+  const NATURAL_STEPS = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
+  const ACCIDENTALS = ['', '#', '', '#', '', '', '#', '', '#', '', '#', ''];
+  const pitchStep = p => {
+    const pc = ((p % 12) + 12) % 12;
+    const oct = Math.floor(p / 12) - 1;
+    return oct * 7 + NATURAL_STEPS[pc];
+  };
+  const isAccidental = p => ACCIDENTALS[((p % 12) + 12) % 12] !== '';
+
+  function noteSpan(notes) {
+    let tmax = 1, pmin = 127, pmax = 0;
+    for (const n of notes) {
+      if (!n) continue;
+      tmax = Math.max(tmax, (n.t + Math.max(n.d, 10)) / 100);
+      if (n.p != null) { pmin = Math.min(pmin, n.p); pmax = Math.max(pmax, n.p); }
+    }
+    const lo = Math.max(0, pmin - 2);
+    const hi = Math.min(127, pmax + 2);
+    return {
+      tmax,
+      pmin: lo,
+      pmax: hi,
+      smin: pitchStep(lo) - 3,
+      smax: pitchStep(hi) + 3,
+    };
+  }
+
+  function mkSvg(svg, span) {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    const w = PAD_L + span.tmax * pxps + 20;
+    const h = isSheetMode()
+      ? PAD_T + (span.smax - span.smin + 1) * STAFF_STEP + PAD_B + 16
+      : PAD_T + (span.pmax - span.pmin + 1) * ROWH + PAD_B;
+    svg.setAttribute('width', w); svg.setAttribute('height', h);
+    return { w, h };
+  }
+
+  const yOf = (span, p) => isSheetMode()
+    ? PAD_T + 8 + (span.smax - pitchStep(p)) * STAFF_STEP
+    : PAD_T + (span.pmax - p) * ROWH;
+  const noteH = () => isSheetMode() ? 7 : ROWH - 1;
+  const noteY = (span, p) => isSheetMode() ? yOf(span, p) - noteH() / 2 : yOf(span, p);
+  const noteW = d => Math.max((d / 100) * pxps, isSheetMode() ? 9 : 2);
+  const xOf = t => PAD_L + (t / 100) * pxps;
+
+  function drawGrid(svg, span, dims, beatSeconds) {
+    if (isSheetMode()) drawStaffGrid(svg, span, dims, beatSeconds);
+    else drawPianoGrid(svg, span, dims, beatSeconds);
+  }
+
+  function drawPianoGrid(svg, span, dims, beatSeconds) {
+    for (let p = span.pmin; p <= span.pmax; p++) {
+      if (p % 12 === 0) {
+        const y = yOf(span, p) + ROWH / 2;
+        line(svg, PAD_L, y, dims.w - 4, y, css('--grid'), 1);
+        text(svg, 4, y + 3, pname(p), css('--muted'), 10);
+      }
+    }
+    const step = beatSeconds || 0.5;
+    for (let t = 0; t <= span.tmax + 1e-6; t += step) {
+      const x = PAD_L + t * pxps;
+      const major = Math.round(t / step) % 4 === 0;
+      line(svg, x, PAD_T - 4, x, dims.h - PAD_B + 4, major ? css('--beat') : css('--grid'), major ? 1.2 : 0.6);
+      if (major) text(svg, x + 2, dims.h - 6, t.toFixed(1) + 's', css('--muted'), 10);
+    }
+  }
+
+  function drawStaffGrid(svg, span, dims, beatSeconds) {
+    const step = beatSeconds || 0.5;
+    const staffColor = css('--grid');
+    for (let s = span.smin; s <= span.smax; s++) {
+      if (s % 2 !== 0) continue;
+      const y = PAD_T + 8 + (span.smax - s) * STAFF_STEP;
+      const strong = s % 7 === 0;
+      line(svg, PAD_L, y, dims.w - 4, y, strong ? css('--beat') : staffColor, strong ? 1 : 0.7);
+      if (strong) {
+        const cMidi = Math.round(((s / 7) + 1) * 12);
+        text(svg, 5, y + 3, pname(cMidi), css('--muted'), 10);
+      }
+    }
+    for (let t = 0; t <= span.tmax + 1e-6; t += step) {
+      const x = PAD_L + t * pxps;
+      const major = Math.round(t / step) % 4 === 0;
+      line(svg, x, PAD_T - 4, x, dims.h - PAD_B + 4, major ? css('--beat') : css('--grid'), major ? 1.2 : 0.6);
+      if (major) text(svg, x + 2, dims.h - 6, t.toFixed(1) + 's', css('--muted'), 10);
+    }
+  }
+
+  function line(svg, x1, y1, x2, y2, stroke, wd) {
+    const e = document.createElementNS(NS, 'line');
+    e.setAttribute('x1', x1); e.setAttribute('y1', y1);
+    e.setAttribute('x2', x2); e.setAttribute('y2', y2);
+    e.setAttribute('stroke', stroke); e.setAttribute('stroke-width', wd);
+    svg.appendChild(e); return e;
+  }
+  function text(svg, x, y, s, fill, size) {
+    const e = document.createElementNS(NS, 'text');
+    e.setAttribute('x', x); e.setAttribute('y', y);
+    e.setAttribute('fill', fill); e.setAttribute('font-size', size);
+    e.textContent = s; svg.appendChild(e); return e;
+  }
+  function rect(svg, x, y, w, h, fill, cls) {
+    const e = document.createElementNS(NS, 'rect');
+    e.setAttribute('x', x); e.setAttribute('y', y);
+    e.setAttribute('width', Math.max(w, 2)); e.setAttribute('height', h);
+    e.setAttribute('rx', isSheetMode() ? 5 : 2); e.setAttribute('fill', fill);
+    if (cls) e.setAttribute('class', cls);
+    svg.appendChild(e); return e;
+  }
+
+  function accidentalMark(svg, span, n, fill) {
+    if (!isSheetMode() || !n || n.p == null || !isAccidental(n.p)) return null;
+    const e = text(svg, xOf(n.t) - 8, yOf(span, n.p) + 3, '#', fill, 10);
+    e.setAttribute('font-weight', '600');
+    return e;
+  }
+
+  function setBaseStroke(e, color, width, dash = '') {
+    e.dataset.baseStroke = color;
+    e.dataset.baseStrokeWidth = String(width);
+    e.dataset.baseStrokeDash = dash;
+    restoreBaseStroke(e);
+  }
+
+  function restoreBaseStroke(e) {
+    if (!e) return;
+    const color = e.dataset.baseStroke;
+    if (color) {
+      e.setAttribute('stroke', color);
+      e.setAttribute('stroke-width', e.dataset.baseStrokeWidth || 1);
+      if (e.dataset.baseStrokeDash) e.setAttribute('stroke-dasharray', e.dataset.baseStrokeDash);
+      else e.removeAttribute('stroke-dasharray');
+    } else {
+      e.setAttribute('stroke', 'none');
+      e.setAttribute('stroke-width', 0);
+      e.removeAttribute('stroke-dasharray');
+    }
+  }
+
+  const scoreSvg = document.getElementById('scoreRoll');
+  let scoreSpan = null;
+  let gtEls = {}, predEls = {}, candLayer = null;
+
+  // --- engraved sheet view (OSMD) ---
+  let osmdReal = null, osmdPred = null;
+  let engravedRealKey = null, engravedPredKey = null;
+
+  function mkOsmd(container) {
+    return new opensheetmusicdisplay.OpenSheetMusicDisplay(container, {
+      autoResize: false, backend: 'svg', drawTitle: false, drawPartNames: false,
+    });
+  }
+
+  async function renderEngraved() {
+    const realDiv = document.getElementById('engravedReal');
+    const predDiv = document.getElementById('engravedPred');
+    const realHint = document.getElementById('engravedRealHint');
+    if (typeof opensheetmusicdisplay === 'undefined') {
+      realDiv.textContent = 'osmd.min.js not found next to visualizer.html — engraved view unavailable.';
+      predDiv.textContent = '';
+      return;
+    }
+    const wid = sel.value;
+
+    // real ASAP MusicXML for this window's measure span (active sidecar for the
+    // real-score sidecar: scores_xml.js)
+    const entry = activeScores?.windows?.[wid] || null;
+    if (entry) {
+      realHint.textContent = `(measures ${entry.measure_from}–${entry.measure_to} of the actual ASAP xml_score.musicxml)`;
+      if (engravedRealKey !== wid) {
+        engravedRealKey = wid;
+        try {
+          if (!osmdReal) osmdReal = mkOsmd(realDiv);
+          await osmdReal.load(entry.xml);
+          osmdReal.render();
+        } catch (err) {
+          osmdReal = null; engravedRealKey = null;
+          realDiv.textContent = 'engraving failed: ' + err.message;
+        }
+      }
+    } else {
+      osmdReal = null; engravedRealKey = null;
+      realHint.textContent = '';
+      realDiv.textContent = activeScores
+        ? 'No real-XML mapping for this window (skipped by precompute_scores_xml.py — see its log).'
+        : 'scores_xml.js not found — run visualizer/precompute_scores_xml.py to enable the real sheet view.';
+    }
+
+    // predicted rollout, typeset on the exact token grid
+    const rollout = currentRollout();
+    const predKey = [wid, streamSel.value, seedRequested(), loraRequested()].join('|');
+    if (engravedPredKey !== predKey) {
+      engravedPredKey = predKey;
+      const xml = (typeof tripletsToMusicXML === 'function' && rollout)
+        ? tripletsToMusicXML(rollout.pred_score.filter(Boolean), beatSeconds, entry ? entry.meter : null)
+        : null;
+      if (xml) {
+        try {
+          if (!osmdPred) osmdPred = mkOsmd(predDiv);
+          await osmdPred.load(xml);
+          osmdPred.render();
+        } catch (err) {
+          osmdPred = null; engravedPredKey = null;
+          predDiv.textContent = 'engraving failed: ' + err.message;
+        }
+      } else {
+        predDiv.textContent = 'No rollout available to engrave.';
+      }
+    }
+  }
+
+  // Render one external paper model's transcription of this window against the
+  // GT, in the same piano-roll idiom as the main score panel. These models emit a
+  // plain score (no per-slot candidate distribution and no stream/seed variants),
+  // so the panel is GT outline + predicted notes only.
+  function drawPaperPanel(which) {
+    const panel = document.getElementById(`${which}Panel`);
+    const svg = document.getElementById(`${which}Roll`);
+    const note = document.getElementById(`${which}Note`);
+    if (!panel || !svg) return;
+    if (isEngravedMode()) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+
+    const groupName = `rollouts_${which}`;
+    const any = Object.values(DATA.examples).some(e => e[groupName]);
+    if (!any) { panel.style.display = 'none'; return; }
+    const block = ex && ex[groupName];
+    const variant = streamSel.value === 'raw' ? 'raw' : 'filtered';
+    const seededKey = variant === 'raw' ? 'raw_seeded' : 'filtered_seeded';
+    const roll = block && (
+      (seedRequested() && block[seededKey]) || block[variant] || block.filtered
+    );
+    const gt = (ex?.gt_score || []).filter(Boolean);
+    const pred = (roll?.pred_score || []).filter(Boolean);
+
+    svg.innerHTML = '';
+    if (!roll || !pred.length) {
+      note.textContent = block ? 'no transcription for this window' : 'not computed';
+      note.classList.add('unavail');
+      svg.setAttribute('height', 0);
+      return;
+    }
+    // Every window is drawn -- there is no span guard, and the only scaling
+    // applied is quarters -> bins from the time signature. When the result still
+    // spans a different length than the ground truth that IS the model's output
+    // (typically a re-notation at different note values), so label it rather than
+    // hide it: hiding makes a re-notation indistinguishable from a failure.
+    const scaleOff = roll.span_ok === false;
+    note.textContent = scaleOff
+      ? `⚠ time scale disagrees: spans ${roll.span_ratio}× the ground truth`
+      : '';
+    note.classList.toggle('unavail', scaleOff);
+
+    const span = noteSpan([...gt, ...pred]);
+    const dims = mkSvg(svg, span);
+    drawGrid(svg, span, dims, beatSeconds);
+    for (const n of pred)
+      rect(svg, xOf(n.t), noteY(span, n.p), noteW(n.d), noteH(), css('--pred'));
+    for (const n of gt) {
+      const e = rect(svg, xOf(n.t), noteY(span, n.p), noteW(n.d), noteH(), 'none');
+      setBaseStroke(e, css('--gt'), 1.5);
+    }
+  }
+
+  const SWEEP_ALPHAS = [10, 30, 50, 70, 90];
+  function sweepAlphaPct() {
+    const el = document.getElementById('rerankAlpha');
+    return SWEEP_ALPHAS[el ? parseInt(el.value, 10) : 2];
+  }
+  function sweepGroupName() { return `rollouts_rerank_ab${sweepAlphaPct()}`; }
+
+  function drawRerankSweepPanel() {
+    const panel = document.getElementById('rerankSweepPanel');
+    const svg = document.getElementById('rerankSweepRoll');
+    const note = document.getElementById('rerankSweepNote');
+    if (!panel || !svg) return;
+    if (isEngravedMode()) { panel.style.display = 'none'; return; }
+    const anySweep = Object.values(DATA.examples).some(
+      e => SWEEP_ALPHAS.some(a => e[`rollouts_rerank_ab${a}`]));
+    if (!anySweep) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    const alphaPct = sweepAlphaPct();
+    const aEl = document.getElementById('rerankAlphaVal');
+    const bEl = document.getElementById('rerankBetaVal');
+    if (aEl) aEl.textContent = (alphaPct / 100).toFixed(1);
+    if (bEl) bEl.textContent = ((100 - alphaPct) / 100).toFixed(1);
+    const block = ex && ex[sweepGroupName()];
+    const roll = block && (block.raw || block.filtered);
+    const gt = (ex?.gt_score || []).filter(Boolean);
+    const pred = (roll?.pred_score || []).filter(Boolean);
+    svg.innerHTML = '';
+    if (!roll || !pred.length) {
+      note.textContent = 'not computed for this window / alpha';
+      note.classList.add('unavail');
+      svg.setAttribute('height', 0);
+      return;
+    }
+    const bits = [];
+    const meta = roll.rerank_meta;
+    const sel = meta && meta.candidates && meta.candidates[meta.selected];
+    if (sel) bits.push(`selected beam: log p_FT ${sel.logp_ft.toFixed(1)}, `
+                       + `log p_base ${sel.logp_base.toFixed(1)}`);
+    const f1 = roll.f1 && roll.f1.onset_pitch_tol1;
+    if (f1) bits.push(`F1 (±1 onset): ${(f1.f1 * 100).toFixed(1)}%`);
+    const fx = roll.f1 || {};
+    if (fx.tol1_scalemax) bits.push(`s-max: ${(fx.tol1_scalemax.f1 * 100).toFixed(1)}% (r=${(+fx.tol1_scalemax.r).toFixed(2)})`);
+    if (fx.tol1_ioi) bits.push(`IOI ±1: ${(fx.tol1_ioi.f1 * 100).toFixed(1)}%`);
+    note.textContent = bits.join('  ·  ');
+    note.classList.remove('unavail');
+    const span = noteSpan([...gt, ...pred]);
+    const dims = mkSvg(svg, span);
+    drawGrid(svg, span, dims, beatSeconds);
+    for (const n of pred)
+      rect(svg, xOf(n.t), noteY(span, n.p), noteW(n.d), noteH(), css('--pred'));
+    for (const n of gt) {
+      const e = rect(svg, xOf(n.t), noteY(span, n.p), noteW(n.d), noteH(), 'none');
+      setBaseStroke(e, css('--gt'), 1.5);
+    }
+  }
+
+  function entropyHeatEnabled() {
+    return document.getElementById('entropyHeat').checked;
+  }
+
+  function entropyChannel() {
+    return document.getElementById('entropyChan').value || 'triplet';
+  }
+
+  function entropyMonoEnabled() {
+    return document.getElementById('entropyMono').checked;
+  }
+
+  function entropyChannelLabel(chan) {
+    return ({
+      triplet: 'all (Σ)',
+      time: 'onset',
+      dur: 'duration',
+      pitch: 'pitch',
+      rgb: 'RGB',
+    })[chan] || chan;
+  }
+
+  // Scalar log-entropy color (t in [0,1]). Default: cool→warm. Monochrome: dark→bright red
+  // (low entropy = deep red, high = bright red) so uncertain notes read brighter on the dark UI.
+  function entropyColor(t, mono) {
+    const x = Math.max(0, Math.min(1, t));
+    if (mono) {
+      // Floor at 40 so low-entropy notes stay visible on the dark piano-roll.
+      const r = Math.round(40 + 215 * x);
+      return `rgb(${r},0,0)`;
+    }
+    const stops = [
+      [0.00, [59, 76, 192]],
+      [0.35, [27, 208, 213]],
+      [0.65, [247, 229, 92]],
+      [1.00, [180, 4, 38]],
+    ];
+    let i = 0;
+    while (i < stops.length - 2 && x > stops[i + 1][0]) i++;
+    const [t0, c0] = stops[i];
+    const [t1, c1] = stops[i + 1];
+    const u = (x - t0) / Math.max(t1 - t0, 1e-9);
+    const r = Math.round(c0[0] + (c1[0] - c0[0]) * u);
+    const g = Math.round(c0[1] + (c1[1] - c0[1]) * u);
+    const b = Math.round(c0[2] + (c1[2] - c0[2]) * u);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  const ENTROPY_SCALE_WARM = 'linear-gradient(180deg, #b40426 0%, #f7e55c 35%, #1bd0d5 65%, #3b4cc0 100%)';
+  const ENTROPY_SCALE_MONO = 'linear-gradient(180deg, #ff0000 0%, #280000 100%)';
+  const ENTROPY_LEGEND_WARM = 'linear-gradient(90deg,#3b4cc0,#f7e55c,#b40426)';
+  const ENTROPY_LEGEND_MONO = 'linear-gradient(90deg,#280000,#ff0000)';
+
+  function logEntropyArray(rollout, chan) {
+    const block = rollout?.log_entropy;
+    if (!block) return null;
+    return block[chan] || null;
+  }
+
+  function slotLogEntropy(rollout, slot, chan) {
+    const arr = logEntropyArray(rollout, chan);
+    if (!arr || slot == null || slot < 0 || slot >= arr.length) return null;
+    const v = arr[slot];
+    return (v == null || !isFinite(v)) ? null : v;
+  }
+
+  function entropyHeatRange(rollout, chan) {
+    const arr = logEntropyArray(rollout, chan);
+    if (!arr) return null;
+    const vals = arr.filter(v => v != null && isFinite(v));
+    if (!vals.length) return null;
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi <= lo) hi = lo + 1e-6;
+    return { lo, hi };
+  }
+
+  function entropyRgbRanges(rollout) {
+    const time = entropyHeatRange(rollout, 'time');
+    const dur = entropyHeatRange(rollout, 'dur');
+    const pitch = entropyHeatRange(rollout, 'pitch');
+    if (!time || !dur || !pitch) return null;
+    return { time, dur, pitch };
+  }
+
+  function norm01(v, range) {
+    if (v == null || !range) return null;
+    return Math.max(0, Math.min(1, (v - range.lo) / (range.hi - range.lo)));
+  }
+
+  // R = onset log-entropy, G = pitch, B = duration (each normalized in-window).
+  function entropyRgbColor(rollout, slot, ranges) {
+    const rN = norm01(slotLogEntropy(rollout, slot, 'time'), ranges.time);
+    const gN = norm01(slotLogEntropy(rollout, slot, 'pitch'), ranges.pitch);
+    const bN = norm01(slotLogEntropy(rollout, slot, 'dur'), ranges.dur);
+    if (rN == null || gN == null || bN == null) return null;
+    // Keep a floor so near-zero entropy doesn't go fully black.
+    const lift = 32;
+    const span = 255 - lift;
+    const r = Math.round(lift + span * rN);
+    const g = Math.round(lift + span * gN);
+    const b = Math.round(lift + span * bN);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function fmtLogEntropyTick(v) {
+    if (!isFinite(v)) return '–';
+    if (Math.abs(v) >= 10) return v.toFixed(1);
+    if (Math.abs(v) >= 1) return v.toFixed(2);
+    return v.toFixed(2);
+  }
+
+  function fmtRange(range) {
+    if (!range) return '–';
+    return `${fmtLogEntropyTick(range.lo)}…${fmtLogEntropyTick(range.hi)}`;
+  }
+
+  function updateEntropyScale(heatOn, chan, heatRange, rgbRanges) {
+    const pane = document.getElementById('entropyScalePane');
+    const ticks = document.getElementById('entropyScaleTicks');
+    const chanEl = document.getElementById('entropyScaleChan');
+    const noteEl = document.getElementById('entropyScaleNote');
+    const chanLbl = document.getElementById('entropyChanLbl');
+    const chanSel = document.getElementById('entropyChan');
+    const monoLbl = document.getElementById('entropyMonoLbl');
+    const monoCb = document.getElementById('entropyMono');
+    const legend = document.getElementById('entropyLegend');
+    const legendSwatch = document.getElementById('entropyLegendSwatch');
+    const scaleBar = document.getElementById('entropyScaleBar');
+    const accPane = document.getElementById('accPane');
+    const isRgb = chan === 'rgb';
+    const mono = !isRgb && entropyMonoEnabled();
+
+    chanLbl.style.display = heatOn ? '' : 'none';
+    chanSel.style.display = heatOn ? '' : 'none';
+    // Monochrome only applies to scalar channels; hide in RGB (and when heat is off).
+    const showMono = heatOn && !isRgb;
+    monoLbl.style.display = showMono ? '' : 'none';
+    monoCb.disabled = !showMono;
+    accPane.classList.toggle('heat-open', heatOn);
+    pane.classList.toggle('rgb-mode', heatOn && isRgb);
+
+    if (!heatOn) {
+      pane.style.display = 'none';
+      pane.setAttribute('aria-hidden', 'true');
+      legend.style.display = 'none';
+      return;
+    }
+
+    legend.style.display = '';
+    chanEl.textContent = entropyChannelLabel(chan);
+
+    if (isRgb) {
+      legendSwatch.style.background = 'linear-gradient(90deg,#ff4040,#40ff40,#4040ff)';
+      legend.querySelector('.lbl').textContent = 'R onset · G pitch · B dur';
+      noteEl.textContent = 'log H nats / channel';
+      pane.style.display = 'flex';
+      pane.setAttribute('aria-hidden', 'false');
+      ticks.innerHTML = '';
+      if (!rgbRanges) {
+        document.getElementById('entropyRgbR').textContent = '–';
+        document.getElementById('entropyRgbG').textContent = '–';
+        document.getElementById('entropyRgbB').textContent = '–';
+        noteEl.textContent = 'no entropy data';
+        return;
+      }
+      document.getElementById('entropyRgbR').textContent = fmtRange(rgbRanges.time);
+      document.getElementById('entropyRgbG').textContent = fmtRange(rgbRanges.pitch);
+      document.getElementById('entropyRgbB').textContent = fmtRange(rgbRanges.dur);
+      return;
+    }
+
+    legendSwatch.style.background = mono ? ENTROPY_LEGEND_MONO : ENTROPY_LEGEND_WARM;
+    scaleBar.style.background = mono ? ENTROPY_SCALE_MONO : ENTROPY_SCALE_WARM;
+    if (!heatRange) {
+      pane.style.display = 'flex';
+      pane.setAttribute('aria-hidden', 'false');
+      ticks.innerHTML = '';
+      noteEl.textContent = 'no entropy data';
+      legend.querySelector('.lbl').textContent = 'no data';
+      return;
+    }
+
+    pane.style.display = 'flex';
+    pane.setAttribute('aria-hidden', 'false');
+    legend.querySelector('.lbl').textContent = 'low → high';
+    noteEl.textContent = chan === 'triplet' ? 'log(Σ H) nats' : 'log H nats';
+
+    const { lo, hi } = heatRange;
+    const nTicks = 5;
+    const parts = [];
+    for (let i = 0; i < nTicks; i++) {
+      const u = i / (nTicks - 1); // 0 at top (high), 1 at bottom (low)
+      const v = hi - u * (hi - lo);
+      const topPct = (u * 100).toFixed(2);
+      parts.push(
+        `<div class="tick" style="top:${topPct}%">${fmtLogEntropyTick(v)}</div>`
+      );
+    }
+    ticks.innerHTML = parts.join('');
+  }
+
+  function drawScore() {
+    drawPaperPanel('masked');
+    drawPaperPanel('masked_40k');
+    drawPaperPanel('masked_40k_final');
+    drawPaperPanel('rerank');
+    drawRerankSweepPanel();
+    drawPaperPanel('paper1');
+    drawPaperPanel('paper2');
+    const engraved = isEngravedMode();
+    document.getElementById('scorePanel').style.display = engraved ? 'none' : '';
+    document.getElementById('engravedPanel').style.display = engraved ? '' : 'none';
+    if (engraved) {
+      updateEntropyScale(false, 'triplet', null, null);
+      renderEngraved();
+      return;
+    }
+    const rollout = currentRollout() || { pred_score: [], branches: {} };
+    const gt = (ex.gt_score || []).filter(Boolean);
+    const pred = (rollout.pred_score || []).filter(Boolean);
+    const branches = rollout.branches || {};
+    const branchCands = Object.values(branches).flatMap(b => (b.candidates || []).filter(c => !c.rest));
+    scoreSpan = noteSpan([...gt, ...pred, ...branchCands]);
+    const dims = mkSvg(scoreSvg, scoreSpan);
+    drawGrid(scoreSvg, scoreSpan, dims, beatSeconds);
+    gtEls = {}; predEls = {};
+    const heatOn = entropyHeatEnabled();
+    const chan = entropyChannel();
+    const isRgb = chan === 'rgb';
+    const mono = !isRgb && entropyMonoEnabled();
+    const heatRange = heatOn && !isRgb ? entropyHeatRange(rollout, chan) : null;
+    const rgbRanges = heatOn && isRgb ? entropyRgbRanges(rollout) : null;
+    updateEntropyScale(heatOn, chan, heatRange, rgbRanges);
+    const heatReady = heatOn && (isRgb ? rgbRanges : heatRange);
+    rollout.pred_score.forEach((n, i) => {
+      if (!n) return;
+      let fill = css('--pred');
+      if (heatReady) {
+        if (isRgb) {
+          fill = entropyRgbColor(rollout, i, rgbRanges) || fill;
+        } else {
+          const logH = slotLogEntropy(rollout, i, chan);
+          if (logH != null) {
+            const t = (logH - heatRange.lo) / (heatRange.hi - heatRange.lo);
+            fill = entropyColor(t, mono);
+          }
+        }
+      }
+      const e = rect(scoreSvg, xOf(n.t), noteY(scoreSpan, n.p), noteW(n.d), noteH(), fill);
+      e.setAttribute('opacity', heatReady ? 0.9 : 0.65);
+      e.dataset.slot = i;
+      const branch = branches[String(i)];
+      const gtSlot = branch && branch.gt_slot != null ? branch.gt_slot : (usingRawRollout() ? null : i);
+      const gtNote = gtSlot != null ? ex.gt_score[gtSlot] : null;
+      const pitchError = gtNote && gtNote.p !== n.p;
+      if (pitchError) {
+        e.dataset.pitchError = '1';
+        setBaseStroke(e, css('--miss'), 2);
+      } else if (n.seeded) {
+        setBaseStroke(e, css('--sel'), 1.6, '2 2');
+      }
+      const title = document.createElementNS(NS, 'title');
+      const ent = rollout.entropy;
+      const logEnt = rollout.log_entropy;
+      let entBits = '';
+      if (ent && ent.time?.[i] != null) {
+        const lt = logEnt?.time?.[i];
+        const ld = logEnt?.dur?.[i];
+        const lp = logEnt?.pitch?.[i];
+        entBits =
+          `  ·  H=[${ent.time[i].toFixed(2)}, ${ent.dur[i].toFixed(2)}, ${ent.pitch[i].toFixed(2)}] nats`;
+        if (isRgb && lt != null && ld != null && lp != null) {
+          entBits += `  ·  RGB logH R(onset)=${Number(lt).toFixed(2)} G(pitch)=${Number(lp).toFixed(2)} B(dur)=${Number(ld).toFixed(2)}`;
+        } else {
+          const logVal = logEnt?.[chan]?.[i];
+          if (logVal != null)
+            entBits += `  ·  ${entropyChannelLabel(chan)} logH=${Number(logVal).toFixed(2)}`;
+        }
+      }
+      title.textContent = (pitchError
+        ? `pitch error at slot ${i}: generated ${pname(n.p)}, ground truth ${pname(gtNote.p)} at slot ${gtSlot}`
+        : `generated score slot ${i}: ${pname(n.p)}`) + (n.seeded ? '  (ground truth dropped in)' : '') + entBits;
+      e.appendChild(title);
+      accidentalMark(scoreSvg, scoreSpan, n, fill);
+      predEls[i] = e;
+    });
+    ex.gt_score.forEach((n, i) => {
+      if (!n) return;
+      const e = rect(scoreSvg, xOf(n.t), noteY(scoreSpan, n.p), noteW(n.d), noteH(), 'none');
+      setBaseStroke(e, css('--gt'), 1.6);
+      e.dataset.slot = i;
+      accidentalMark(scoreSvg, scoreSpan, n, css('--gt'));
+      gtEls[i] = e;
+    });
+    candLayer = document.createElementNS(NS, 'g');
+    scoreSvg.appendChild(candLayer);
+    applyToggles();
+  }
+
+  function applyToggles() {
+    const sgt = document.getElementById('showGt').checked;
+    const spr = document.getElementById('showPred').checked;
+    Object.values(gtEls).forEach(e => e.style.display = sgt ? '' : 'none');
+    Object.values(predEls).forEach(e => e.style.display = spr ? '' : 'none');
+  }
+
+  const perfSvg = document.getElementById('perfRoll');
+  let perfEls = [];
+  let perfElByKey = {};
+
+  function drawPerf() {
+    const notes = currentPerfNotes();
+    const span = noteSpan(notes);
+    const dims = mkSvg(perfSvg, span);
+    drawGrid(perfSvg, span, dims, 1.0);
+    perfEls = []; perfElByKey = {};
+    notes.forEach((n) => {
+      const j = n.j;
+      const isMistake = j == null;
+      const inPrefix = j != null && j < ex.prefix_controls;
+      const selKey = noteSelectionKey(n);
+      const clickable = hasScoreSlotForNote(n);
+      const fill = isMistake ? css('--miss') : css('--perf');
+      const e = rect(perfSvg, xOf(n.t), noteY(span, n.p), noteW(n.d), noteH(), fill, 'note');
+      e.setAttribute('opacity', isMistake ? (clickable ? 1 : 0.9) : (clickable ? 1 : 0.4));
+      if (inPrefix && clickable) {
+        setBaseStroke(e, css('--perf-prefix'), 1, '3 2');
+      }
+      e.dataset.key = selKey || '';
+      e.style.cursor = clickable ? 'pointer' : 'default';
+      e.addEventListener('click', ev => {
+        ev.stopPropagation();
+        if (clickable) selectNote(selKey);
+        else if (isMistake) showMistakeInfo(n);
+      });
+      const title = document.createElementNS(NS, 'title');
+      const slot = scoreSlotForNote(n);
+      title.textContent = isMistake
+        ? `unmatched performance note  ${pname(n.p)}  t=${(n.t/100).toFixed(2)}s` +
+          (clickable ? `  — click: model score slot ${slot} (raw rollout)` : '  (no rollout slot)')
+        : `perf #${j}${inPrefix ? ' (prefix)' : ''}  ${pname(n.p)}  t=${(n.t/100).toFixed(2)}s` +
+          (clickable ? `  — click: quantized score slot ${slot}` : '  (no score slot in this window)');
+      e.appendChild(title);
+      accidentalMark(perfSvg, span, n, fill);
+      perfEls.push(e);
+      if (selKey) perfElByKey[selKey] = e;
+    });
+    perfSvg.addEventListener('click', () => clearSelection());
+    document.getElementById('f1MetricMode')?.addEventListener('change',
+      e => setF1MetricMode(e.target.value));
+    document.getElementById('rolloutModeBtn')?.addEventListener('click', () => {
+      const id = document.getElementById('exampleSel')?.value;
+      const ex = DATA.examples[id];
+      // Full-song rollouts exist only for the paper *test* split (59 perfs).
+      const target = ex && ex.piece && String(id).startsWith('test')
+        ? 'fullsong.html#' + encodeURIComponent('test/' + ex.piece)
+        : 'fullsong.html';
+      window.open(target, '_blank');
+    });
+    document.getElementById('pfOurs')?.addEventListener('change', () => {
+      // full re-render through the existing example pipeline
+      sel.dispatchEvent(new Event('change'));
+      updateF1Panel();
+    });
+    // Task-6 jump: windowed mode -> full rollout of this window's performance.
+    // example.piece is the performance path, which is exactly the fullsong key
+    // (prefixed by its split, derivable from the example id "val-*/test-*").
+    function syncFullsongLink() {
+      const a = document.getElementById('fullsongLink');
+      if (!a) return;
+      const id = document.getElementById('exampleSel')?.value;
+      const ex = DATA.examples[id];
+      if (ex && ex.piece && String(id).startsWith('test'))
+        a.href = 'fullsong.html#' + encodeURIComponent('test/' + ex.piece);
+      else
+        a.href = 'fullsong.html';
+    }
+    window.__syncFullsongLink = syncFullsongLink;
+    setInterval(syncFullsongLink, 1500);
+  }
+
+  function showMistakeInfo(n) {
+    clearSelection();
+    document.getElementById('candinfo').innerHTML =
+      `<span class="lbl">Unmatched performance note (${pname(n.p)} @ ${(n.t/100).toFixed(2)}s) — ` +
+      `not in the filtered model input. No raw-rollout slot was precomputed for it.</span>`;
+  }
+
+  const topPSlider = document.getElementById('topP');
+  const topPVal = document.getElementById('topPVal');
+  const topPFraction = () => topPSlider.value / 100;
+  const rankPane = document.getElementById('rankPane');
+  const rankSlider = document.getElementById('rankSlider');
+  const rankVal = document.getElementById('rankVal');
+
+  function nucleusFilter(cands, p) {
+    const total = cands.reduce((s, c) => s + c.prob, 0) || 1;
+    let cum = 0;
+    const kept = [];
+    for (const c of cands) {
+      kept.push(c);
+      cum += c.prob / total;
+      if (cum >= p) break;
+    }
+    return kept;
+  }
+
+  function clearCandidates() {
+    while (candLayer && candLayer.firstChild) candLayer.removeChild(candLayer.firstChild);
+    displayedCands = []; candEls = []; hoverRank = null;
+  }
+
+  function clearSelection() {
+    selectedKey = null;
+    clearCandidates();
+    Object.values(gtEls).forEach(e => e.classList.remove('fadeout', 'semifade'));
+    Object.values(predEls).forEach(e => e.classList.remove('fadeout', 'semifade'));
+    perfEls.forEach(restoreBaseStroke);
+    rankPane.style.display = 'none';
+    document.getElementById('candinfo').innerHTML =
+      '<span class="lbl">No performance note selected.</span>';
+    drawPerplexity();
+  }
+
+  function applyRankHighlight() {
+    const n = hoverRank != null ? hoverRank : parseInt(rankSlider.value, 10);
+    candEls.forEach((ce, i) => {
+      const active = (i === n - 1);
+      const c = displayedCands[i];
+      const maxP = displayedCands[0] ? displayedCands[0].prob : 1;
+      const baseAlpha = 0.15 + 0.85 * (c.prob / maxP);
+      if (ce.rect) {
+        ce.rect.setAttribute('stroke', active ? css('--sel') : 'none');
+        ce.rect.setAttribute('stroke-width', active ? 2 : 0);
+        ce.rect.setAttribute('opacity', active ? 1 : (candEls.some((_, k) => k === n - 1) ? baseAlpha * 0.55 : baseAlpha));
+      }
+      if (ce.label) ce.label.setAttribute('opacity', active ? 1 : 0.45);
+      if (ce.row) ce.row.classList.toggle('hl', active);
+    });
+    rankVal.textContent = String(n);
+  }
+
+  function selectNote(key) {
+    clearSelection();
+    selectedKey = key;
+    const el = perfElByKey[key];
+    if (el) { el.setAttribute('stroke', css('--sel')); el.setAttribute('stroke-width', 2); }
+
+    const rollout = currentRollout() || {};
+    const branch = rollout.branches && rollout.branches[key];
+    const info = document.getElementById('candinfo');
+    if (!branch) {
+      if (!branchLoaded[sel.value]) {
+        info.innerHTML = `<span class="lbl">Loading candidates…</span>`;
+        void ensureBranches(sel.value).then(() => {
+          if (selectedKey === key) selectNote(key);
+        });
+        return;
+      }
+      info.innerHTML = `<span class="lbl">No rollout branch for selection key ${key}.</span>`;
+      return;
+    }
+
+    const slot = branch.slot;
+    const gtSlot = branch.gt_slot != null ? branch.gt_slot : slot;
+    Object.entries(gtEls).forEach(([s, e]) => e.classList.add(+s === gtSlot ? 'semifade' : 'fadeout'));
+    Object.entries(predEls).forEach(([s, e]) => e.classList.add(+s === slot ? 'semifade' : 'fadeout'));
+    const gtNote = ex.gt_score[gtSlot];
+    const predNote = rollout.pred_score[slot];
+    if (gtNote) {
+      const g = rect(candLayer, xOf(gtNote.t), noteY(scoreSpan, gtNote.p),
+                     noteW(gtNote.d), noteH(), 'none');
+      g.setAttribute('stroke', css('--gt')); g.setAttribute('stroke-width', 2.2);
+      g.setAttribute('stroke-dasharray', '4 2');
+    }
+
+    displayedCands = nucleusFilter(branch.candidates, topPFraction());
+    const maxP = Math.max(...displayedCands.map(c => c.prob), 1e-9);
+    candEls = [];
+    let greedyMarked = false;
+    displayedCands.forEach((c, rank) => {
+      let r = null, t = null;
+      const isGreedy = c.greedy && !greedyMarked;
+      if (isGreedy) greedyMarked = true;
+      if (!c.rest) {
+        const alpha = 0.15 + 0.85 * (c.prob / maxP);
+        r = rect(candLayer, xOf(c.t), noteY(scoreSpan, c.p), noteW(c.d), noteH(), css('--cand'));
+        r.setAttribute('opacity', alpha.toFixed(3));
+        r.style.cursor = 'pointer';
+        if (isGreedy) { r.setAttribute('stroke', css('--pred')); r.setAttribute('stroke-width', 1.4); }
+        t = text(candLayer, xOf(c.t) + 2, noteY(scoreSpan, c.p) - 2,
+                 (100 * c.prob).toFixed(1) + '%', css('--text'), 9);
+        t.setAttribute('opacity', Math.max(0.45, alpha).toFixed(3));
+        accidentalMark(candLayer, scoreSpan, c, css('--cand'));
+        r.addEventListener('mouseenter', () => { hoverRank = rank + 1; applyRankHighlight(); });
+        r.addEventListener('mouseleave', () => { hoverRank = null; applyRankHighlight(); });
+      }
+      candEls.push({ rect: r, label: t, row: null });
+    });
+
+    const rows = displayedCands.map((c, r) => {
+      const bar = Math.max(2, 120 * c.prob / maxP);
+      const greedyDot = c.greedy && displayedCands.slice(0, r).every(x => !x.greedy)
+        ? ' <span style="color:var(--pred)" title="greedy rollout choice">●</span>' : '';
+      return `<tr class="cand-row" data-rank="${r + 1}">
+        <td>${r + 1}${greedyDot}</td>
+        <td>${c.rest ? 'REST' : pname(c.p)}</td>
+        <td>${(c.t / 100).toFixed(2)} s</td>
+        <td>${(c.d / 100).toFixed(2)} s</td>
+        <td><span class="bar" style="width:${bar}px"></span> ${(100 * c.prob).toFixed(2)}%</td>
+        <td class="lbl">${c.probs.map(p => (100 * p).toFixed(1) + '%').join(' · ')}</td>
+      </tr>`;
+    }).join('');
+    const gtDesc = gtNote
+      ? `${pname(gtNote.p)} @ ${(gtNote.t / 100).toFixed(2)} s, dur ${(gtNote.d / 100).toFixed(2)} s`
+      : 'dummy REST slot';
+    const predDesc = predNote
+      ? `${pname(predNote.p)} @ ${(predNote.t / 100).toFixed(2)} s`
+      : '—';
+    const label = usingRawRollout()
+      ? `raw perf #${branch.raw_index != null ? branch.raw_index : key}` +
+        (branch.gt_slot != null ? ` (matched filtered #${branch.gt_slot})` : ' (unmatched)')
+      : `perf #${key}`;
+    info.innerHTML = `
+      <div style="margin-bottom:6px">${label} → score slot <b>${slot}</b>
+        &nbsp;·&nbsp; ground truth: <b style="color:var(--gt)">${gtDesc}</b>
+        &nbsp;·&nbsp; rollout chose: <b style="color:var(--pred)">${predDesc}</b>
+        &nbsp;·&nbsp; <span class="lbl">showing ${displayedCands.length}/${branch.candidates.length} (top-p ${topPSlider.value}%) — ${usingRawRollout() ? 'raw' : 'filtered'} AR rollout at slot ${slot}</span></div>
+      <table>
+        <tr><th>#</th><th>pitch</th><th>onset</th><th>duration</th><th>joint prob</th><th>onset · dur · pitch prob</th></tr>
+        ${rows}
+      </table>`;
+
+    info.querySelectorAll('tr.cand-row').forEach(row => {
+      const rank = parseInt(row.dataset.rank, 10);
+      candEls[rank - 1].row = row;
+      row.addEventListener('mouseenter', () => { hoverRank = rank; applyRankHighlight(); });
+      row.addEventListener('mouseleave', () => { hoverRank = null; applyRankHighlight(); });
+    });
+
+    rankSlider.max = String(displayedCands.length);
+    rankSlider.value = '1';
+    rankPane.style.display = 'flex';
+    applyRankHighlight();
+    drawPerplexity();
+  }
+
+  const minimap = document.getElementById('minimap');
+
+  function flashEl(e) {
+    if (!e) return;
+    e.setAttribute('stroke', css('--sel'));
+    e.setAttribute('stroke-width', 2.4);
+    e.removeAttribute('stroke-dasharray');
+    e.scrollIntoView && e.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }
+  function unflashEl(e, keepSelected) {
+    if (!e) return;
+    if (keepSelected) { e.setAttribute('stroke', css('--sel')); e.setAttribute('stroke-width', 2); }
+    else restoreBaseStroke(e);
+  }
+
+  function drawMinimap() {
+    minimap.innerHTML = '';
+    const rollout = currentRollout();
+    const k = ex.prefix_controls;
+    const numSlots = ex.gt_score.length;
+    const cells = [];
+    for (let j = 0; j < k; j++) {
+      cells.push({ kind: 'control', j, label: `prefix control (perf #${j})` });
+      cells.push({ kind: 'placeholder', label: `prefix REST placeholder ${j}` });
+    }
+    for (let s = 0; s < numSlots; s++) {
+      cells.push({ kind: 'score', slot: s, label: `score slot ${s} (quantizes perf #${s})` });
+      cells.push({ kind: 'control', j: s + k, label: `control (perf #${s + k})` });
+    }
+    const colors = { control: css('--perf'), placeholder: css('--muted'), score: css('--pred') };
+    cells.forEach(cell => {
+      const d = document.createElement('div');
+      d.className = 'sq';
+      d.style.background = colors[cell.kind];
+      d.title = cell.label;
+      d.addEventListener('mouseenter', () => {
+        const key = selectionKeyForFilteredIndex(cell.j);
+        if (cell.kind === 'control' && cell.j != null) flashEl(perfElByKey[key]);
+        else if (cell.kind === 'score') { flashEl(predEls[cell.slot]); flashEl(gtEls[cell.slot]); }
+      });
+      d.addEventListener('mouseleave', () => {
+        const key = selectionKeyForFilteredIndex(cell.j);
+        if (cell.kind === 'control' && cell.j != null) unflashEl(perfElByKey[key], key === selectedKey);
+        else if (cell.kind === 'score') { unflashEl(predEls[cell.slot]); unflashEl(gtEls[cell.slot]); }
+      });
+      d.addEventListener('click', () => {
+        if (cell.kind === 'control' && cell.j != null) {
+          const key = selectionKeyForFilteredIndex(cell.j);
+          if (rollout.branches?.[key]) selectNote(key);
+        } else if (cell.kind === 'score') {
+          const key = selectionKeyForFilteredIndex(cell.slot);
+          if (rollout.branches?.[key]) selectNote(key);
+        }
+      });
+      minimap.appendChild(d);
+    });
+  }
+
+  function selectedSlotIndex() {
+    if (selectedKey == null) return null;
+    const b = currentRollout()?.branches?.[selectedKey];
+    return b?.slot ?? null;
+  }
+
+  function drawPerplexity() {
+    const wrap = document.getElementById('pplWrap');
+    const svg = document.getElementById('pplChart');
+    const empty = document.getElementById('pplEmpty');
+    const tip = document.getElementById('pplTip');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    tip.style.display = 'none';
+
+    const ppl = currentRollout()?.perplexity;
+    const hasData = ppl && ppl.time && ppl.time.some(v => v != null);
+    wrap.style.display = hasData ? 'block' : 'none';
+    empty.style.display = hasData ? 'none' : 'block';
+    if (!hasData) return;
+
+    const series = [
+      { key: 'time', color: css('--pred'), label: 'onset' },
+      { key: 'dur', color: css('--perf'), label: 'dur' },
+      { key: 'pitch', color: css('--cand'), label: 'pitch' },
+    ];
+    const n = ppl.time.length;
+    const W = Math.max(520, wrap.clientWidth || 600);
+    const H = 92;
+    const ML = 44, MR = 10, MT = 8, MB = 20;
+    const iw = W - ML - MR, ih = H - MT - MB;
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+    const vals = [];
+    for (const s of series) {
+      for (let i = 0; i < n; i++) {
+        const v = ppl[s.key][i];
+        if (v != null && isFinite(v) && v > 0) vals.push(v);
+      }
+    }
+    let ymin = Math.max(1, Math.min(...vals));
+    let ymax = Math.max(...vals);
+    if (!isFinite(ymin) || !isFinite(ymax)) return;
+    if (ymax <= ymin) ymax = ymin * 1.5;
+    const logMinRaw = Math.log10(ymin);
+    const logMaxRaw = Math.log10(ymax);
+    const logPad = Math.max((logMaxRaw - logMinRaw) * 0.08, 0.02);
+    const logMin = Math.max(0, logMinRaw - logPad);
+    const logMax = logMaxRaw + logPad;
+    const logSpan = Math.max(logMax - logMin, 0.01);
+    const xAt = i => ML + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw);
+    const yAt = v => MT + ih - ((Math.log10(Math.max(v, Math.pow(10, logMin))) - logMin) / logSpan) * ih;
+
+    function fmtPplTick(v) {
+      if (v >= 100) return v.toFixed(0);
+      if (v >= 10) return v.toFixed(1).replace(/\.0$/, '');
+      return v.toFixed(2).replace(/\.00$/, '').replace(/0$/, '');
+    }
+
+    function logTicks(minLog, maxLog) {
+      const ticks = [];
+      const e0 = Math.floor(minLog);
+      const e1 = Math.ceil(maxLog);
+      for (let e = e0; e <= e1; e++) {
+        for (const m of [1, 2, 5]) {
+          const v = m * Math.pow(10, e);
+          const lv = Math.log10(v);
+          if (lv >= minLog - 1e-9 && lv <= maxLog + 1e-9) ticks.push(v);
+        }
+      }
+      if (ticks.length < 3) {
+        ticks.push(Math.pow(10, minLog), Math.pow(10, (minLog + maxLog) / 2), Math.pow(10, maxLog));
+      }
+      return [...new Set(ticks.map(v => +v.toPrecision(6)))].sort((a, b) => a - b);
+    }
+
+    const grid = document.createElementNS(NS, 'g');
+    grid.setAttribute('opacity', '0.35');
+    for (const yv of logTicks(logMin, logMax)) {
+      const y = yAt(yv);
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', ML);
+      line.setAttribute('x2', ML + iw);
+      line.setAttribute('y1', y);
+      line.setAttribute('y2', y);
+      line.setAttribute('stroke', css('--grid'));
+      grid.appendChild(line);
+      const lbl = text(grid, 4, y + 3, fmtPplTick(yv), css('--muted'), 9);
+      lbl.setAttribute('text-anchor', 'start');
+    }
+    svg.appendChild(grid);
+
+    const axis = document.createElementNS(NS, 'line');
+    axis.setAttribute('x1', ML);
+    axis.setAttribute('x2', ML + iw);
+    axis.setAttribute('y1', MT + ih);
+    axis.setAttribute('y2', MT + ih);
+    axis.setAttribute('stroke', css('--grid'));
+    svg.appendChild(axis);
+
+    for (const s of series) {
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        const v = ppl[s.key][i];
+        if (v == null || !isFinite(v)) continue;
+        pts.push(`${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`);
+      }
+      if (!pts.length) continue;
+      const path = document.createElementNS(NS, 'polyline');
+      path.setAttribute('points', pts.join(' '));
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', s.color);
+      path.setAttribute('stroke-width', '1.6');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(path);
+    }
+
+    const slot = selectedSlotIndex();
+    if (slot != null && slot >= 0 && slot < n) {
+      const sel = document.createElementNS(NS, 'line');
+      sel.setAttribute('x1', xAt(slot));
+      sel.setAttribute('x2', xAt(slot));
+      sel.setAttribute('y1', MT);
+      sel.setAttribute('y2', MT + ih);
+      sel.setAttribute('stroke', css('--sel'));
+      sel.setAttribute('stroke-width', '1.5');
+      sel.setAttribute('stroke-dasharray', '4 3');
+      sel.setAttribute('opacity', '0.85');
+      svg.appendChild(sel);
+    }
+
+    const xLbl = text(svg, ML + iw / 2, H - 4, 'score slot index', css('--muted'), 9);
+    xLbl.setAttribute('text-anchor', 'middle');
+
+    const hit = document.createElementNS(NS, 'rect');
+    hit.setAttribute('x', ML);
+    hit.setAttribute('y', MT);
+    hit.setAttribute('width', iw);
+    hit.setAttribute('height', ih);
+    hit.setAttribute('fill', 'transparent');
+    hit.style.cursor = 'crosshair';
+    hit.addEventListener('mousemove', ev => {
+      const rect = svg.getBoundingClientRect();
+      const x = ((ev.clientX - rect.left) / rect.width) * W;
+      const idx = n <= 1 ? 0 : Math.round(((x - ML) / iw) * (n - 1));
+      const i = Math.max(0, Math.min(n - 1, idx));
+      const parts = series.map(s => {
+        const v = ppl[s.key][i];
+        return `${s.label}: ${v == null ? '—' : v.toFixed(2)}`;
+      });
+      tip.textContent = `slot ${i} — ${parts.join(' · ')}`;
+      tip.style.display = 'block';
+      tip.style.left = (ev.clientX + 12) + 'px';
+      tip.style.top = (ev.clientY + 12) + 'px';
+    });
+    hit.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    svg.appendChild(hit);
+  }
+
+  const branchLoaded = {};
+  const branchLoading = {};
+
+  function mergeBranches(example, packed) {
+    if (!example || !packed) return;
+    if (packed.branches) example.branches = packed.branches;
+    for (const [group, streams] of Object.entries(packed)) {
+      if (group === 'branches' || !example[group] || !streams) continue;
+      for (const [stream, payload] of Object.entries(streams)) {
+        if (example[group][stream] && payload && payload.branches) {
+          example[group][stream].branches = payload.branches;
+        }
+      }
+    }
+  }
+
+  function ensureBranches(id) {
+    if (branchLoaded[id]) return Promise.resolve();
+    if (branchLoading[id]) return branchLoading[id];
+    branchLoading[id] = new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = 'data_ex/' + encodeURIComponent(id) + '.js?v=202608171420';
+      s.onload = () => {
+        const packed = window.VISUALIZER_BRANCHES && window.VISUALIZER_BRANCHES[id];
+        if (packed) mergeBranches(DATA.examples[id], packed);
+        normalizeRawBranches(DATA.examples[id]);
+        branchLoaded[id] = true;
+        if (sel.value === id) {
+          const keep = selectedKey;
+          drawScore();
+          drawPerf();
+          drawMinimap();
+          if (keep != null && currentRollout()?.branches?.[keep]) selectNote(keep);
+        }
+        resolve();
+      };
+      s.onerror = () => resolve();
+      document.head.appendChild(s);
+    });
+    return branchLoading[id];
+  }
+
+  function loadExample(id) {
+    ex = DATA.examples[id];
+    selectedKey = null;
+    stopPlayback();
+    updateStreamOptions();
+    updateOursToggle();
+    updateSeedToggle();
+    updateBeamSlider();
+    drawScore();
+    drawPerf();
+    drawMinimap();
+    drawPerplexity();
+    updateMeta();
+    updateAccuracy();
+    clearSelection();
+    void ensureBranches(id);
+  }
+
+  function redrawRollsPreservingSelection(redrawMap = false) {
+    if (!ex) return;
+    const keep = selectedKey;
+    stopPlayback();
+    drawScore();
+    drawPerf();
+    if (redrawMap) drawMinimap();
+    drawPerplexity();
+    updateMeta();
+    updateAccuracy();
+    if (keep != null && currentRollout()?.branches?.[keep]) selectNote(keep);
+    else clearSelection();
+  }
+
+  sel.addEventListener('change', () => loadExample(sel.value));
+  streamSel.addEventListener('change', () => {
+    const keep = selectedKey;
+    stopPlayback();
+    updateSeedToggle();
+    updateBeamSlider();
+    drawScore();
+    drawPerf();
+    drawMinimap();
+    drawPerplexity();
+    updateMeta();
+    updateAccuracy();
+    if (keep != null && currentRollout()?.branches?.[keep]) selectNote(keep);
+    else clearSelection();
+  });
+  document.getElementById('seedGt').addEventListener('change', () => {
+    const keep = selectedKey;
+    stopPlayback();
+    updateBeamSlider();
+    drawScore();
+    drawPerf();
+    drawMinimap();
+    drawPerplexity();
+    updateMeta();
+    updateAccuracy();
+    if (keep != null && currentRollout()?.branches?.[keep]) selectNote(keep);
+    else clearSelection();
+  });
+  oursSel.addEventListener('change', () => {
+    const keep = selectedKey;
+    stopPlayback();
+    updateOursToggle();
+    updateSeedToggle();
+    updateBeamSlider();
+    drawScore();
+    drawPerf();
+    drawMinimap();
+    drawPerplexity();
+    updateMeta();
+    updateAccuracy();
+    if (keep != null && currentRollout()?.branches?.[keep]) selectNote(keep);
+    else clearSelection();
+  });
+  // Beam-width UI was removed; the hoisted stub keeps the remaining
+  // updateBeamSlider() call sites harmless until the UI returns.
+  function updateBeamSlider() {}
+  const rerankAlphaSlider = document.getElementById('rerankAlpha');
+  if (rerankAlphaSlider) rerankAlphaSlider.addEventListener('input', () => {
+    drawRerankSweepPanel();
+    updateF1Panel();
+  });
+  const beamSlider = document.getElementById('beamN');
+  const beamVal = document.getElementById('beamNVal');
+  if (beamSlider) beamSlider.addEventListener('input', () => {
+    updateBeamSlider();
+    if (beamVal) beamVal.textContent = String(beamSlider.value);
+    redrawRollsPreservingSelection();
+  });
+  viewModeSel.addEventListener('change', () => redrawRollsPreservingSelection());
+  timeScaleSlider.addEventListener('input', () => {
+    pxps = parseInt(timeScaleSlider.value, 10);
+    timeScaleVal.textContent = `${pxps} px/s`;
+    redrawRollsPreservingSelection();
+  });
+  document.getElementById('clearBtn').addEventListener('click', clearSelection);
+  document.getElementById('showGt').addEventListener('change', applyToggles);
+  document.getElementById('showPred').addEventListener('change', applyToggles);
+  document.getElementById('entropyHeat').addEventListener('change', () => {
+    if (ex) drawScore();
+  });
+  document.getElementById('entropyChan').addEventListener('change', () => {
+    if (ex && entropyHeatEnabled()) drawScore();
+  });
+  document.getElementById('entropyMono').addEventListener('change', () => {
+    if (ex && entropyHeatEnabled() && entropyChannel() !== 'rgb') drawScore();
+  });
+  playBtns.perf.addEventListener('click', () => { void playMode('perf'); });
+  playBtns.gt.addEventListener('click', () => { void playMode('gt'); });
+  playBtns.pred.addEventListener('click', () => { void playMode('pred'); });
+  document.getElementById('stopPlay').addEventListener('click', stopPlayback);
+  topPSlider.addEventListener('input', () => {
+    topPVal.textContent = topPSlider.value + '%';
+    if (selectedKey != null) selectNote(selectedKey);
+  });
+  rankSlider.addEventListener('input', () => { hoverRank = null; applyRankHighlight(); });
+
+  if (firstEx.raw_notes) {
+    streamSel.value = 'raw';
+    streamSel.disabled = false;
+  } else {
+    streamSel.value = 'filtered';
+    streamSel.disabled = true;
+    streamSel.title = 'Raw streams unavailable — regenerate data.js with format-2 precompute';
+  }
+
+  loadExample(sel.value = orderedIds[0]);
+})();
+</script>
+</body>
+</html>

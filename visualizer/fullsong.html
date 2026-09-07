@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Full-song rollouts</title>
+<style>
+  :root {
+    --bg: #14161a; --panel: #1d2026; --grid: #2a2e36; --beat: #343943;
+    --text: #d6d9de; --muted: #8a8f98;
+    --gt: #3fd08c; --pred: #ff9c41; --perf: #5aa9ff; --perf-prefix: #3a566e;
+    --cand: #ff5db1; --sel: #ffe14d; --miss: #e05d5d;
+    --ours: #5aa9ff; --beyer: #ff9c41; --zeng: #e05d5d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding-bottom: 24px; background: var(--bg); color: var(--text);
+         font: 13px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+           border-bottom: 1px solid var(--grid); position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  header h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; }
+  select, button { background: var(--panel); color: var(--text); border: 1px solid var(--grid);
+                   border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer; }
+  button:hover, select:hover { border-color: var(--muted); }
+  .key { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+  .swatch { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+  .lbl { color: var(--muted); }
+  #meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+  #timeScaleVal { min-width: 52px; display: inline-block; }
+  .panel { margin: 12px 16px; background: var(--panel); border: 1px solid var(--grid);
+           border-radius: 10px; overflow: hidden; }
+  .panel h2 { font-size: 12px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase;
+              color: var(--muted); margin: 0; padding: 8px 12px 0; display: flex; gap: 10px; align-items: baseline; }
+  .panel h2 .hint { font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .rollwrap { overflow-x: auto; }
+  canvas { display: block; }
+  #backBtn { background: #2a78d6; color: #fff; border: none; font-weight: 600; border-radius: 4px; }
+  #metricsWrap { overflow-x: auto; padding: 6px 12px 10px; }
+  #metricsTable { border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+  #metricsTable th { text-align: right; padding: 2px 4px 2px 14px; font-weight: 500; opacity: .7; }
+  #metricsTable td { text-align: right; padding: 2px 4px 2px 14px; font-variant-numeric: tabular-nums; }
+  #metricsTable td.mdl { text-align: left; padding-left: 0; }
+  #metricsTable td.na { opacity: .35; }
+  #tip { position: fixed; display: none; pointer-events: none; z-index: 9;
+         background: rgba(20,22,26,0.96); border: 1px solid var(--grid); border-radius: 6px;
+         padding: 7px 9px; font-size: 11px; color: var(--text); white-space: nowrap; }
+  #tip table { border-collapse: collapse; }
+  #tip td { padding: 1px 6px 1px 0; }
+  #tip .bar { height: 7px; background: var(--cand); border-radius: 3px; display: inline-block; vertical-align: middle; }
+  #tip .hd { color: var(--muted); border-bottom: 1px solid var(--grid); }
+  #entLegend .swatch { width: 48px; }
+  #aggImgs { display: none; padding: 8px 12px 12px; }
+  #aggImgs img { max-width: 100%; border-radius: 6px; margin-top: 8px; background: #fff; }
+  #hint { padding: 6px 16px 14px; color: var(--muted); font-size: 12px; }
+
+  /* Vertical log-entropy color scale, bottom-right -- same widget as visualizer.html. */
+  #entropyScalePane { position: fixed; right: 8px; bottom: 12px; width: 72px;
+                      display: none; flex-direction: column; align-items: center; gap: 4px;
+                      background: var(--panel); border: 1px solid var(--grid); border-radius: 10px;
+                      padding: 8px 6px 10px; z-index: 7; font-size: 10px; color: var(--muted); }
+  #entropyScalePane.rgb-mode { width: 118px; align-items: stretch; }
+  #entropyScalePane .ttl { text-align: center; line-height: 1.25; color: var(--muted); }
+  #entropyScalePane .ttl b { color: var(--text); font-weight: 600; }
+  #entropyScaleBody { position: relative; width: 100%; height: 160px; margin-top: 2px; }
+  #entropyScalePane.rgb-mode #entropyScaleBody { display: none; }
+  #entropyScaleBar { position: absolute; left: 4px; top: 0; bottom: 0; width: 14px;
+                     border-radius: 3px; border: 1px solid var(--grid);
+                     background: linear-gradient(180deg, #b40426 0%, #f7e55c 35%, #1bd0d5 65%, #3b4cc0 100%); }
+  #entropyScaleTicks { position: absolute; left: 22px; right: 0; top: 0; bottom: 0; }
+  #entropyScaleTicks .tick { position: absolute; left: 0; right: 0; transform: translateY(-50%);
+                             font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #entropyScaleTicks .tick::before { content: ''; position: absolute; left: -8px; top: 50%;
+                                     width: 6px; height: 1px; background: var(--grid); }
+  #entropyScaleNote { text-align: center; font-size: 9px; line-height: 1.3; margin-top: 2px; }
+  #entropyRgbLegend { display: none; flex-direction: column; gap: 6px; margin-top: 4px; font-size: 10px; }
+  #entropyScalePane.rgb-mode #entropyRgbLegend { display: flex; }
+  #entropyRgbLegend .rgb-row { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+  #entropyRgbLegend .rgb-swatch { width: 12px; height: 12px; border-radius: 2px; flex: 0 0 auto;
+                                 border: 1px solid var(--grid); }
+  #entropyRgbLegend .rgb-lbl { flex: 1; color: var(--muted); }
+  #entropyRgbLegend .rgb-range { font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Full-song rollouts</h1>
+  <button id="backBtn" title="back to the windowed-mode visualizer">&larr; windowed mode</button>
+  <select id="perfSel"></select>
+  <span class="lbl">ours =</span>
+  <select id="oursVar" title="Which of our checkpoints / decode regimes fills the OURS panel, metrics row, entropy heatmap and DTW curve. Beyer / Zeng panels stay fixed."></select>
+  <span class="lbl">metric</span>
+  <select id="metricSel" title="Which score family fills the metrics table">
+    <option value="base">tol1 F1</option>
+    <option value="smax">scale-max F1</option>
+    <option value="ioi">IOI F1</option>
+    <option value="ioi_smax" selected>IOI scale-max F1</option>
+    <option value="muster">MUSTER (fixed)</option>
+  </select>
+  <label class="key" title="Horizontal time scale (pixels per second of score time), as in the windowed visualizer. Very long songs are clamped so the roll stays under the browser's canvas width limit.">
+    t-scale <input type="range" id="timeScale" min="5" max="220" step="5" value="90" style="vertical-align:middle">
+    <span id="timeScaleVal">90 px/s</span>
+  </label>
+  <label class="key"><input type="checkbox" id="showGt" checked> <span class="swatch" style="background:var(--gt)"></span> ground-truth score</label>
+  <label class="key"><input type="checkbox" id="showPred" checked> <span class="swatch" style="background:var(--pred)"></span> predicted score (rollout)</label>
+  <label class="key" title="Scale normalization: redraw each system's onsets and durations multiplied by its per-song scale-max argmax ratio r (best of the 13 beat-unit ratios 1/6..6), i.e. on the clock its scale-max F1 was scored on. GT is never rescaled. r=1 means the raw and normalized views coincide.">
+    <input id="scaleNorm" type="checkbox"> scale-normalize (&times;r)</label>
+  <label class="key" title="Color OUR predicted notes by decode-time log-entropy (trace-decoded slide-69 lanes only). Channel: onset / duration / pitch / all (Σ), or RGB (R=onset, G=pitch, B=duration; each channel normalized over the song).">
+    <input type="checkbox" id="entHeat"> color pred by log-entropy</label>
+  <span class="lbl" id="entChanLbl" style="display:none">channel</span>
+  <select id="entChan" style="display:none" title="Which score-token entropy drives the heatmap">
+    <option value="triplet" selected>all (Σ)</option>
+    <option value="time">onset</option>
+    <option value="dur">duration</option>
+    <option value="pitch">pitch</option>
+    <option value="rgb">RGB (R=onset, G=pitch, B=dur)</option>
+  </select>
+  <label class="key" id="entMonoLbl" style="display:none"
+         title="Red log-entropy ramp (scalar channels only): low entropy = dark/deep red, high = bright red. Disabled in RGB mode.">
+    <input type="checkbox" id="entMono"> monochrome</label>
+  <span id="entLegend" class="key" style="display:none" title="Predicted-note log-entropy heatmap">
+    <span class="swatch" id="entLegendSwatch" style="background:linear-gradient(90deg,#3b4cc0,#f7e55c,#b40426)"></span>
+    <span class="lbl">low → high</span></span>
+  <span class="key" style="border-left:1px solid var(--grid);padding-left:12px">
+    <label class="key" title="replay OUR model's generation: notes appear in decode order; the shaded band is the packed context window sliding at each re-pack boundary">
+      <input id="animOn" type="checkbox"> animate</label>
+    <button id="animPlay" disabled>&#9654;</button>
+    <input id="animSpeed" type="range" min="5" max="300" value="60" title="notes per second" style="width:70px">
+    <input id="animScrub" type="range" min="0" max="0" value="0" style="width:150px">
+    <span id="animInfo" class="lbl"></span>
+  </span>
+  <span id="meta"></span>
+</header>
+
+<div class="panel">
+  <h2>Metrics <span class="hint" id="metricsHint"></span></h2>
+  <div id="metricsWrap"><table id="metricsTable"></table></div>
+</div>
+
+<div class="panel"><h2><span style="color:var(--ours)">Ours</span> <span class="hint" id="oursHint"></span></h2>
+  <div class="rollwrap"><canvas id="rollOurs"></canvas></div></div>
+<div class="panel"><h2><span style="color:var(--beyer)">Beyer &amp; Dai</span> <span class="hint">MIDI2ScoreTransformer (ISMIR 2024)</span></h2>
+  <div class="rollwrap"><canvas id="rollBeyer"></canvas></div></div>
+<div class="panel"><h2><span style="color:var(--zeng)">Zeng+</span> <span class="hint">joint-apt-epr (ICLR 2026)</span></h2>
+  <div class="rollwrap"><canvas id="rollZeng"></canvas></div></div>
+
+<div class="panel">
+  <h2>DTW vs GT
+    <span class="hint">warp factor d(pred)/d(gt) — 1.0 = clock in sync; error curves in beats (right scale)</span>
+    <button id="aggBtn" style="margin-left:auto;margin-right:10px">aggregate figures</button>
+  </h2>
+  <div class="rollwrap"><canvas id="dtwCanvas"></canvas></div>
+  <div id="aggImgs">
+    <div class="lbl">Test-set aggregates (59 songs): overlap-69 slide (left/first) and slide-by-one comparison.</div>
+    <img src="dtw_drift.png" alt="aggregate DTW, slide-69">
+    <img src="dtw_slide1.png" alt="aggregate DTW, slide-by-1 across models">
+  </div>
+</div>
+
+<div id="hint">Same drawing conventions as the windowed visualizer: <span style="color:var(--gt)">green outlines</span> are the ground-truth score, <span style="color:var(--pred)">orange bars</span> the system's predicted score, 0.5 s beat grid with a heavier line every 2 s, one row per semitone with C labels. Each system is re-anchored to its own first onset (whole-song eval convention). <b>scale-normalize</b> multiplies a system's clock by its per-song scale-max argmax ratio (the panel label shows the factor; the metrics table shows it for the scale-max families) — the view the scale-max / IOI scale-max scores are computed on. Hover OUR notes
+for decode-time perplexity, entropy and top-5 alternatives per channel (trace lanes only). Deep-link with
+#&lt;split/perf&gt;. Boundary geometry: slide-69 re-packs every 69 notes after 138; slide-by-1 every note; reset = disjoint windows.</div>
+<div id="tip"></div>
+
+<div id="entropyScalePane" aria-hidden="true">
+  <div class="ttl">log-entropy<br><b id="entropyScaleChan">all</b></div>
+  <div id="entropyScaleBody">
+    <div id="entropyScaleBar"></div>
+    <div id="entropyScaleTicks"></div>
+  </div>
+  <div id="entropyRgbLegend">
+    <div class="rgb-row"><span class="rgb-swatch" style="background:#ff4040"></span><span class="rgb-lbl">R onset</span><span class="rgb-range" id="entropyRgbR">–</span></div>
+    <div class="rgb-row"><span class="rgb-swatch" style="background:#40ff40"></span><span class="rgb-lbl">G pitch</span><span class="rgb-range" id="entropyRgbG">–</span></div>
+    <div class="rgb-row"><span class="rgb-swatch" style="background:#4040ff"></span><span class="rgb-lbl">B dur</span><span class="rgb-range" id="entropyRgbB">–</span></div>
+  </div>
+  <div class="lbl" id="entropyScaleNote">nats (log H)</div>
+</div>
+
+<script src="data_fullsong.js"></script>
+<script>
+if (!window.FULLSONG_DATA) {
+  document.body.innerHTML =
+    '<p style="padding:24px;color:#e05d5d">Failed to load <code>data_fullsong.js</code>. ' +
+    'Rebuild with <code>python visualizer/build_fullsong_payload_v2.py</code>.</p>';
+  throw new Error("FULLSONG_DATA missing");
+}
+const D = window.FULLSONG_DATA;
+// Per-note traces ship as one file per lane (see build_fullsong_payload_v2.py):
+// inlining them put the payload over V8's max script source length and the
+// renderer crashed before drawing anything. Fetched on demand, then redrawn.
+D.trace = D.trace || {};
+const TRACE_LANES = new Set(D.trace_lanes || Object.keys(D.trace));
+const traceAsked = new Set();
+function ensureTrace(v) {
+  if (!TRACE_LANES.has(v) || D.trace[v] || traceAsked.has(v)) return;
+  traceAsked.add(v);
+  const sc = document.createElement("script");
+  sc.src = `fullsong_trace/${v}.js`;
+  sc.onload = () => { D.trace[v] = (window.FULLSONG_TRACE || {})[v] || {}; draw(); };
+  sc.onerror = () => { D.trace[v] = {}; };
+  document.head.appendChild(sc);
+}
+// DTW curves can ship per lane too (web bundle: build_web_bundle.py), with an
+// optional `step` when the curve is downsampled along the GT note index.
+D.dtw = D.dtw || {};
+const DTW_LANES = new Set(D.dtw_lanes || []);
+const dtwAsked = new Set();
+function ensureDtw(v) {
+  if (!DTW_LANES.has(v) || D.dtw[v] || dtwAsked.has(v)) return;
+  dtwAsked.add(v);
+  const sc = document.createElement("script");
+  sc.src = `dtw/${v}.js`;
+  sc.onload = () => { D.dtw[v] = (window.FULLSONG_DTW || {})[v] || {}; drawDtw(); };
+  sc.onerror = () => { D.dtw[v] = {}; };
+  document.head.appendChild(sc);
+}
+// Note arrays ship the same way — one file per variant lane.
+D.lanes = D.lanes || {};
+const LANE_VARIANTS = new Set(D.lane_variants || Object.keys(D.lanes));
+const laneWait = new Map();
+function ensureLane(v, cb) {
+  if (!LANE_VARIANTS.has(v) || D.lanes[v]) { if (cb) cb(); return; }
+  if (laneWait.has(v)) { if (cb) laneWait.get(v).push(cb); return; }
+  laneWait.set(v, cb ? [cb] : []);
+  const sc = document.createElement("script");
+  sc.src = `fullsong_lanes/${v}.js`;
+  sc.onload = () => {
+    D.lanes[v] = (window.FULLSONG_LANES || {})[v] || {};
+    const cbs = laneWait.get(v) || [];
+    laneWait.delete(v);
+    cbs.forEach(f => f());
+    draw();
+  };
+  sc.onerror = () => {
+    D.lanes[v] = {};
+    const cbs = laneWait.get(v) || [];
+    laneWait.delete(v);
+    cbs.forEach(f => f());
+  };
+  document.head.appendChild(sc);
+}
+function ensureLanes(vars, cb) {
+  let left = 0;
+  const done = () => { if (--left <= 0 && cb) cb(); };
+  for (const v of vars) {
+    if (!LANE_VARIANTS.has(v) || D.lanes[v]) continue;
+    left++;
+    ensureLane(v, done);
+  }
+  if (!left && cb) cb();
+}
+// Labels for the hand-registered lanes; Muon-arm lanes carry theirs in the
+// payload (D.labels, from muon_arms.py) so a new DAgger round needs no edit here.
+const VAR_LABEL = {
+  base_s69: "baseline · slide-69", base_s1: "baseline · slide-by-1",
+  base_rst: "baseline · reset", base_gtc: "baseline · GT-ctx oracle",
+  base_pf: "baseline · pitch-forced",
+  m25_s69: "mask 0.25 · slide-69", m25_s1: "mask 0.25 · slide-by-1",
+  m25_rst: "mask 0.25 · reset", m25_pf: "mask 0.25 · pitch-forced",
+  m50_s69: "mask 0.50 · slide-69", m50_s1: "mask 0.50 · slide-by-1",
+  m50_rst: "mask 0.50 · reset", m50_pf: "mask 0.50 · pitch-forced",
+  m75_s69: "mask 0.75 · slide-69", m75_s1: "mask 0.75 · slide-by-1",
+  m75_rst: "mask 0.75 · reset", m75_gtc: "mask 0.75 · GT-ctx oracle",
+  m75_pf: "mask 0.75 · pitch-forced",
+};
+const LABEL = v => (D.labels || {})[v] || VAR_LABEL[v] || v;
+const OVERLAP = v => v.endsWith("_s1") ? 137 : (v.endsWith("_rst") ? 0 : 69);
+const MKEYS = ["pitch_error_rate","missing_note_rate","extra_note_rate",
+               "onset_time_error_rate","offset_time_error_rate","mean_error_rate"];
+const MHDR = ["pitch","missing","extra","onset","offset","mean"];
+
+// Piano-roll geometry shared with visualizer.html: 7 px per semitone, pitch
+// labels in a 46 px gutter, beat grid every 0.5 s with a heavier line every
+// 2 s, notes drawn 6 px tall with 2 px rounded corners. Note times are in
+// 10 ms grid units, so px per unit = pxps / 100.
+const ROWH = 7, PAD_L = 46, PAD_T = 14, PAD_B = 22;
+const MAX_W = 32000;   // Firefox caps a canvas dimension at 32767 px
+const NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const pname = p => NAMES[p % 12] + (Math.floor(p / 12) - 1);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const $ = id => document.getElementById(id);
+const perfSel = $("perfSel"), oursVar = $("oursVar");
+for (const k of D.order) perfSel.appendChild(new Option(k, k));
+for (const v of D.variants) if (LANE_VARIANTS.has(v))
+  oursVar.appendChild(new Option(LABEL(v), v));
+// default OURS lane: the slide-69 lane with the best test-set tol1 F1
+function bestLane() {
+  let best = null, bv = -Infinity;
+  for (const v of D.variants) {
+    if (!LANE_VARIANTS.has(v) || !v.endsWith("_s69")) continue;
+    const a = ((D.agg || {})[v] || {}).base;
+    if (a != null && a > bv) { bv = a; best = v; }
+  }
+  return best;
+}
+oursVar.value = bestLane() || (LANE_VARIANTS.has("muondag3_s69") ? "muondag3_s69"
+  : (LANE_VARIANTS.has("m75_s69") ? "m75_s69" : oursVar.options[0]?.value));
+
+const ANIM = { on: false, i: 0, playing: false, last: 0 };
+let hitRects = [];   // ours-panel note hit boxes for the tooltip
+let SPAN = null;     // shared pitch/time extent so the three rolls line up
+
+function key() { return perfSel.value; }
+function oursNotes() { return (D.lanes[oursVar.value] || {})[key()] || []; }
+function laneNotes(v) { return (D.lanes[v] || {})[key()] || []; }
+// scale-max argmax ratio for a lane on the current song (1 when unknown)
+function laneRatio(v) { const r = (((D.f1 || {})[v] || {})[key()] || {}).r; return r == null ? 1 : r; }
+// notes as drawn: raw, or rescaled by the lane's ratio when scale-normalize is on
+function viewNotes(v, notes) {
+  if (!$("scaleNorm").checked) return notes;
+  const r = laneRatio(v);
+  return r === 1 ? notes : notes.map(n => [n[0] * r, n[1] * r, n[2]]);
+}
+function gtNotes() { return D.gt[key()] || []; }
+function traceRec() { return ((D.trace || {})[oursVar.value] || {})[key()] || null; }
+
+function boundaryIdxs(n, ov) {
+  const out = []; let b = 138; const fresh = Math.max(1, 138 - ov);
+  if (ov === 0) { for (let x = 138; x < n; x += 138) out.push(x); return out; }
+  while (b < n) { out.push(b); b += fresh; } return out;
+}
+function windowStart(i, bounds, ov) {
+  let s = 0; for (const b of bounds) { if (i >= b) s = b - ov; else break; }
+  return Math.max(0, s);
+}
+
+// ---- log-entropy heatmap: the same mapping as visualizer.html -------------
+// The trace stores raw per-channel entropies H (nats); the heatmap works on
+// log(H + eps) like compute_sequence_ppl.py's log_entropy arrays, normalized
+// over the song. Channels: onset (time) / duration / pitch / all (Σ), or RGB.
+const LOG_EPS = 1e-12;
+function traceLogH(tr, i, chan) {
+  const h = tr.H[i];
+  if (!h) return null;
+  const v = chan === "time" ? h[0] : chan === "dur" ? h[1] : chan === "pitch" ? h[2]
+    : (h[0] == null || h[1] == null || h[2] == null ? null : h[0] + h[1] + h[2]);
+  return v == null || !isFinite(v) ? null : Math.log(v + LOG_EPS);
+}
+function heatRange(tr, chan) {
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < tr.H.length; i++) {
+    const v = traceLogH(tr, i, chan);
+    if (v == null) continue;
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  if (!isFinite(lo)) return null;
+  if (hi <= lo) hi = lo + 1e-6;
+  return { lo, hi };
+}
+function rgbRangesOf(tr) {
+  const time = heatRange(tr, "time"), dur = heatRange(tr, "dur"), pitch = heatRange(tr, "pitch");
+  return time && dur && pitch ? { time, dur, pitch } : null;
+}
+function norm01(v, r) { return v == null || !r ? null : Math.max(0, Math.min(1, (v - r.lo) / (r.hi - r.lo))); }
+// Scalar log-entropy color (t in [0,1]). Default: cool→warm. Monochrome: dark→bright red.
+function entropyColor(t, mono) {
+  const x = Math.max(0, Math.min(1, t));
+  if (mono) return `rgb(${Math.round(40 + 215 * x)},0,0)`;
+  const stops = [[0.00,[59,76,192]],[0.35,[27,208,213]],[0.65,[247,229,92]],[1.00,[180,4,38]]];
+  let i = 0;
+  while (i < stops.length - 2 && x > stops[i + 1][0]) i++;
+  const [t0, c0] = stops[i], [t1, c1] = stops[i + 1];
+  const u = (x - t0) / Math.max(t1 - t0, 1e-9);
+  return `rgb(${c0.map((c, j) => Math.round(c + (c1[j] - c) * u)).join(",")})`;
+}
+// R = onset log-entropy, G = pitch, B = duration (each normalized over the song).
+function entropyRgbColor(tr, i, ranges) {
+  const rN = norm01(traceLogH(tr, i, "time"), ranges.time);
+  const gN = norm01(traceLogH(tr, i, "pitch"), ranges.pitch);
+  const bN = norm01(traceLogH(tr, i, "dur"), ranges.dur);
+  if (rN == null || gN == null || bN == null) return null;
+  const lift = 32, span = 255 - lift;
+  return `rgb(${Math.round(lift + span * rN)},${Math.round(lift + span * gN)},${Math.round(lift + span * bN)})`;
+}
+const CHAN_LABEL = { triplet: "all (Σ)", time: "onset", dur: "duration", pitch: "pitch", rgb: "RGB" };
+const ENTROPY_SCALE_WARM = "linear-gradient(180deg, #b40426 0%, #f7e55c 35%, #1bd0d5 65%, #3b4cc0 100%)";
+const ENTROPY_SCALE_MONO = "linear-gradient(180deg, #ff0000 0%, #280000 100%)";
+const ENTROPY_LEGEND_WARM = "linear-gradient(90deg,#3b4cc0,#f7e55c,#b40426)";
+const ENTROPY_LEGEND_MONO = "linear-gradient(90deg,#280000,#ff0000)";
+function fmtTick(v) { return !isFinite(v) ? "–" : (Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2)); }
+function fmtRange(r) { return r ? `${fmtTick(r.lo)}…${fmtTick(r.hi)}` : "–"; }
+function updateEntropyScale(heatOn, chan, hr, rr) {
+  const pane = $("entropyScalePane"), ticks = $("entropyScaleTicks"), legend = $("entLegend");
+  const isRgb = chan === "rgb", mono = !isRgb && $("entMono").checked;
+  $("entChanLbl").style.display = heatOn ? "" : "none";
+  $("entChan").style.display = heatOn ? "" : "none";
+  const showMono = heatOn && !isRgb;
+  $("entMonoLbl").style.display = showMono ? "" : "none";
+  $("entMono").disabled = !showMono;
+  pane.classList.toggle("rgb-mode", heatOn && isRgb);
+  if (!heatOn) {
+    pane.style.display = "none"; pane.setAttribute("aria-hidden", "true");
+    legend.style.display = "none"; return;
+  }
+  legend.style.display = "";
+  pane.style.display = "flex"; pane.setAttribute("aria-hidden", "false");
+  $("entropyScaleChan").textContent = CHAN_LABEL[chan] || chan;
+  const note = $("entropyScaleNote"), sw = $("entLegendSwatch"), lbl = legend.querySelector(".lbl");
+  if (isRgb) {
+    sw.style.background = "linear-gradient(90deg,#ff4040,#40ff40,#4040ff)";
+    lbl.textContent = "R onset · G pitch · B dur";
+    ticks.innerHTML = "";
+    if (!rr) {
+      for (const k of ["R", "G", "B"]) $("entropyRgb" + k).textContent = "–";
+      note.textContent = "no entropy data"; return;
+    }
+    $("entropyRgbR").textContent = fmtRange(rr.time);
+    $("entropyRgbG").textContent = fmtRange(rr.pitch);
+    $("entropyRgbB").textContent = fmtRange(rr.dur);
+    note.textContent = "log H nats / channel"; return;
+  }
+  sw.style.background = mono ? ENTROPY_LEGEND_MONO : ENTROPY_LEGEND_WARM;
+  $("entropyScaleBar").style.background = mono ? ENTROPY_SCALE_MONO : ENTROPY_SCALE_WARM;
+  if (!hr) { ticks.innerHTML = ""; note.textContent = "no entropy data"; lbl.textContent = "no data"; return; }
+  lbl.textContent = "low → high";
+  note.textContent = chan === "triplet" ? "log(Σ H) nats" : "log H nats";
+  const parts = [];
+  for (let i = 0; i < 5; i++) {
+    const u = i / 4, v = hr.hi - u * (hr.hi - hr.lo);   // 0 at top (high), 1 at bottom (low)
+    parts.push(`<div class="tick" style="top:${(u * 100).toFixed(2)}%">${fmtTick(v)}</div>`);
+  }
+  ticks.innerHTML = parts.join("");
+}
+
+// ---- piano rolls ------------------------------------------------------------
+function computeSpan() {
+  const sets = [gtNotes(), viewNotes(oursVar.value, oursNotes()),
+                viewNotes("beyer", laneNotes("beyer")), viewNotes("zeng", laneNotes("zeng"))];
+  let tmax = 100, pmin = 127, pmax = 0;
+  for (const ns of sets) for (const n of ns) {
+    tmax = Math.max(tmax, n[0] + Math.max(n[1], 10));
+    if (n[2] < pmin) pmin = n[2];
+    if (n[2] > pmax) pmax = n[2];
+  }
+  if (pmin > pmax) { pmin = 21; pmax = 108; }
+  pmin = Math.max(0, pmin - 2); pmax = Math.min(127, pmax + 2);
+  const want = +$("timeScale").value;
+  const pxps = Math.min(want, (MAX_W - PAD_L - 20) / (tmax / 100));
+  return { tmax, pmin, pmax, pxps, want };
+}
+function rrect(g, x, y, w, h, r) {
+  g.beginPath();
+  if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h);
+}
+
+function drawPanel(cvs, v, rawNotes, isOurs) {
+  const S = SPAN, pxps = S.pxps, px = pxps / 100;
+  const C = { panel: css("--panel"), grid: css("--grid"), beat: css("--beat"), muted: css("--muted"),
+              gt: css("--gt"), pred: css("--pred") };
+  const notes = viewNotes(v, rawNotes);
+  const rr = $("scaleNorm").checked ? laneRatio(v) : 1;
+  const gt = gtNotes();
+  const W = Math.ceil(PAD_L + (S.tmax / 100) * pxps + 20);
+  const H = PAD_T + (S.pmax - S.pmin + 1) * ROWH + PAD_B;
+  if (cvs.width !== W || cvs.height !== H) { cvs.width = W; cvs.height = H; }
+  const g = cvs.getContext("2d");
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1;
+  g.fillStyle = C.panel; g.fillRect(0, 0, W, H);
+  g.font = "10px -apple-system, 'Segoe UI', Roboto, sans-serif";
+  const yOf = p => PAD_T + (S.pmax - Math.min(S.pmax, Math.max(S.pmin, p))) * ROWH;
+  const xOf = t => PAD_L + t * px;
+  // octave lines + C labels
+  g.lineWidth = 1; g.strokeStyle = C.grid; g.fillStyle = C.muted;
+  for (let p = S.pmin; p <= S.pmax; p++) if (p % 12 === 0) {
+    const y = Math.round(yOf(p) + ROWH / 2) + 0.5;
+    g.beginPath(); g.moveTo(PAD_L, y); g.lineTo(W - 4, y); g.stroke();
+    g.fillText(pname(p), 4, y + 3);
+  }
+  // beat grid: 0.5 s minors (coarsened when zoomed out), heavier major every 4
+  let step = 0.5;
+  while (step * pxps < 8) step *= 2;
+  const labelEvery = 4 * step * pxps >= 48 ? 4 : 8;
+  const tmaxS = S.tmax / 100;
+  for (let k = 0, t = 0; t <= tmaxS + 1e-6; k++, t = k * step) {
+    const x = PAD_L + t * pxps, major = k % 4 === 0;
+    g.strokeStyle = major ? C.beat : C.grid; g.lineWidth = major ? 1.2 : 0.6;
+    g.beginPath(); g.moveTo(x, PAD_T - 4); g.lineTo(x, H - PAD_B + 4); g.stroke();
+    if (k % labelEvery === 0) { g.fillStyle = C.muted; g.fillText(t.toFixed(1) + "s", x + 2, H - 6); }
+  }
+  // entropy heatmap (ours panel, trace lanes only)
+  const tr = isOurs ? traceRec() : null;
+  const heatOn = isOurs && $("entHeat").checked && !!tr;
+  const chan = $("entChan").value || "triplet", isRgb = chan === "rgb", mono = !isRgb && $("entMono").checked;
+  const hr = heatOn && !isRgb ? heatRange(tr, chan) : null;
+  const rgbR = heatOn && isRgb ? rgbRangesOf(tr) : null;
+  if (isOurs) updateEntropyScale(heatOn, chan, hr, rgbR);
+  const heatReady = heatOn && (isRgb ? rgbR : hr);
+  const ov = OVERLAP(oursVar.value);
+  const bounds = boundaryIdxs(notes.length, ov);
+  let upto = notes.length, dim = 1;
+  if (ANIM.on) { if (isOurs) upto = Math.floor(ANIM.i); else dim = 0.18; }
+  if (isOurs) hitRects = [];
+  const noteH = ROWH - 1;
+  // predicted score: filled rounded bars (orange, or the entropy color)
+  if ($("showPred").checked) {
+    g.globalAlpha = (heatReady ? 0.9 : 0.65) * dim;
+    for (let i = 0; i < Math.min(upto, notes.length); i++) {
+      const n = notes[i];
+      let fill = C.pred;
+      if (heatReady) {
+        if (isRgb) fill = entropyRgbColor(tr, i, rgbR) || fill;
+        else {
+          const lh = traceLogH(tr, i, chan);
+          if (lh != null) fill = entropyColor((lh - hr.lo) / (hr.hi - hr.lo), mono);
+        }
+      }
+      const x = xOf(n[0]), w = Math.max(n[1] * px, 2), y = yOf(n[2]);
+      g.fillStyle = fill; rrect(g, x, y, w, noteH, 2); g.fill();
+      if (isOurs) hitRects.push([x, y, w, noteH, i]);
+    }
+  }
+  // ground-truth score: green outlines on top, as in the windowed view
+  if ($("showGt").checked) {
+    g.globalAlpha = dim; g.strokeStyle = C.gt; g.lineWidth = 1.6;
+    for (const n of gt) { rrect(g, xOf(n[0]), yOf(n[2]), Math.max(n[1] * px, 2), noteH, 2); g.stroke(); }
+  }
+  g.globalAlpha = 1;
+  if (isOurs && ANIM.on && upto > 0) {
+    const i = Math.max(0, upto - 1);
+    const sIdx = windowStart(i, bounds, ov);
+    const x0 = xOf(notes[sIdx][0]);
+    let xr = 0; for (let k2 = sIdx; k2 <= i; k2++) xr = Math.max(xr, xOf(notes[k2][0]));
+    g.fillStyle = "rgba(90,169,255,0.10)"; g.fillRect(x0, PAD_T - 4, Math.max(2, xr - x0), H - PAD_T - PAD_B + 8);
+    g.strokeStyle = "rgba(90,169,255,0.8)"; g.lineWidth = 1;
+    g.strokeRect(x0 + .5, PAD_T - 3.5, Math.max(2, xr - x0), H - PAD_T - PAD_B + 7);
+    g.fillStyle = "#8a93a0";
+    for (const b of bounds) { if (b > i) break; g.fillRect(xOf(notes[b][0]), PAD_T - 4, 1, H - PAD_T - PAD_B + 8); }
+    const wno = bounds.filter(b => i >= b).length;
+    $("animInfo").textContent = `note ${i+1}/${notes.length} · window ${wno+1} (ctx ${sIdx}–${i})`;
+  }
+  g.fillStyle = C.muted;
+  g.fillText(`${notes.length} notes` + (rr !== 1 ? `  ·  ×${+rr.toFixed(4)} (scale-max argmax)` : ($("scaleNorm").checked ? "  ·  ×1" : "")), PAD_L + 4, 10);
+}
+
+function fmtPct(v) { return v == null ? "–" : (v*100).toFixed(1) + "%"; }
+function metricsTable() {
+  const m = $("metricSel").value, k = key();
+  const rows = [["ours", oursVar.value, "var(--ours)"],
+                ["beyer", "beyer", "var(--beyer)"], ["zeng", "zeng", "var(--zeng)"]];
+  const T = $("metricsTable");
+  let html;
+  if (m === "muster") {
+    $("metricsHint").textContent = "MUSTER (fixed) error rates, lower is better · GT self-floor mean 0.29 · Ondine songs unavailable (GT fails MUSTER XML conversion)";
+    html = "<tr><th></th>" + MHDR.map(h => `<th>${h}</th>`).join("") + "<th>test mean</th></tr>";
+    for (const [lbl, v, col] of rows) {
+      const r = ((D.muster || {})[v] || {})[k];
+      html += `<tr><td class="mdl" style="color:${col}">${lbl === "ours" ? LABEL(v) : lbl}</td>` +
+        MKEYS.map(kk => r ? `<td>${r[kk].toFixed(1)}</td>` : `<td class="na">–</td>`).join("") +
+        `<td>${(D.agg[v]||{}).muster ?? "–"}</td></tr>`;
+    }
+  } else {
+    $("metricsHint").textContent = {base:"tol1 F1: onset±1 grid unit + pitch, absolute grid",
+      smax:"scale-max F1: max over 13 beat-unit rescalings",
+      ioi:"IOI F1: shift-invariant interarrival",
+      ioi_smax:"IOI scale-max F1: invariant to global clock scale AND offset"}[m];
+    const rk = m === "smax" ? "r" : (m === "ioi_smax" ? "ioi_r" : null);
+    html = "<tr><th></th><th>this song</th><th>test-set mean</th>" + (rk ? "<th>argmax r</th>" : "") + "</tr>";
+    for (const [lbl, v, col] of rows) {
+      const r = ((D.f1 || {})[v] || {})[k];
+      const ag = (D.agg[v] || {})[m];
+      html += `<tr><td class="mdl" style="color:${col}">${lbl === "ours" ? LABEL(v) : lbl}</td>` +
+        `<td>${r ? fmtPct(r[m]) : "–"}</td><td>${ag != null ? ag.toFixed(2) + "%" : "–"}</td>` +
+        (rk ? `<td>${r && r[rk] != null ? "×" + r[rk] : "–"}</td>` : "") + `</tr>`;
+    }
+  }
+  T.innerHTML = html;
+}
+
+function drawDtw() {
+  const cvs = $("dtwCanvas");
+  const series = [["ours", oursVar.value, css("--ours")],
+                  ["beyer", "beyer", css("--beyer")],
+                  ["zeng", "zeng", css("--zeng")]];
+  const k = key();
+  const recs = series.map(([l, v, c]) => [l, ((D.dtw || {})[v] || {})[k], c]).filter(r => r[1]);
+  const W = Math.max(700, document.body.clientWidth - 80), H = 180;
+  cvs.width = W; cvs.height = H;
+  const g = cvs.getContext("2d");
+  g.fillStyle = css("--panel"); g.fillRect(0, 0, W, H);
+  g.font = "10px -apple-system, 'Segoe UI', Roboto, sans-serif";
+  if (!recs.length) { g.fillStyle = css("--muted"); g.fillText("no DTW data for this lane yet", 10, 20); return; }
+  const stepOf = rec => (rec && rec.step) || 1;
+  const n = Math.max(...recs.map(r => (r[1].warp.length - 1) * stepOf(r[1]) + 1));
+  const X = i => 40 + i * (W - 55) / Math.max(1, n - 1);
+  const yW = w => H - 18 - Math.max(0, Math.min(2.1, w)) / 2.1 * (H - 30);
+  g.strokeStyle = css("--gt"); g.setLineDash([4,3]); g.beginPath();
+  g.moveTo(40, yW(1)); g.lineTo(W-15, yW(1)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = css("--muted");
+  g.fillText("warp 1.0", 2, yW(1)+3); g.fillText("2.0", 16, yW(2)+3); g.fillText("0", 22, yW(0)+3);
+  for (const [lbl, rec, col] of recs) {
+    g.strokeStyle = col; g.lineWidth = lbl === "ours" ? 1.8 : 1.0;
+    g.beginPath();
+    rec.warp.forEach((w, i) => { if (w == null) return;
+      const x = X(i * stepOf(rec)), y = yW(w); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+    g.stroke();
+  }
+  const ours = recs.find(r => r[0] === "ours");
+  if (ours) {
+    const yE = e => H - 18 - Math.max(0, Math.min(120, e)) / 120 * (H - 30);
+    for (const [fld, col] of [["eraw", "#c4531f"], ["ewrp", "#7fb4e6"]]) {
+      g.strokeStyle = col; g.lineWidth = 1; g.setLineDash([2,2]); g.beginPath();
+      let started = false;
+      ours[1][fld].forEach((e, i) => { if (e == null) { started = false; return; }
+        const x = X(i * stepOf(ours[1])), y = yE(e); started ? g.lineTo(x, y) : g.moveTo(x, y); started = true; });
+      g.stroke(); g.setLineDash([]);
+    }
+    g.fillStyle = "#c4531f"; g.fillText("err unwarped (dashed)", W-260, 12);
+    g.fillStyle = "#7fb4e6"; g.fillText("err warped", W-120, 12);
+  }
+  g.fillStyle = css("--muted"); g.fillText("GT note index →", W/2-30, H-4);
+}
+
+function fmtAltTok(ch, rel) {
+  if (ch === 2) return rel >= 128 ? "rest" : pname(rel);   // pitch channel
+  return rel;                                               // grid units
+}
+function showTip(ev, i) {
+  const tr = traceRec(), tip = $("tip");
+  const n = oursNotes()[i];
+  let html = `<table><tr class="hd"><td colspan="3">note ${i} · ${pname(n[2])} · t=${n[0]} d=${n[1]}</td></tr>`;
+  if (tr) {
+    const chn = ["onset", "dur", "pitch"];
+    const H = tr.H[i] || [];
+    html += `<tr class="hd"><td>chan</td><td>ppl</td><td>top-5 alternatives</td></tr>`;
+    for (let c = 0; c < 3; c++) {
+      const alts = (tr.alts[i] || [])[c] || [];
+      const bars = alts.map(([tok, p]) =>
+        `<span title="p=${p}">${fmtAltTok(c, tok)}<span class="bar" style="width:${Math.max(2, p*38)}px;margin:0 5px 0 2px"></span></span>`).join("");
+      html += `<tr><td>${chn[c]} (H=${H[c] != null ? (+H[c]).toFixed(2) : "–"})</td><td>${(tr.ppl[i]||[])[c] ?? "–"}</td><td>${bars}</td></tr>`;
+    }
+    if ($("entHeat").checked) {
+      const chan = $("entChan").value || "triplet";
+      const bits = chan === "rgb"
+        ? ["time", "pitch", "dur"].map((c, j) => `${"RGB"[j]}(${CHAN_LABEL[c]})=${fmtTick(traceLogH(tr, i, c) ?? NaN)}`).join(" ")
+        : `${CHAN_LABEL[chan]} logH=${fmtTick(traceLogH(tr, i, chan) ?? NaN)}`;
+      html += `<tr><td colspan="3" style="color:var(--muted)">${bits} nats</td></tr>`;
+    }
+  } else {
+    html += `<tr><td colspan="3" style="color:var(--muted)">no trace for this lane (trace-decoded slide-69 lanes only)</td></tr>`;
+  }
+  tip.innerHTML = html + "</table>";
+  tip.style.display = "block";
+  tip.style.left = Math.min(window.innerWidth - 340, ev.clientX + 14) + "px";
+  tip.style.top = (ev.clientY + 12) + "px";
+}
+$("rollOurs").addEventListener("mousemove", ev => {
+  const r = ev.target.getBoundingClientRect();
+  const x = ev.clientX - r.left + ev.target.parentNode.scrollLeft, y = ev.clientY - r.top;
+  const hit = hitRects.find(([hx, hy, hw, hh]) => x >= hx && x <= hx+hw && y >= hy && y <= hy+hh);
+  if (hit) showTip(ev, hit[4]); else $("tip").style.display = "none";
+});
+$("rollOurs").addEventListener("mouseleave", () => $("tip").style.display = "none");
+
+function draw() {
+  ensureTrace(oursVar.value);
+  ensureDtw(oursVar.value); ensureDtw("beyer"); ensureDtw("zeng");
+  $("oursHint").textContent = LABEL(oursVar.value);
+  SPAN = computeSpan();
+  $("timeScaleVal").textContent = SPAN.pxps < SPAN.want - 1e-9
+    ? `${SPAN.pxps.toFixed(0)} px/s (max width)` : `${SPAN.want} px/s`;
+  const hasTrace = !!traceRec();
+  $("entHeat").disabled = !hasTrace;
+  drawPanel($("rollOurs"), oursVar.value, oursNotes(), true);
+  drawPanel($("rollBeyer"), "beyer", laneNotes("beyer"), false);
+  drawPanel($("rollZeng"), "zeng", laneNotes("zeng"), false);
+  metricsTable();
+  drawDtw();
+  const meta = D.meta[key()];
+  $("meta").textContent = `${meta.work} · boundaries(s69): ${meta.boundaries}`;
+}
+
+function animTick(ts) {
+  if (!ANIM.playing) return;
+  const n = oursNotes().length;
+  const dt = ANIM.last ? (ts - ANIM.last) / 1000 : 0;
+  ANIM.last = ts;
+  ANIM.i = Math.min(n, ANIM.i + dt * (+$("animSpeed").value));
+  $("animScrub").value = Math.floor(ANIM.i);
+  drawPanel($("rollOurs"), oursVar.value, oursNotes(), true);   // only the replayed panel changes per frame
+  if (ANIM.i >= n) { ANIM.playing = false; $("animPlay").innerHTML = "&#9654;"; return; }
+  requestAnimationFrame(animTick);
+}
+$("animOn").addEventListener("change", e => {
+  ANIM.on = e.target.checked; ANIM.i = 0; ANIM.playing = false; ANIM.last = 0;
+  $("animScrub").max = oursNotes().length; $("animScrub").value = 0;
+  $("animPlay").disabled = !ANIM.on; $("animPlay").innerHTML = "&#9654;";
+  $("animInfo").textContent = ""; draw();
+});
+$("animPlay").addEventListener("click", () => {
+  ANIM.playing = !ANIM.playing; ANIM.last = 0;
+  $("animPlay").innerHTML = ANIM.playing ? "&#10074;&#10074;" : "&#9654;";
+  if (ANIM.playing) requestAnimationFrame(animTick);
+});
+$("animScrub").addEventListener("input", e => { ANIM.i = +e.target.value; drawPanel($("rollOurs"), oursVar.value, oursNotes(), true); });
+$("aggBtn").addEventListener("click", () => {
+  const d = $("aggImgs"); d.style.display = d.style.display === "block" ? "none" : "block";
+});
+$("backBtn").addEventListener("click", () => { window.location = "index.html"; });
+for (const id of ["timeScale", "showGt", "showPred", "scaleNorm", "entHeat", "entChan", "entMono", "metricSel"])
+  $(id).addEventListener(id === "timeScale" ? "input" : "change", draw);
+oursVar.addEventListener("change", () => {
+  ensureLanes([oursVar.value], () => {
+    ANIM.i = 0; $("animScrub").max = oursNotes().length; draw();
+  });
+});
+perfSel.addEventListener("change", () => {
+  location.hash = encodeURIComponent(perfSel.value);
+  ANIM.i = 0; ANIM.playing = false; $("animScrub").max = oursNotes().length; draw();
+});
+const want = decodeURIComponent(location.hash.slice(1));
+if (want && D.meta[want]) perfSel.value = want;
+ensureLanes([oursVar.value, "beyer", "zeng"], draw);
+</script>
+</body>
+</html>
