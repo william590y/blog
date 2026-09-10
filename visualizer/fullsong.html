@@ -142,13 +142,31 @@
   <div class="rollwrap"><canvas id="rollZeng"></canvas></div></div>
 
 <div class="panel">
+  <h2>Score perplexity under the untuned base AMT
+    <span class="hint">score-only tokens (no performance controls) scored by stanford-crfm/music-medium-800k in strided 341-note windows; per-note NLL, raw (faint) and Gaussian-smoothed (bold); x = note index of each sequence</span>
+  </h2>
+  <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:2px 0 6px">
+    <label class="key" title="Unconstrained: softmax over the whole vocabulary. Slot-constrained: renormalised over the tokens legal for the slot (the distribution decoding samples from).">softmax
+      <select id="pplVar"><option value="u">unconstrained</option><option value="c">slot-constrained</option></select></label>
+    <label class="key" title="Which score-token NLL to plot; 'all' averages the three tokens of each note.">channel
+      <select id="pplChan"><option value="all">all (mean of 3)</option><option value="time">onset</option><option value="dur">duration</option><option value="pitch">pitch</option></select></label>
+    <label class="key" title="Gaussian kernel width in notes applied to the NLL sequence; 0 = raw only">σ (notes)
+      <input id="pplSigma" type="number" min="0" max="500" step="5" value="30" style="width:58px"></label>
+    <label class="key"><input type="checkbox" id="pplLog" checked> log axis</label>
+    <span id="pplTotals" class="lbl"></span>
+  </div>
+  <div class="rollwrap"><canvas id="pplCanvas"></canvas></div>
+</div>
+
+<div class="panel">
   <h2>DTW vs GT
     <span class="hint">warp factor d(pred)/d(gt) — 1.0 = clock in sync; error curves in beats (right scale)</span>
     <button id="aggBtn" style="margin-left:auto;margin-right:10px">aggregate figures</button>
   </h2>
   <div class="rollwrap"><canvas id="dtwCanvas"></canvas></div>
   <div id="aggImgs">
-    <div class="lbl">Test-set aggregates (59 songs): overlap-69 slide (left/first) and slide-by-one comparison.</div>
+    <div class="lbl">Test-set aggregates (59 songs): score perplexity under the untuned base AMT (generated vs GT, best no-DAgger lane, slide-69); then DTW drift for overlap-69 slide and the slide-by-one comparison.</div>
+    <img src="ppl_total.png" alt="score perplexity under the untuned base AMT, generated vs ground truth, all test pieces">
     <img src="dtw_drift.png" alt="aggregate DTW, slide-69">
     <img src="dtw_slide1.png" alt="aggregate DTW, slide-by-1 across models">
   </div>
@@ -209,6 +227,21 @@ function ensureDtw(v) {
   sc.src = `dtw/${v}.js`;
   sc.onload = () => { D.dtw[v] = (window.FULLSONG_DTW || {})[v] || {}; drawDtw(); };
   sc.onerror = () => { D.dtw[v] = {}; };
+  document.head.appendChild(sc);
+}
+// Per-note score perplexity under the untuned base AMT ships per lane too
+// (ppl/<lane>.js, plus ppl/gt.js for the ground-truth score; see
+// visualizer/base_score_ppl_pieces.py and build_fullsong_payload_v2.py).
+D.ppl = D.ppl || {};
+const PPL_LANES = new Set(D.ppl_lanes || []);
+const pplAsked = new Set();
+function ensurePpl(v) {
+  if (!PPL_LANES.has(v) || D.ppl[v] || pplAsked.has(v)) return;
+  pplAsked.add(v);
+  const sc = document.createElement("script");
+  sc.src = `ppl/${v}.js`;
+  sc.onload = () => { D.ppl[v] = (window.FULLSONG_PPL || {})[v] || {}; drawPpl(); };
+  sc.onerror = () => { D.ppl[v] = {}; };
   document.head.appendChild(sc);
 }
 // Note arrays ship the same way — one file per variant lane.
@@ -608,6 +641,93 @@ function drawDtw() {
   g.fillStyle = css("--muted"); g.fillText("GT note index →", W/2-30, H-4);
 }
 
+// ---- score perplexity under the base AMT ------------------------------------
+// Records: {u: [[nll_t, nll_d, nll_p], ...], c: [...], su: {ppl, ppl_time, ...}, sc: {...}}
+// per note of the lane's generated score (and of the GT score under "gt").
+function gaussSmooth(xs, sigma) {
+  if (!(sigma > 0)) return xs.slice();
+  const r = Math.ceil(3 * sigma), w = [];
+  for (let k = -r; k <= r; k++) w.push(Math.exp(-0.5 * k * k / (sigma * sigma)));
+  const out = new Array(xs.length);
+  for (let i = 0; i < xs.length; i++) {
+    let s = 0, z = 0;
+    for (let k = -r; k <= r; k++) {
+      const j = i + k; if (j < 0 || j >= xs.length) continue;
+      const v = xs[j]; if (v == null || !isFinite(v)) continue;
+      s += w[k + r] * v; z += w[k + r];
+    }
+    out[i] = z > 0 ? s / z : null;
+  }
+  return out;
+}
+function pplSeries(rec, variant, chan) {
+  const a = rec && rec[variant]; if (!a) return null;
+  const idx = { time: 0, dur: 1, pitch: 2 }[chan];
+  return a.map(tr => idx == null ? (tr[0] + tr[1] + tr[2]) / 3 : tr[idx]);
+}
+function fmtPpl(x) { return x == null ? "–" : (x >= 100 ? x.toFixed(0) : x >= 10 ? x.toFixed(1) : x.toFixed(2)); }
+function drawPpl() {
+  const cvs = $("pplCanvas"); if (!cvs) return;
+  const k = key(), variant = $("pplVar").value, chan = $("pplChan").value;
+  const sigma = Math.max(0, +$("pplSigma").value || 0), logY = $("pplLog").checked;
+  const series = [["ours", ((D.ppl || {})[oursVar.value] || {})[k], css("--ours")],
+                  ["gt", ((D.ppl || {})["gt"] || {})[k], css("--gt")]].filter(r => r[1]);
+  const W = Math.max(700, document.body.clientWidth - 80), H = 200;
+  cvs.width = W; cvs.height = H;
+  const g = cvs.getContext("2d");
+  g.fillStyle = css("--panel"); g.fillRect(0, 0, W, H);
+  g.font = "10px -apple-system, 'Segoe UI', Roboto, sans-serif";
+  const tot = $("pplTotals");
+  if (!series.length) {
+    g.fillStyle = css("--muted"); g.fillText("no base-AMT perplexity for this lane yet", 10, 20);
+    tot.textContent = ""; return;
+  }
+  const sumKey = variant === "u" ? "su" : "sc";
+  tot.textContent = series.map(([l, rec]) => {
+    const sm = rec[sumKey] || {};
+    return `${l === "ours" ? "ours" : "GT"} total PPL ${fmtPpl(sm.ppl)} (onset ${fmtPpl(sm.ppl_time)} · dur ${fmtPpl(sm.ppl_dur)} · pitch ${fmtPpl(sm.ppl_pitch)})`;
+  }).join("   |   ");
+  const raw = series.map(([l, rec, c]) => [l, pplSeries(rec, variant, chan), c]);
+  const sm = raw.map(([l, xs, c]) => [l, gaussSmooth(xs, sigma), c]);
+  const n = Math.max(...raw.map(r => r[1].length));
+  const X = i => 44 + i * (W - 60) / Math.max(1, n - 1);
+  // y in NLL (nats); ticks labelled as perplexity = exp(NLL)
+  let lo = Infinity, hi = -Infinity;
+  for (const [, xs] of raw) for (const v of xs) { if (v == null) continue; if (v < lo) lo = v; if (v > hi) hi = v; }
+  if (!isFinite(lo)) return;
+  const toY = logY ? (v => v) : (v => Math.exp(v));
+  let ylo = toY(Math.max(lo, 0)), yhi = toY(hi);
+  if (!logY) { ylo = 0; }
+  if (yhi <= ylo) yhi = ylo + 1e-6;
+  const Y = v => H - 18 - (toY(v) - ylo) / (yhi - ylo) * (H - 30);
+  g.strokeStyle = css("--muted"); g.fillStyle = css("--muted"); g.setLineDash([2, 3]);
+  const ticks = logY ? [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 1e4, 1e5].filter(t => Math.log(t) >= ylo - 1e-9 && Math.log(t) <= yhi + 1e-9)
+                     : [0, 0.25, 0.5, 0.75, 1].map(u => ylo + u * (yhi - ylo));
+  for (const t of ticks) {
+    const y = logY ? Y(Math.log(t)) : H - 18 - (t - ylo) / (yhi - ylo) * (H - 30);
+    g.beginPath(); g.moveTo(44, y); g.lineTo(W - 15, y); g.stroke();
+    g.fillText(fmtPpl(t), 2, y + 3);
+  }
+  g.setLineDash([]);
+  for (const [l, xs, c] of raw) {
+    g.strokeStyle = c; g.globalAlpha = sigma > 0 ? 0.28 : 0.9; g.lineWidth = 0.8; g.beginPath();
+    let started = false;
+    xs.forEach((v, i) => { if (v == null) { started = false; return; } const x = X(i), y = Y(v); started ? g.lineTo(x, y) : g.moveTo(x, y); started = true; });
+    g.stroke(); g.globalAlpha = 1;
+  }
+  if (sigma > 0) for (const [l, xs, c] of sm) {
+    g.strokeStyle = c; g.lineWidth = l === "ours" ? 2.2 : 1.8; g.beginPath();
+    let started = false;
+    xs.forEach((v, i) => { if (v == null) { started = false; return; } const x = X(i), y = Y(v); started ? g.lineTo(x, y) : g.moveTo(x, y); started = true; });
+    g.stroke();
+  }
+  g.fillStyle = css("--ours"); g.fillText(`ours (${LABEL(oursVar.value)})`, W - 330, 12);
+  g.fillStyle = css("--gt"); g.fillText("ground-truth score", W - 120, 12);
+  g.fillStyle = css("--muted");
+  g.fillText(`${chan === "all" ? "per-note mean token" : chan} perplexity under base AMT, ${variant === "u" ? "unconstrained" : "slot-constrained"}${sigma > 0 ? `, σ=${sigma} notes` : ""}`, 48, 12);
+  g.fillText("note index →", W / 2 - 30, H - 4);
+}
+
 function fmtAltTok(ch, rel) {
   if (ch === 2) return rel >= 128 ? "rest" : pname(rel);   // pitch channel
   return rel;                                               // grid units
@@ -663,6 +783,8 @@ function draw() {
   drawPanel($("rollZeng"), "zeng", laneNotes("zeng"), false);
   metricsTable();
   drawDtw();
+  ensurePpl(oursVar.value); ensurePpl("gt");
+  drawPpl();
   const meta = D.meta[key()];
   $("meta").textContent = `${meta.work} · boundaries(s69): ${meta.boundaries}`;
 }
@@ -708,6 +830,8 @@ perfSel.addEventListener("change", () => {
 const want = decodeURIComponent(location.hash.slice(1));
 if (want && D.meta[want]) perfSel.value = want;
 ensureLanes([oursVar.value, "beyer", "zeng"], draw);
+for (const id of ["pplVar", "pplChan", "pplSigma", "pplLog"])
+  $(id).addEventListener(id === "pplSigma" ? "input" : "change", drawPpl);
 </script>
 </body>
 </html>
