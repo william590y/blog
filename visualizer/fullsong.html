@@ -134,6 +134,11 @@
   <div id="metricsWrap"><table id="metricsTable"></table></div>
 </div>
 
+<div class="panel"><h2><span style="color:var(--perf)">Performance</span>
+    <span class="hint">the input the model conditions on (performance time, same px/s) — <span class="swatch" style="background:var(--perf)"></span> aligned to a score note ·
+      <span class="swatch" style="background:var(--miss);outline:1px solid var(--miss)"></span> no aligned score note (dropped from training windows, still fed as a control) · hover/click a note for generated note <i>i</i>'s logits; click pins</span>
+    <span class="hint" id="perfHint" style="margin-left:auto"></span></h2>
+  <div class="rollwrap"><canvas id="rollPerf"></canvas></div></div>
 <div class="panel"><h2><span style="color:var(--ours)">Ours</span> <span class="hint" id="oursHint"></span></h2>
   <div class="rollwrap"><canvas id="rollOurs"></canvas></div></div>
 <div class="panel"><h2><span style="color:var(--beyer)">Beyer &amp; Dai</span> <span class="hint">MIDI2ScoreTransformer (ISMIR 2024)</span></h2>
@@ -173,7 +178,8 @@
 </div>
 
 <div id="hint">Same drawing conventions as the windowed visualizer: <span style="color:var(--gt)">green outlines</span> are the ground-truth score, <span style="color:var(--pred)">orange bars</span> the system's predicted score, 0.5 s beat grid with a heavier line every 2 s, one row per semitone with C labels. Each system is re-anchored to its own first onset (whole-song eval convention). <b>scale-normalize</b> multiplies a system's clock by its per-song scale-max argmax ratio (the panel label shows the factor; the metrics table shows it for the scale-max families) — the view the scale-max / IOI scale-max scores are computed on. Hover OUR notes
-for decode-time perplexity, entropy and top-5 alternatives per channel (trace lanes only). Deep-link with
+for decode-time perplexity, entropy and top-5 alternatives per channel (trace lanes only); the PERFORMANCE panel maps performance note <i>i</i> to generated note <i>i</i>
+(one score note per control) and paints in <span style="color:var(--miss)">red</span> the performance notes the tokenizer's aligner could not match to any score note. Click a note to pin its tooltip (Esc/click to release). Deep-link with
 #&lt;split/perf&gt;. Boundary geometry: slide-69 re-packs every 69 notes after 138; slide-by-1 every note; reset = disjoint windows.</div>
 <div id="tip"></div>
 
@@ -343,6 +349,12 @@ function viewNotes(v, notes) {
 }
 function gtNotes() { return D.gt[key()] || []; }
 function traceRec() { return ((D.trace || {})[oursVar.value] || {})[key()] || null; }
+// performance notes: [t, d, p, a] per control (a = aligned GT index, -1 = unaligned);
+// control i <-> generated note i (the rollout emits one score note per control)
+function perfNotes() { return ((D.perf || {})[key()]) || []; }
+let perfHitRects = [];
+let HOVER = -1;       // hovered/pinned note index, shared by the performance and OURS panels
+let PINNED = false;
 
 function boundaryIdxs(n, ov) {
   const out = []; let b = 138; const fresh = Math.max(1, 138 - ov);
@@ -474,6 +486,64 @@ function rrect(g, x, y, w, h, r) {
   if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h);
 }
 
+function drawPerfPanel() {
+  const cvs = $("rollPerf"), S = SPAN, pxps = S.pxps, px = pxps / 100;
+  const notes = perfNotes();
+  const C = { panel: css("--panel"), grid: css("--grid"), beat: css("--beat"), muted: css("--muted"),
+              perf: css("--perf"), miss: css("--miss"), sel: css("--sel") };
+  let tmax = 100, pmin = 127, pmax = 0, un = 0;
+  for (const n of notes) { tmax = Math.max(tmax, n[0] + Math.max(n[1], 10)); if (n[2] < pmin) pmin = n[2]; if (n[2] > pmax) pmax = n[2]; if (n[3] < 0) un++; }
+  if (pmin > pmax) { pmin = 21; pmax = 108; }
+  pmin = Math.max(0, pmin - 2); pmax = Math.min(127, pmax + 2);
+  $("perfHint").textContent = notes.length ? `${un} of ${notes.length} performance notes unaligned (${(100*un/notes.length).toFixed(1)}%)` : "no performance data for this song";
+  const W = Math.min(MAX_W, Math.ceil(PAD_L + (tmax / 100) * pxps + 20));
+  const H = PAD_T + (pmax - pmin + 1) * ROWH + PAD_B;
+  if (cvs.width !== W || cvs.height !== H) { cvs.width = W; cvs.height = H; }
+  const g = cvs.getContext("2d");
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1;
+  g.fillStyle = C.panel; g.fillRect(0, 0, W, H);
+  g.font = "10px -apple-system, 'Segoe UI', Roboto, sans-serif";
+  const yOf = p => PAD_T + (pmax - Math.min(pmax, Math.max(pmin, p))) * ROWH;
+  const xOf = t => PAD_L + t * px;
+  g.lineWidth = 1; g.strokeStyle = C.grid; g.fillStyle = C.muted;
+  for (let p = pmin; p <= pmax; p++) if (p % 12 === 0) {
+    const y = Math.round(yOf(p) + ROWH / 2) + 0.5;
+    g.beginPath(); g.moveTo(PAD_L, y); g.lineTo(W - 4, y); g.stroke();
+    g.fillText(pname(p), 4, y + 3);
+  }
+  let step = 0.5;
+  while (step * pxps < 8) step *= 2;
+  const labelEvery = 4 * step * pxps >= 48 ? 4 : 8;
+  for (let k = 0, t = 0; t <= tmax / 100 + 1e-6; k++, t = k * step) {
+    const x = PAD_L + t * pxps, major = k % 4 === 0;
+    g.strokeStyle = major ? C.beat : C.grid; g.lineWidth = major ? 1.2 : 0.6;
+    g.beginPath(); g.moveTo(x, PAD_T - 4); g.lineTo(x, H - PAD_B + 4); g.stroke();
+    if (k % labelEvery === 0) { g.fillStyle = C.muted; g.fillText(t.toFixed(1) + "s", x + 2, H - 6); }
+  }
+  perfHitRects = [];
+  const noteH = ROWH - 1;
+  const dimAnim = ANIM.on ? Math.floor(ANIM.i) : notes.length;
+  // aligned notes first (blue), unaligned on top (red, outlined) so they stay visible in dense passages
+  for (const pass of [0, 1]) for (let i = 0; i < notes.length; i++) {
+    const n = notes[i], bad = n[3] < 0;
+    if ((pass === 0) === bad) continue;
+    const x = xOf(n[0]), w = Math.max(n[1] * px, 2), y = yOf(n[2]);
+    g.globalAlpha = i < dimAnim ? (bad ? 0.95 : 0.7) : 0.22;
+    g.fillStyle = bad ? C.miss : C.perf; rrect(g, x, y, w, noteH, 2); g.fill();
+    if (bad) { g.strokeStyle = C.miss; g.lineWidth = 1.2; g.stroke(); }
+    // unaligned notes are drawn on top, so they must also win the hit test: keep them first
+    if (bad) perfHitRects.unshift([x, y, w, noteH, i]); else perfHitRects.push([x, y, w, noteH, i]);
+  }
+  g.globalAlpha = 1;
+  if (HOVER >= 0 && HOVER < notes.length) {
+    const n = notes[HOVER];
+    g.strokeStyle = C.sel; g.lineWidth = 2;
+    rrect(g, xOf(n[0]) - 1.5, yOf(n[2]) - 1.5, Math.max(n[1] * px, 2) + 3, noteH + 3, 3); g.stroke();
+  }
+  g.fillStyle = C.muted;
+  g.fillText(`${notes.length} performance notes · performance time`, PAD_L + 4, 10);
+}
+
 function drawPanel(cvs, v, rawNotes, isOurs) {
   const S = SPAN, pxps = S.pxps, px = pxps / 100;
   const C = { panel: css("--panel"), grid: css("--grid"), beat: css("--beat"), muted: css("--muted"),
@@ -546,6 +616,11 @@ function drawPanel(cvs, v, rawNotes, isOurs) {
     for (const n of gt) { rrect(g, xOf(n[0]), yOf(n[2]), Math.max(n[1] * px, 2), noteH, 2); g.stroke(); }
   }
   g.globalAlpha = 1;
+  if (isOurs && HOVER >= 0 && HOVER < notes.length) {
+    const n = notes[HOVER];
+    g.strokeStyle = css("--sel"); g.lineWidth = 2;
+    rrect(g, xOf(n[0]) - 1.5, yOf(n[2]) - 1.5, Math.max(n[1] * px, 2) + 3, noteH + 3, 3); g.stroke();
+  }
   if (isOurs && ANIM.on && upto > 0) {
     const i = Math.max(0, upto - 1);
     const sIdx = windowStart(i, bounds, ov);
@@ -735,7 +810,14 @@ function fmtAltTok(ch, rel) {
 function showTip(ev, i) {
   const tr = traceRec(), tip = $("tip");
   const n = oursNotes()[i];
-  let html = `<table><tr class="hd"><td colspan="3">note ${i} · ${pname(n[2])} · t=${n[0]} d=${n[1]}</td></tr>`;
+  if (!n) return;
+  let html = `<table><tr class="hd"><td colspan="3">generated note ${i} · ${pname(n[2])} · t=${n[0]} d=${n[1]} (score grid)</td></tr>`;
+  const pn = perfNotes()[i];
+  if (pn) {
+    const gtn = pn[3] >= 0 ? gtNotes()[pn[3]] : null;
+    html += `<tr><td colspan="3" style="color:${pn[3] < 0 ? "var(--miss)" : "var(--perf)"}">performance note ${i} · ${pname(pn[2])} · t=${(pn[0]/100).toFixed(2)}s d=${(pn[1]/100).toFixed(2)}s · ` +
+      (pn[3] < 0 ? "<b>NOT aligned to any score note</b>" : `aligned → GT note ${pn[3]}${gtn ? ` (${pname(gtn[2])} t=${gtn[0]} d=${gtn[1]})` : ""}`) + `</td></tr>`;
+  }
   if (tr) {
     const chn = ["onset", "dur", "pitch"];
     const H = tr.H[i] || [];
@@ -761,13 +843,34 @@ function showTip(ev, i) {
   tip.style.left = Math.min(window.innerWidth - 340, ev.clientX + 14) + "px";
   tip.style.top = (ev.clientY + 12) + "px";
 }
-$("rollOurs").addEventListener("mousemove", ev => {
+function hitAt(ev, rects) {
   const r = ev.target.getBoundingClientRect();
   const x = ev.clientX - r.left + ev.target.parentNode.scrollLeft, y = ev.clientY - r.top;
-  const hit = hitRects.find(([hx, hy, hw, hh]) => x >= hx && x <= hx+hw && y >= hy && y <= hy+hh);
-  if (hit) showTip(ev, hit[4]); else $("tip").style.display = "none";
-});
-$("rollOurs").addEventListener("mouseleave", () => $("tip").style.display = "none");
+  return rects.find(([hx, hy, hw, hh]) => x >= hx && x <= hx+hw && y >= hy && y <= hy+hh);
+}
+function setHover(i) {
+  if (i === HOVER) return;
+  HOVER = i;
+  drawPerfPanel();
+  drawPanel($("rollOurs"), oursVar.value, oursNotes(), true);
+}
+function bindRoll(id, rectsOf) {
+  const el = $(id);
+  el.addEventListener("mousemove", ev => {
+    if (PINNED) return;
+    const hit = hitAt(ev, rectsOf());
+    if (hit) { showTip(ev, hit[4]); setHover(hit[4]); } else { $("tip").style.display = "none"; setHover(-1); }
+  });
+  el.addEventListener("mouseleave", () => { if (!PINNED) { $("tip").style.display = "none"; setHover(-1); } });
+  el.addEventListener("click", ev => {
+    const hit = hitAt(ev, rectsOf());
+    if (PINNED) { PINNED = false; $("tip").style.display = "none"; setHover(-1); return; }
+    if (hit) { PINNED = true; showTip(ev, hit[4]); setHover(hit[4]); }
+  });
+}
+bindRoll("rollOurs", () => hitRects);
+bindRoll("rollPerf", () => perfHitRects);
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" && PINNED) { PINNED = false; $("tip").style.display = "none"; setHover(-1); } });
 
 function draw() {
   ensureTrace(oursVar.value);
@@ -778,6 +881,7 @@ function draw() {
     ? `${SPAN.pxps.toFixed(0)} px/s (max width)` : `${SPAN.want} px/s`;
   const hasTrace = !!traceRec();
   $("entHeat").disabled = !hasTrace;
+  drawPerfPanel();
   drawPanel($("rollOurs"), oursVar.value, oursNotes(), true);
   drawPanel($("rollBeyer"), "beyer", laneNotes("beyer"), false);
   drawPanel($("rollZeng"), "zeng", laneNotes("zeng"), false);
@@ -824,6 +928,7 @@ oursVar.addEventListener("change", () => {
   });
 });
 perfSel.addEventListener("change", () => {
+  HOVER = -1; PINNED = false; $("tip").style.display = "none";
   location.hash = encodeURIComponent(perfSel.value);
   ANIM.i = 0; ANIM.playing = false; $("animScrub").max = oursNotes().length; draw();
 });
