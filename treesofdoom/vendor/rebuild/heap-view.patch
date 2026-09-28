@@ -1,0 +1,14 @@
+diff --git a/src/unicorn-wrapper.js b/src/unicorn-wrapper.js
+index fe6f19b..1db238f 100644
+--- a/src/unicorn-wrapper.js
++++ b/src/unicorn-wrapper.js
+@@ -3,6 +3,9 @@
+  * Wrapper made by Alexandro Sanchez Bach.
+  */
+ 
++// Expose the live memory view required by the ARM host ABI after memory grows.
++Object.defineProperty(Module, 'HEAPU8', { configurable: true, get: function () { return HEAPU8; } });
++
+ Object.assign(Module, {
+     // uc_arch
+     ARCH_ARM: 1,

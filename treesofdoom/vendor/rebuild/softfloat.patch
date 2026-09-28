@@ -1,0 +1,141 @@
+diff --git a/build.py b/build.py
+index 709da60..c6f6f63 100644
+--- a/build.py
++++ b/build.py
+@@ -206,6 +206,16 @@ def compileUnicorn(archs=[]):
+     cmd = ['emmake', 'cmake', '--build', UNICORN_BUILD_DIR, '--target', 'unicorn_archive', f'-j{jobs}']
+     subprocess.run(cmd, check=True)
+ 
++    linkUnicorn(archs)
++
++
++def linkUnicorn(archs=[]):
++    # Native ARM EABI hooks are optional; the default build is plain cap32.
++    with_softfloat = os.environ.get('NTTOD_SOFTFLOAT') == '1'
++    exported = list(EXPORTED_FUNCTIONS)
++    if with_softfloat:
++        exported += ['_nttod_add_f32_hook', '_nttod_hook_count',
++                     '_nttod_fallback_count', '_nttod_clear_f32_hooks']
+     # Port the static library to JavaScript/WASM
+     suffix = ('_' + '+'.join(archs)) if archs else ''
+     methods = [
+@@ -215,7 +225,7 @@ def compileUnicorn(archs=[]):
+         'emcc',
+         '-Os',
+         os.path.join(UNICORN_BUILD_DIR, 'libunicorn.a'),
+-        '-s', f"EXPORTED_FUNCTIONS={EXPORTED_FUNCTIONS}",
++        '-s', f"EXPORTED_FUNCTIONS={exported}",
+         '-s', f"EXPORTED_RUNTIME_METHODS={methods}",
+         '-s', 'RESERVED_FUNCTION_POINTERS=256',
+         '-s', 'ALLOW_TABLE_GROWTH=1',
+@@ -226,6 +236,9 @@ def compileUnicorn(archs=[]):
+         '-s', 'WASM_BIGINT=1',
+         '-s', "EXPORT_NAME='MUnicorn'",
+     ]
++    if with_softfloat:
++        cmd += ['src/nttod-softfloat.c', '-I' + os.path.join(UNICORN_DIR, 'include'),
++                '-fno-fast-math', '-ffp-contract=off']
+     for path in constant_files(archs):
+         cmd += ['--post-js', path]
+     cmd += ['--post-js', 'src/unicorn-wrapper.js']
+diff --git a/src/nttod-softfloat.c b/src/nttod-softfloat.c
+new file mode 100644
+index 0000000..c5038e0
+--- /dev/null
++++ b/src/nttod-softfloat.c
+@@ -0,0 +1,95 @@
++/* Optional ARM EABI f32 compiler-runtime hooks. Original guest code is unchanged.
++ * GPL-2.0, matching Unicorn.js. Strict IEEE arithmetic: no fast-math or contraction.
++ * Each helper is compared bit-for-bit against the original ARM implementation.
++ */
++#include <stdint.h>
++#include <stdlib.h>
++#include <limits.h>
++#include <unicorn/unicorn.h>
++#include <unicorn/arm.h>
++typedef union { uint32_t bits; float value; } F32;
++typedef struct FloatHook {
++    uc_engine *uc;
++    uc_hook handle;
++    int operation;
++    uint32_t handled, fallback;
++    struct FloatHook *next;
++} FloatHook;
++static FloatHook *hooks;
++static int is_nan_bits(uint32_t bits) { return (bits & UINT32_C(0x7fffffff)) > UINT32_C(0x7f800000); }
++static int is_nonfinite_bits(uint32_t bits) { return (bits & UINT32_C(0x7f800000)) == UINT32_C(0x7f800000); }
++/* Original ARM libgcc has observable subnormal add/subtract quirks. */
++static int is_subnormal_bits(uint32_t bits) {
++    return (bits & UINT32_C(0x7f800000)) == 0 && (bits & UINT32_C(0x007fffff)) != 0;
++}
++static void float_hook(uc_engine *uc, uint64_t address, uint32_t size, void *data)
++{
++    (void)address; (void)size;
++    FloatHook *hook = data;
++    uint32_t registers[3];
++    int ids[3] = {UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_LR};
++    void *values[3] = {&registers[0], &registers[1], &registers[2]};
++    if (uc_reg_read_batch(uc, ids, values, 3) != UC_ERR_OK) { hook->fallback++; return; }
++    F32 a = {.bits=registers[0]}, b = {.bits=registers[1]}, result;
++    uint32_t output;
++    switch(hook->operation) {
++    case 1: result.value=(float)(int32_t)a.bits; output=result.bits; break;
++    case 2:
++        if(is_nan_bits(a.bits)) output=0;
++        else if(a.value>=2147483648.0f) output=INT32_MAX;
++        else if(a.value<=-2147483648.0f) output=(uint32_t)INT32_MIN;
++        else output=(uint32_t)(int32_t)a.value;
++        break;
++    case 3: output=a.value<=b.value; break;
++    case 4: output=is_nan_bits(a.bits)||is_nan_bits(b.bits); break;
++    case 5: case 6: case 7: case 12:
++        if(is_nonfinite_bits(a.bits)||is_nonfinite_bits(b.bits)||
++           is_subnormal_bits(a.bits)||is_subnormal_bits(b.bits)||
++           (hook->operation==12&&(b.bits&UINT32_C(0x7fffffff))==0)) { hook->fallback++; return; }
++        if(hook->operation==5) result.value=a.value+b.value;
++        else if(hook->operation==6) result.value=a.value-b.value;
++        else if(hook->operation==7) result.value=a.value*b.value;
++        else result.value=a.value/b.value;
++        if(is_subnormal_bits(result.bits)){hook->fallback++;return;}
++        output=result.bits; break;
++    case 8: output=a.value<b.value; break;
++    case 9: output=a.value>b.value; break;
++    case 10: output=a.value==b.value; break;
++    case 11: output=a.value>=b.value; break;
++    case 13: result.value=(float)a.bits; output=result.bits; break;
++    case 14:
++        if(is_nan_bits(a.bits)||a.value<=0.0f) output=0;
++        else if(a.value>=4294967296.0f) output=UINT32_MAX;
++        else output=(uint32_t)a.value;
++        break;
++    default: hook->fallback++; return;
++    }
++    int output_ids[2]={UC_ARM_REG_R0,UC_ARM_REG_PC};
++    void *output_values[2]={&output,&registers[2]};
++    uc_reg_write_batch(uc,output_ids,output_values,2);
++    hook->handled++;
++}
++int nttod_add_f32_hook(uc_engine *uc,uint32_t address,int operation)
++{
++    if(!uc||operation<1||operation>14)return UC_ERR_ARG;
++    FloatHook *hook=calloc(1,sizeof(*hook));if(!hook)return UC_ERR_NOMEM;
++    hook->uc=uc;hook->operation=operation;
++    uc_err result=uc_hook_add(uc,&hook->handle,UC_HOOK_CODE,(void*)float_hook,hook,
++        (uint64_t)(address&~1u),(uint64_t)(address&~1u));
++    if(result!=UC_ERR_OK){free(hook);return result;}
++    hook->next=hooks;hooks=hook;return UC_ERR_OK;
++}
++uint32_t nttod_hook_count(uc_engine *uc)
++{
++    uint32_t count=0;for(FloatHook *hook=hooks;hook;hook=hook->next)if(hook->uc==uc)count+=hook->handled;return count;
++}
++uint32_t nttod_fallback_count(uc_engine *uc)
++{
++    uint32_t count=0;for(FloatHook *hook=hooks;hook;hook=hook->next)if(hook->uc==uc)count+=hook->fallback;return count;
++}
++void nttod_clear_f32_hooks(uc_engine *uc)
++{
++    FloatHook **link=&hooks;
++    while(*link){FloatHook *hook=*link;if(hook->uc!=uc){link=&hook->next;continue;}
++        uc_hook_del(uc,hook->handle);*link=hook->next;free(hook);}
++}

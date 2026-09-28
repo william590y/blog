@@ -1,0 +1,5 @@
+const NAME='trees-of-doom-saves';
+const STORE='files';
+function database(){return new Promise((resolve,reject)=>{const request=indexedDB.open(NAME,1);request.onupgradeneeded=()=>request.result.createObjectStore(STORE);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
+export async function readSaves(){const db=await database();try{return await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),store=tx.objectStore(STORE),result=new Map(),request=store.openCursor();request.onsuccess=()=>{const cursor=request.result;if(cursor){result.set(cursor.key,new Uint8Array(cursor.value));cursor.continue();}};tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);});}finally{db.close();}}
+export async function writeSaves(files){const db=await database();try{await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE);store.clear();for(const [path,bytes] of files)store.put(bytes.slice().buffer,path);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}finally{db.close();}}

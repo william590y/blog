@@ -1,0 +1,14 @@
+diff --git a/qemu/accel/tcg/translator.c b/qemu/accel/tcg/translator.c
+index 72f21c41..6098a65a 100644
+--- a/qemu/accel/tcg/translator.c
++++ b/qemu/accel/tcg/translator.c
+@@ -47,7 +47,8 @@ void translator_loop(const TranslatorOps *ops, DisasContextBase *db,
+     db->pc_next = db->pc_first;
+     db->is_jmp = DISAS_NEXT;
+     db->num_insns = 0;
+-    db->max_insns = max_insns;
++    /* Bound TCI blocks for WebAssembly: larger ARM blocks corrupt TCG state. */
++    db->max_insns = max_insns < 32 ? max_insns : 32;
+     db->singlestep_enabled = cpu->singlestep_enabled;
+ 
+     ops->init_disas_context(db, cpu);

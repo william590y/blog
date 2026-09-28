@@ -1,0 +1,100 @@
+{
+  "sha256": "beebb0f4de7569198bdb2a9d6a3cb048dbb1737b8453486d8578eb6022ba4209",
+  "randomSamplesPerHelper": 100000,
+  "edgeInputs": 74,
+  "operations": [
+    {
+      "name": "__aeabi_i2f",
+      "checked": 100074,
+      "elapsedMs": 1778.612103,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_f2iz",
+      "checked": 100074,
+      "elapsedMs": 1595.3009889999998,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fcmple",
+      "checked": 105476,
+      "elapsedMs": 1847.945331,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fcmpun",
+      "checked": 105476,
+      "elapsedMs": 1485.4900550000002,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fadd",
+      "checked": 105476,
+      "elapsedMs": 1583.7195290000009,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fsub",
+      "checked": 105476,
+      "elapsedMs": 1845.053092,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fmul",
+      "checked": 105476,
+      "elapsedMs": 1876.4769750000014,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fcmplt",
+      "checked": 105476,
+      "elapsedMs": 1933.3589229999998,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fcmpgt",
+      "checked": 105476,
+      "elapsedMs": 1896.2783049999998,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fcmpeq",
+      "checked": 105476,
+      "elapsedMs": 1860.0030669999996,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fcmpge",
+      "checked": 105476,
+      "elapsedMs": 1910.3415659999991,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_fdiv",
+      "checked": 105476,
+      "elapsedMs": 2463.373485,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_ui2f",
+      "checked": 100074,
+      "elapsedMs": 1600.3279589999984,
+      "mismatches": 0
+    },
+    {
+      "name": "__aeabi_f2uiz",
+      "checked": 100074,
+      "elapsedMs": 1482.180032999997,
+      "mismatches": 0
+    }
+  ],
+  "startedAt": "2026-09-28T02:37:07.926Z",
+  "acceleration": {
+    "hooks": 14,
+    "handled": 1429924,
+    "fallback": 29240
+  },
+  "totalChecks": 1455056,
+  "passed": true,
+  "finishedAt": "2026-09-28T02:37:33.090Z"
+}

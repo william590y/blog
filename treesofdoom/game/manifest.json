@@ -1,0 +1,137 @@
+[
+  {
+    "path": "/data/files/assets/Default.png",
+    "url": "assets/Default.png",
+    "size": 19190
+  },
+  {
+    "path": "/data/files/assets/app.properties",
+    "url": "assets/app.properties",
+    "size": 849
+  },
+  {
+    "path": "/data/files/assets/audio.sca",
+    "url": "assets/audio.sca",
+    "size": 4232987
+  },
+  {
+    "path": "/data/files/assets/characters_320.sca",
+    "url": "assets/characters_320.sca",
+    "size": 2779795
+  },
+  {
+    "path": "/data/files/assets/characters_640.sca",
+    "url": "assets/characters_640.sca",
+    "size": 7296057
+  },
+  {
+    "path": "/data/files/assets/chunks.sca",
+    "url": "assets/chunks.sca",
+    "size": 19946
+  },
+  {
+    "path": "/data/files/assets/collision_320.sca",
+    "url": "assets/collision_320.sca",
+    "size": 2767
+  },
+  {
+    "path": "/data/files/assets/collision_640.sca",
+    "url": "assets/collision_640.sca",
+    "size": 2767
+  },
+  {
+    "path": "/data/files/assets/day.ogg",
+    "url": "assets/day.ogg",
+    "size": 1362989
+  },
+  {
+    "path": "/data/files/assets/fonts_320.sca",
+    "url": "assets/fonts_320.sca",
+    "size": 148770
+  },
+  {
+    "path": "/data/files/assets/fonts_640.sca",
+    "url": "assets/fonts_640.sca",
+    "size": 251710
+  },
+  {
+    "path": "/data/files/assets/gamedata.db",
+    "url": "assets/gamedata.db",
+    "size": 40960
+  },
+  {
+    "path": "/data/files/assets/images_320.sca",
+    "url": "assets/images_320.sca",
+    "size": 1507784
+  },
+  {
+    "path": "/data/files/assets/images_640.sca",
+    "url": "assets/images_640.sca",
+    "size": 4170424
+  },
+  {
+    "path": "/data/files/assets/menu.ogg",
+    "url": "assets/menu.ogg",
+    "size": 998421
+  },
+  {
+    "path": "/data/files/assets/mercury.properties",
+    "url": "assets/mercury.properties",
+    "size": 0
+  },
+  {
+    "path": "/data/files/assets/mustachio.ogg",
+    "url": "assets/mustachio.ogg",
+    "size": 29808
+  },
+  {
+    "path": "/data/files/assets/night.ogg",
+    "url": "assets/night.ogg",
+    "size": 1360493
+  },
+  {
+    "path": "/data/files/assets/slotsmusic.ogg",
+    "url": "assets/slotsmusic.ogg",
+    "size": 993168
+  },
+  {
+    "path": "/data/files/assets/strings.sca",
+    "url": "assets/strings.sca",
+    "size": 10076
+  },
+  {
+    "path": "/data/files/assets/theme_forest_320.sca",
+    "url": "assets/theme_forest_320.sca",
+    "size": 1463694
+  },
+  {
+    "path": "/data/files/assets/theme_forest_640.sca",
+    "url": "assets/theme_forest_640.sca",
+    "size": 3454247
+  },
+  {
+    "path": "/data/files/assets/theme_scribble_320.sca",
+    "url": "assets/theme_scribble_320.sca",
+    "size": 1513154
+  },
+  {
+    "path": "/data/files/assets/theme_scribble_640.sca",
+    "url": "assets/theme_scribble_640.sca",
+    "size": 3235407
+  },
+  {
+    "path": "/data/files/assets/theme_winter_320.sca",
+    "url": "assets/theme_winter_320.sca",
+    "size": 1326507
+  },
+  {
+    "path": "/data/files/assets/theme_winter_640.sca",
+    "url": "assets/theme_winter_640.sca",
+    "size": 3027719
+  },
+  {
+    "path": "/data/files/assets/ui.sca",
+    "url": "assets/ui.sca",
+    "size": 16318
+  }
+]
