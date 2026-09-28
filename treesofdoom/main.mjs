@@ -68,7 +68,9 @@ button.addEventListener('click', async () => {
         status.textContent = `Loading the original game… ${loaded}/${manifest.length}`;
       })
     ]);
-    runtime = await ArmRuntime.create({onLog:log});
+    // Shop construction is a long synchronous native update on slower phones.
+    // Keep the instruction guard, but allow up to two minutes for native loading.
+    runtime = await ArmRuntime.create({onLog:log, maxMillis:120_000});
     libc = installLibc(runtime, {fs, saves, onSave:queueSave, onLog:log});
     // MemoryFS owns copies; release download buffers to reduce phone memory use.
     fs.clear(); saves.clear();

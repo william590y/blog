@@ -233,7 +233,8 @@ export class ArmRuntime {
           const result=stub.fn(ctx);if(result?.then)throw new Error('Native import returned a Promise: '+stub.name);
           this.setResult(result);next=ctx.lr;
         }else{steps+=(options.batchInstructions||2_000_000);next=pc|((this.engine.reg_read_i32(this.uc.ARM_REG_CPSR)&32)?1:0);}
-        if(steps>(options.maxInstructions||100_000_000)||performance.now()-beginTime>(options.maxMillis||30_000))throw new Error('Native call budget exceeded at '+hex(this.getReg(15)));
+        const elapsedMs=performance.now()-beginTime;
+        if(steps>(options.maxInstructions||100_000_000)||elapsedMs>(options.maxMillis||30_000))throw new Error('Native call budget exceeded at '+hex(this.getReg(15))+' (elapsed '+Math.round(elapsedMs)+' ms; counted instructions '+steps+')');
       }
       const result=this.getReg(0);this.lastResult={r0:result,r1:this.getReg(1),elapsedMs:performance.now()-beginTime};return result;
     } catch(error){
