@@ -23,11 +23,17 @@ export class MemoryFS {
   delete(path){path=this.path(path);const node=this.nodes.get(path);if(!node)return false;this.nodes.delete(path);if(node.writable)this.markDirty();return true;}
   exportWritable(){return new Map([...this.nodes].filter(([,n])=>n.writable).map(([p,n])=>[p,n.data.slice()]));}
   flush(){
-    if(!this.onSave||this.savedRevision===this.revision)return;
-    const revision=this.revision,result=this.onSave(this.exportWritable());
-    this.savedRevision=revision;
-    // The callback may enqueue IndexedDB work. Host code owns error reporting and retry.
-    return result;
+    if(!this.onSave||this.savedRevision===this.revision||this.scheduledRevision===this.revision||Date.now()<(this.retryAfter||0))return;
+    const revision=this.revision;
+    this.scheduledRevision=revision;
+    const failed=()=>{if(this.scheduledRevision===revision)this.scheduledRevision=this.savedRevision;this.retryAfter=Date.now()+1000;};
+    try{
+      const result=this.onSave(this.exportWritable());
+      if(result?.then)return Promise.resolve(result).then(()=>{this.savedRevision=Math.max(this.savedRevision,revision);},failed);
+      this.savedRevision=revision;
+      return result;
+    }catch(error){failed();throw error;}
+
   }
 }
 export function installLibc(rt,options={}) {

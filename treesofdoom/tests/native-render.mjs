@@ -7,7 +7,8 @@ import {installJNI} from '../jni.mjs';
 import {installGLES} from '../gles.mjs';
 import {installAudio} from '../audio.mjs';
 const require=createRequire(import.meta.url);
-const gl=require('gl')(320,480,{alpha:false,antialias:false,depth:true,stencil:true,preserveDrawingBuffer:true});
+const W=320,H=Number(process.env.HEIGHT||480);
+const gl=require('gl')(W,H,{alpha:false,antialias:false,depth:true,stencil:true,preserveDrawingBuffer:true});
 const {PNG}=require('pngjs');
 if(!gl)throw Error('No real GL context');
 console.log('GL',gl.getParameter(gl.VERSION),gl.getParameter(gl.RENDERER));
@@ -23,16 +24,19 @@ const actions=new Map([[301,[0,270,245]],[303,[1,270,245]],[331,[0,70,447]],[333
 const output=process.argv[2]||'render-output';await mkdir(output,{recursive:true});
 const times=[],snapshots=[];let failure=null,completed=0;const start=performance.now();
 function state(){const app=rt.readU32(rt.symbols.get('_ZN3App11s_pInstanceE')),controller=app?rt.readU32(app+4):0;return controller?rt.readU32(controller+0x14):null;}
-async function snapshot(frame){const png=new PNG({width:320,height:480}),pixels=new Uint8Array(320*480*4);gl.finish();gl.readPixels(0,0,320,480,gl.RGBA,gl.UNSIGNED_BYTE,pixels);for(let y=0;y<480;y++)png.data.set(pixels.subarray(y*1280,(y+1)*1280),(479-y)*1280);await writeFile(`${output}/${frame}.png`,PNG.sync.write(png));const s={frame,state:state(),glError:gl.getError(),draws:graphics.stats.draws};snapshots.push(s);console.log('FRAME',JSON.stringify(s));}
+async function snapshot(frame){const png=new PNG({width:W,height:H}),pixels=new Uint8Array(W*H*4);gl.finish();gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,pixels);for(let y=0;y<H;y++)png.data.set(pixels.subarray(y*W*4,(y+1)*W*4),(H-1-y)*W*4);await writeFile(`${output}/${frame}.png`,PNG.sync.write(png));const s={frame,state:state(),glError:gl.getError(),draws:graphics.stats.draws};snapshots.push(s);console.log('FRAME',JSON.stringify(s));}
 try{
- rt.loadElf(await readFile(new URL('../game/libnttod.so',import.meta.url)));rt.constructors();game.startup({width:320,height:480});
+ rt.loadElf(await readFile(new URL('../game/libnttod.so',import.meta.url)));rt.constructors();game.startup({width:W,height:H});
  for(let frame=1;frame<=1200;frame++){
   guestNow=1700000000000+frame*1000/30;
-  if(actions.has(frame))game.touch(...actions.get(frame),0);
+  if(actions.has(frame))game.touch(actions.get(frame)[0],actions.get(frame)[1],actions.get(frame)[2]+(frame===1021||frame===1023?(H-480)/2:H-480),0);
   const a=performance.now();game.update();graphics.frame();libc.fs.flush();times.push(performance.now()-a);completed=frame;
   if(times.at(-1)>1000)console.log('SLOW',frame,times.at(-1));
   if(frame%30===0)await snapshot(frame);
  }
  game.pause();game.resume();game.update();
+ console.log('SAVES',JSON.stringify([...libc.fs.exportWritable()].map(([path,bytes])=>({path,bytes:bytes.length}))));
+ gl.getExtension('STACKGL_resize_drawingbuffer').resize(320,480);game.resize(320,480);game.update();graphics.frame();
+ if(gl.getError())throw Error('GL error after display resize');
 }catch(e){failure=e.stack;console.error(failure);process.exitCode=1;}
 finally{const result={completed,failure,elapsedMs:performance.now()-start,times,snapshots,graphics:graphics.stats,native:rt.stats};await writeFile(`${output}/result.json`,JSON.stringify(result,null,2));console.log('RESULT',JSON.stringify({completed,failure,elapsedMs:result.elapsedMs,glErrors:graphics.stats.errors}));rt.dispose();}

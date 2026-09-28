@@ -18,6 +18,18 @@ try {
   [0xe92d4000,0xe12fff33,0xe8bd8000].forEach((v,i)=>rt.writeU32(invoke+i*4,v));
   const nested=rt.registerImport('test:nested',()=>rt.call(arm,[],{batchInstructions:128}));
   assert.equal(rt.call(invoke,[0,0,0,nested]),300);
+  const pooled=rt.registerImport('test:pooled',c=>{
+    assert.equal(c.argU32(0),123);assert.equal(c.argU32(4),456);
+    const lr=c.lr;rt.call(invoke,[0,0,0,nested]);
+    assert.equal(c.argU32(0),123);assert.equal(c.argU32(4),456);assert.equal(c.lr,lr);
+    return 789;
+  });
+  // Direct host stubs retain the caller's stack argument layout.
+  assert.equal(rt.call(pooled,[123,0,0,0,456]),789);
+  const inline=rt.registerImport('test:inline',c=>c.argU32(0)+1,{inline:true});
+  assert.equal(rt.call(inline,[41]),42);
+  rt.registerImport('test:inline',()=>rt.call(arm)); // replacement clears inline flag
+  assert.equal(rt.call(inline),300);
   assert.equal(rt.call(arm,[],{blockBudget:false}),300);
   assert.equal(rt.call(arm),300);
   let a=0,b=0;

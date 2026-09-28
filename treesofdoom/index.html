@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="immersive">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -16,7 +16,7 @@
     main {display:flex;flex-direction:column;align-items:center;width:100%;gap:12px;padding:14px}
     h1 {font-size:1.4rem;margin:0}
     #stage {display:flex;align-items:center;justify-content:center;width:100%;height:clamp(200px,calc(100dvh - 190px),720px);min-height:0}
-    #screen {display:block;width:320px;height:480px;max-width:100%;max-height:100%;aspect-ratio:2/3;touch-action:none;background:#000;object-fit:contain}
+    #screen {display:block;width:320px;height:480px;max-width:100%;max-height:100%;touch-action:none;background:#000;object-fit:fill}
     #controls {display:flex;justify-content:center;flex-wrap:wrap;gap:8px;flex-shrink:0}
     button {font:inherit;border:0;border-radius:7px;padding:12px 22px;background:#d9efb1;color:#17220a;cursor:pointer} button:disabled {opacity:.6;cursor:wait}
     button.secondary {background:#253331;color:#f5f8f7;padding:10px 14px;font-size:.85rem;min-height:44px}
@@ -25,23 +25,34 @@
     #status:empty {display:none}
     #diagnostics {width:100%;max-width:900px;font:12px ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto}
     html.immersive,html.immersive body {height:100%;overflow:hidden;overscroll-behavior:none}
-    main.immersive {position:fixed;inset:0;height:100dvh;background:#101718;gap:6px;padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left))}
+    main.immersive {position:fixed;inset:0;height:100dvh;background:#101718;gap:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
     main.immersive h1,main.immersive #diagnostics {display:none}
     main.immersive #stage {flex:1;height:auto}
-    main.immersive #controls {gap:6px}
+    main.immersive #controls {position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:12px;right:12px;gap:8px;padding:14px;background:#101718ed;border-radius:12px;z-index:2}
+    main.immersive #status {position:absolute;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;margin:auto;padding:10px;background:#101718e8;border-radius:8px;z-index:2;pointer-events:none}
+    #player,#player * {-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+    #screen { -webkit-user-drag:none }
+    #menu {display:none;position:absolute;right:max(8px,env(safe-area-inset-right));bottom:max(4px,env(safe-area-inset-bottom));z-index:3;min-height:36px;padding:7px 10px;font-size:.75rem;opacity:.8}
+    main.immersive.playing #menu {display:block}
+    main.immersive.playing:not(.menu-open) #controls {display:none}
+    main.immersive.playing #controls {bottom:calc(max(4px,env(safe-area-inset-bottom)) + 44px)}
+    #save-status {width:100%;text-align:center;color:#c7d3d2;font-size:.75rem}
+    #diagnostics {user-select:text;-webkit-user-select:text}
     dialog {max-width:min(90vw,26rem);background:#1d2b29;color:#f5f8f7;border:1px solid #52645c;border-radius:14px;padding:24px;line-height:1.5}
     dialog::backdrop {background:#000a} dialog h2 {font-size:1.2rem;margin-top:0} dialog ol {padding-left:22px} dialog button {width:100%}
     [hidden] {display:none!important}
   </style>
 </head>
 <body>
-  <main id="player">
+  <main id="player" class="immersive">
     <h1>Trees of Doom</h1>
     <div id="stage"><canvas id="screen" width="320" height="480" aria-label="Trees of Doom game"></canvas></div>
+    <button id="menu" class="secondary" aria-expanded="false" aria-controls="controls" aria-label="Game display options">Menu</button>
     <div id="controls">
       <button id="play">Play</button>
-      <button id="fullscreen" class="secondary" aria-pressed="false">Full screen</button>
+      <button id="fullscreen" class="secondary" aria-pressed="true">Exit full screen</button>
       <button id="install" class="secondary">Add to Home Screen</button>
+      <span id="save-status" role="status">Progress saves automatically on this device</span>
     </div>
     <p id="status" role="status">Original game · Runs on your device · First download about 44 MB</p>
     <pre id="diagnostics" hidden></pre>

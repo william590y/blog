@@ -31,13 +31,30 @@ loading 17%, so they are disabled. The original game library is unchanged.
 
 ## Fullscreen and iPhone Home Screen
 
-Use **Full screen** to fit the game to the available display without stretching.
-Supported browsers use the native Fullscreen API. On iPhone, use Safari’s
+The expanded view is now the default. The original engine renders at the
+available portrait aspect ratio, including the iPhone 13 Pro Max's tall screen,
+while keeping 320-pixel-wide assets for speed. Safe areas protect the notch and
+home indicator. Display controls move into **Menu** during play.
+
+Play requests the native Fullscreen API where supported. On iPhone, use Safari’s
 **Share -> Add to Home Screen**, keep **Open as Web App** enabled if shown, and
-launch the new icon. Home Screen launches automatically use the fitted view
-without Safari toolbars. iOS may still show system status/gesture indicators.
-The in-page button also provides a fitted view if the Fullscreen API is absent.
-The view respects safe areas, rotation, and touch coordinate scaling.
+launch the new icon to remove Safari's toolbars. iOS controls system indicators.
+Selection, touch callouts and tap highlights are disabled on the game surface.
+
+## Local progress
+
+Writable game files (including original SQLite and keychain data) are saved to
+IndexedDB automatically. A synchronous localStorage recovery snapshot protects
+small saves if iOS suspends the page before an IndexedDB transaction finishes.
+Existing IndexedDB saves migrate in place; the newest complete snapshot wins.
+Failed writes remain dirty and retry. The Menu shows save status, and the page
+requests persistent storage when the browser supports it. No cookies or account
+are required. This saves the original game's progress, not a mid-jump CPU state.
+
+Progress belongs to this browser / installed app on this device. Clearing site
+data removes it, and browsers may still evict nonpersistent storage. Use the
+same Home Screen app consistently; Safari and installed apps can have separate
+storage.
 
 ## Files
 
@@ -48,7 +65,7 @@ The view respects safe areas, rotation, and touch coordinate scaling.
 - `audio.mjs`: original FMOD calls adapted to Web Audio.
 - `main.mjs`, `index.html`: browser entry point and touch/lifecycle handling.
 - `display.mjs`, `app.webmanifest`: fullscreen and Home Screen presentation.
-- `save-store.mjs`: IndexedDB persistence for writable game files.
+- `save-store.mjs`: IndexedDB saves and localStorage recovery.
 - `game/`: original native library and original extracted assets.
 - `vendor/`: emulator and zlib, licenses and corresponding emulator source.
 - `node-render.mjs`: real headless GLES2 test harness, not a browser substitute.
@@ -59,8 +76,7 @@ services and online leaderboards are unavailable. Native service adapters
 must deliver their offline/error callbacks without modifying game logic.
 
 The first download includes approximately 44 MB of original game content.
-Progress is saved to this site's IndexedDB when browser storage is available;
-clearing site data deletes local progress. Browser audio starts with a user
+Progress is saved locally when browser storage is available. Browser audio starts with a user
 gesture. Graphics requires WebGL1.
 
 ## Development and static deployment

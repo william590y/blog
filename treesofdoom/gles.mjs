@@ -62,12 +62,15 @@ export function installGLES(rt, gl, options = {}) {
       throw new Error(`Invalid GLES memory read: ${len} bytes at 0x${ptr.toString(16)}`);
     }
     if (len === 0) return new Uint8Array(0);
-    const bytes = rt.readBytes(ptr >>> 0, len);
+    // WebGL consumes these views synchronously. Retained buffer shadows still
+    // use copyBytes; never keep a view across guest execution / WASM growth.
+    const bytes = rt.view(ptr >>> 0, len);
     return bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   }
   function copyBytes(ptr, len) { return readBytes(ptr, len).slice(); }
   function typed(ptr, count, Type) {
-    const bytes = copyBytes(ptr, count * Type.BYTES_PER_ELEMENT);
+    let bytes = readBytes(ptr, count * Type.BYTES_PER_ELEMENT);
+    if (bytes.byteOffset % Type.BYTES_PER_ELEMENT) bytes = bytes.slice();
     return new Type(bytes.buffer, bytes.byteOffset, count);
   }
   function writeI32(ptr, value) { if (ptr) rt.writeU32(ptr >>> 0, Number(value) >>> 0); }
@@ -114,7 +117,7 @@ export function installGLES(rt, gl, options = {}) {
       stats.calls++;
       const result = fn(ctx);
       return typeof result === 'number' ? result : typeof result === 'boolean' ? Number(result) : 0;
-    });
+    }, {inline: true});
   }
   function gen(kind, create, count, ptr) {
     if (count < 0) { error(GL.INVALID_VALUE); return; }

@@ -23,6 +23,24 @@ const FAST_IMPORTS = new Set(`malloc calloc realloc free memcpy memmove memset m
   deflateInit2_ deflate deflateReset deflateEnd uncompress zError`.split(/\s+/).filter(Boolean));
 const FLOAT_HELPERS = ['i2f','f2iz','fcmple','fcmpun','fadd','fsub','fmul','fcmplt','fcmpgt','fcmpeq','fcmpge','fdiv','ui2f','f2uiz'];
 
+// A context is reused only at the same guest call depth. Nested qsort / JNI
+// callbacks get a separate slot, so outer argument caches remain intact.
+class ImportContext {
+  constructor(runtime) { this.runtime=runtime; this.regs=new Uint32Array(4); this.bits=new DataView(new ArrayBuffer(8)); }
+  reset(name,address) { this.name=name; this.address=address; this.mask=0; this._sp=undefined; this._lr=undefined; return this; }
+  get sp() { return this._sp??(this._sp=this.runtime.getReg(13)); }
+  get lr() { return this._lr??(this._lr=this.runtime.getReg(14)); }
+  argU32(i) {
+    if(i>=4)return this.runtime.readU32(this.sp+(i-4)*4);
+    const bit=1<<i;
+    if(!(this.mask&bit)){this.regs[i]=this.runtime.getReg(i);this.mask|=bit;}
+    return this.regs[i];
+  }
+  argI32(i) { return this.argU32(i)|0; }
+  argF32(i) { this.bits.setUint32(0,this.argU32(i),true); return this.bits.getFloat32(0,true); }
+  argF64(i) { this.bits.setUint32(0,this.argU32(i),true); this.bits.setUint32(4,this.argU32(i+1),true); return this.bits.getFloat64(0,true); }
+}
+
 export class ArmRuntime {
   static async create(options={}) {
     let factory = options.factory || globalThis.MUnicorn;
@@ -61,9 +79,10 @@ export class ArmRuntime {
     this.engine.reg_write_i32(uc.ARM_REG_FPEXC, 0x40000000);
     this.depth=0; this.images=[]; this.lastImports=[]; this.stats={calls:0,imports:0,fastImports:0,batches:0};
     this.softFloatHooks=new Map();
+    this.importContexts=[];this.cpuContexts=[];this.resultBits=new DataView(new ArrayBuffer(8));
     this.engine.hook_add(uc.HOOK_CODE, (e,address) => {
       const stub=this.stubNames.get(Number(address));
-      if(this.options.fastImports!==false && stub?.fn && FAST_IMPORTS.has(stub.name)){
+      if(this.options.fastImports!==false && stub?.fn && (stub.inline || FAST_IMPORTS.has(stub.name))){
         try{
           this.inInlineImport=true;
           const ctx=this.context(stub.name,stub.address);
@@ -131,10 +150,11 @@ export class ArmRuntime {
   allocCString(s) {const b=encoder.encode(s);const p=this.alloc(b.length+1);this.writeBytes(p,b);return p;}
   getReg(i) {const err=this.uc._uc_reg_read(this.handle,this.regs[i],this.regScratch);if(err)throw new Error('reg read '+err);return this.regScratchView().getUint32(0,true);}
   setReg(i,v) {this.regScratchView().setUint32(0,Number(v)>>>0,true);const err=this.uc._uc_reg_write(this.handle,this.regs[i],this.regScratch);if(err)throw new Error('reg write '+err);}
-  registerImport(name, fn) {
+  registerImport(name, fn, {inline=false}={}) {
     let item=this.imports.get(name);
     if(!item){const address=this.stubNext;this.stubNext+=4;if(this.stubNext>=this.returnAddress)throw new Error('Host callback space exhausted');this.writeU32(address,0xe12fff1e);item={name,address,fn};this.imports.set(name,item);this.stubNames.set(address,item);}
     else if(fn)item.fn=fn;
+    if(fn)item.inline=inline;
     return item.address;
   }
   registerDataSymbol(name,address) {this.dataSymbols.set(name,address);return address;}
@@ -196,14 +216,13 @@ export class ArmRuntime {
     }
   }
   context(name,address) {
-    const rt=this,regs=[];let sp,lr,temp;
-    const floatBits=()=>temp||(temp=new DataView(new ArrayBuffer(8)));
-    const ctx={runtime:rt,name,address,get sp(){return sp??(sp=rt.getReg(13));},get lr(){return lr??(lr=rt.getReg(14));},argU32(i){return i<4?(regs[i]??(regs[i]=rt.getReg(i))):rt.readU32(this.sp+(i-4)*4);},argI32(i){return this.argU32(i)|0;},argF32(i){const t=floatBits();t.setUint32(0,this.argU32(i),true);return t.getFloat32(0,true);},argF64(i){const t=floatBits();t.setUint32(0,this.argU32(i),true);t.setUint32(4,this.argU32(i+1),true);return t.getFloat64(0,true);}};
-    return ctx;
+    const ctx=this.importContexts[this.depth]??(this.importContexts[this.depth]=new ImportContext(this));
+    return ctx.reset(name,address);
   }
+
   setResult(result) {
     if(result&&typeof result==='object'){
-      const tmp=new DataView(new ArrayBuffer(8));
+      const tmp=this.resultBits;
       if('f32'in result){tmp.setFloat32(0,result.f32,true);this.setReg(0,tmp.getUint32(0,true));}
       else if('f64'in result){tmp.setFloat64(0,result.f64,true);this.setReg(0,tmp.getUint32(0,true));this.setReg(1,tmp.getUint32(4,true));}
       else if('u64'in result){const n=BigInt(result.u64);this.setReg(0,Number(n&0xffffffffn));this.setReg(1,Number(n>>32n&0xffffffffn));}
@@ -218,7 +237,7 @@ export class ArmRuntime {
     // Count a conservative instruction bound once per cap32 block when the
     // native helper is present, retaining the standard Unicorn fallback.
     const blockBudget=options.blockBudget!==false&&typeof this.uc._nttod_emu_start_budget==='function';
-    const saved=this.engine.context_alloc();this.engine.context_save(saved);const savedTrap=this.pendingTrap;let steps=0;
+    const saved=this.cpuContexts[this.depth]??(this.cpuContexts[this.depth]=this.engine.context_alloc());this.engine.context_save(saved);const savedTrap=this.pendingTrap;let steps=0;
     const beginTime=performance.now();this.depth++;this.stats.calls++;this.pendingTrap=undefined;
     try {
       const oldSp=this.getReg(13);const sp=(oldSp-0x1000)&~7;
@@ -247,8 +266,8 @@ export class ArmRuntime {
     } catch(error){
       this.lastCpuState=Array.from({length:16},(_,i)=>this.getReg(i));
       const message=String(error.message||error);throw new Error(message+'\nNative call '+(options.name||this.describeAddress(address))+', PC='+this.describeAddress(this.getReg(15))+', LR='+this.describeAddress(this.getReg(14))+(this.memoryFault?'\nMemory fault '+JSON.stringify(this.memoryFault):'')+'\nRecent imports: '+this.lastImports.join(', '));
-    } finally {this.depth--;this.engine.context_restore(saved);this.engine.context_free(saved);this.pendingTrap=savedTrap;}
+    } finally {this.depth--;this.engine.context_restore(saved);this.pendingTrap=savedTrap;}
   }
   constructors(options={}) {for(const image of this.images)for(const address of image.constructors)this.call(address,[],options);}
-  dispose(){this.uc._nttod_clear_budget?.(this.handle);this.uc._nttod_clear_f32_hooks?.(this.handle);this.engine.close();for(const r of this.regions)this.uc._free(r.ptr);this.uc._free(this.regScratch);}
+  dispose(){this.uc._nttod_clear_budget?.(this.handle);this.uc._nttod_clear_f32_hooks?.(this.handle);for(const ctx of this.cpuContexts)this.engine.context_free(ctx);this.engine.close();for(const r of this.regions)this.uc._free(r.ptr);this.uc._free(this.regScratch);}
 }

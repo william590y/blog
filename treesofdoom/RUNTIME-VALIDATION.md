@@ -99,3 +99,55 @@ replay harness are retained in `tests/native-render-result.json` and
 `tests/native-render.mjs`. The harness requires Node, `gl`, `pngjs`, and a real
 GLES-capable display (the test used Xvfb/Mesa). Copy the browser vendor bundle
 to `.cjs` for Node as described in the emulator rebuild instructions.
+
+
+## Default expanded view, tall screens, durable saves and host-call tuning
+
+Follow-up on 2026-09-28. The page now opens expanded, and the native engine uses
+320 x variable-height coordinates matching the available portrait viewport.
+At 428 x 926 CSS pixels with 47 / 34-pixel safe areas, the game gets a 428 x 845
+CSS-pixel surface backed by 320 x 632 native coordinates. Artwork is not
+stretched or cropped; the original engine lays out the taller scene. Browser
+chrome still requires native fullscreen or a Home Screen web app. iOS text
+selection, touch callouts, and tap highlights are disabled on the game surface.
+
+Host optimizations reuse import-argument objects and CPU contexts by guest-call
+depth, run non-reentrant GL adapters inline, and pass bounded guest-memory views
+to synchronous WebGL calls. Retained buffer shadows remain owned copies.
+The emulator bundle, original game binary, assets and game logic are unchanged.
+
+A fresh sequential 1,200-frame baseline/candidate comparison had **40 / 40
+byte-identical PNG checkpoints**, identical native call/import counts, and no
+CPU or GL errors. Emulator batches fell from 711,815 to 509,625 by eliminating
+GL stop/resume transitions. Raw timings and checkpoint hashes are retained in
+`tests/mobile-performance-result.json`.
+
+| Measurement | Prior deployment | This update |
+| --- | ---: | ---: |
+| Menu median, frames 271–300 | 53.21 ms | 50.00 ms |
+| Gameplay median, frames 781–1000 | 101.26 ms | 94.15 ms |
+| All frames, median | 62.86 ms | 60.04 ms |
+| Total replay | 137.61 s | 130.00 s |
+
+Gameplay throughput improved about 7.5% in this single desktop comparison.
+These are software-renderer timings, not phone FPS or a native-app benchmark.
+ARM interpretation remains the dominant limitation; near-native performance
+would require a different CPU translation strategy. Direct iPhone testing
+remains outstanding.
+
+`tests/save-store.mjs` verifies existing IndexedDB v1 migration, binary progress
+across module reload, ordered writes, synchronous recovery before async commit,
+newest-snapshot selection, quota/database failures, deletion, and retry of dirty
+filesystem revisions. It uses fake-indexeddb, available through NODE_PATH.
+The CPU guard suite additionally checks pooled outer arguments surviving nested
+guest calls, explicit inline imports, and replacing an inline handler safely.
+
+The 320 x 632 native render completed 1,200 frames through shop, scrolling,
+Classic loading, tutorial acknowledgement, a jump and coin collection, followed
+by pause/resume and a resize back to 320 x 480 with zero GL errors. The final
+screen and timings are retained in `tests/tall-gameplay.png` and
+`tests/tall-render-result.json`. Two original save files (102 and 16,384 bytes)
+were restored into a fresh emulator and run for another 300 frames. All inventory,
+statistics, high-score and achievement rows matched; the five awarded Moustachios
+survived the restart. These are native-engine and storage-adapter checks;
+physical iPhone Safari validation remains outstanding.

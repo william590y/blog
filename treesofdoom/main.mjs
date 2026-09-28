@@ -1,5 +1,6 @@
+import {gameDimensions, setPlaying} from './display.mjs';
 import {ArmRuntime} from './runtime.mjs';
-import {readSaves, writeSaves} from './save-store.mjs';
+import {readSaves, writeSaves, requestPersistentStorage} from './save-store.mjs';
 
 const canvas = document.querySelector('#screen');
 const button = document.querySelector('#play');
@@ -14,15 +15,22 @@ function log(...parts) {
 }
 function stage(message) { status.textContent = message; if (message) log(message); }
 let runtime, game, libc, graphics, audio, audioContext;
-let active = false, paused = false, failed = false, saveQueue = Promise.resolve();
+let active = false, paused = false, failed = false;
+let saveWarning = false;
 function queueSave(files) {
-  saveQueue = saveQueue.then(() => writeSaves(files)).catch(error => {
+  return writeSaves(files).then(result => {
+    document.querySelector('#save-status').textContent = result.backupOnly ? 'Progress saved locally (recovery copy)' : 'Progress saved on this device';
+    if (saveWarning) { stage(''); saveWarning = false; }
+  }).catch(error => {
     log('Save failed', error.message);
-    stage('Your browser could not save progress. Keep this page open to continue this session.');
+    if (!saveWarning) stage('Progress could not be saved. Retrying… Keep this page open.');
+    saveWarning = true;
+    document.querySelector('#save-status').textContent = 'Saving unavailable — retrying';
+    throw error;
   });
 }
 function failure(message, error) {
-  active = false; failed = true;
+  active = false; failed = true; setPlaying(false);
   stage(message + ': ' + error.message); log(error.stack || error.message);
   if (runtime) log('Recent native calls', runtime.lastImports);
   button.hidden = false; button.disabled = false; button.textContent = 'Reload game';
@@ -35,6 +43,7 @@ canvas.addEventListener('webglcontextlost', event => {
 button.addEventListener('click', async () => {
   if (failed) { location.reload(); return; }
   button.disabled = true;
+  requestPersistentStorage().then(persistent => log('Persistent storage', persistent));
   try {
     const options = {alpha:false, antialias:false, stencil:true, preserveDrawingBuffer:true};
     const gl = canvas.getContext('webgl', options) || canvas.getContext('experimental-webgl', options);
@@ -47,7 +56,7 @@ button.addEventListener('click', async () => {
     ]);
     let saves;
     try { saves = await readSaves(); }
-    catch (error) { saves = new Map(); log('Saved progress unavailable', error.message); }
+    catch (error) { throw new Error('Could not open saved progress. Reload to retry. ' + error.message); }
     stage('Loading the original game…');
     const fs = new Map();
     const manifestResponse = await fetch('./game/manifest.json');
@@ -80,14 +89,21 @@ button.addEventListener('click', async () => {
     runtime.loadElf(native);
     stage('Starting the original engine…');
     runtime.constructors();
-    game.startup({width:320, height:480});
-    active = true; button.hidden = true;
+    const size = gameDimensions();
+    canvas.width = size.width; canvas.height = size.height;
+    game.startup(size);
+    active = true; button.hidden = true; setPlaying(true);
     stage('Loading game assets…');
     let frames = 0, last = performance.now();
     function frame() {
       if (!active) return;
       if (paused) { requestAnimationFrame(frame); return; }
       try {
+        const size = gameDimensions();
+        if (canvas.width !== size.width || canvas.height !== size.height) {
+          canvas.width = size.width; canvas.height = size.height;
+          game.resize(size.width, size.height);
+        }
         game.update(); graphics.frame(); libc.fs.flush(); frames++;
         const now = performance.now();
         if (debug && now - last > 3000) {
