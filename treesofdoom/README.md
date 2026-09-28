@@ -14,8 +14,9 @@ reached height 50 with 10 coins through the original tutorial. All observed
 rendering checks reported no GL errors.
 
 The original loader builds 250 chunks across successive updates. Loading is
-slow, and the desktop software-rendering test ran at roughly7–10 frames/second
-during gameplay. Direct iPhone Safari performance has not been verified.
+still noticeable. The optimized emulator measured about 1.8x faster than the
+previous runtime in a controlled desktop software-rendering comparison. Direct
+iPhone Safari performance has not been verified.
 The cloud test browser disables WebGL, so these gameplay checks used actual
 GLES2 through Mesa/ANGLE, not that browser or a graphics-call recorder.
 
@@ -28,6 +29,16 @@ matched 1,455,056 comparisons against original ARM outputs but slowed asset
 loading 17%, so they are disabled. The original game library is unchanged.
 
 
+## Fullscreen and iPhone Home Screen
+
+Use **Full screen** to fit the game to the available display without stretching.
+Supported browsers use the native Fullscreen API. On iPhone, use Safari’s
+**Share -> Add to Home Screen**, keep **Open as Web App** enabled if shown, and
+launch the new icon. Home Screen launches automatically use the fitted view
+without Safari toolbars. iOS may still show system status/gesture indicators.
+The in-page button also provides a fitted view if the Fullscreen API is absent.
+The view respects safe areas, rotation, and touch coordinate scaling.
+
 ## Files
 
 - `runtime.mjs`: ARM ELF loading, memory, host imports and execution.
@@ -36,6 +47,7 @@ loading 17%, so they are disabled. The original game library is unchanged.
 - `gles.mjs`: original GLES2 calls translated to WebGL1.
 - `audio.mjs`: original FMOD calls adapted to Web Audio.
 - `main.mjs`, `index.html`: browser entry point and touch/lifecycle handling.
+- `display.mjs`, `app.webmanifest`: fullscreen and Home Screen presentation.
 - `save-store.mjs`: IndexedDB persistence for writable game files.
 - `game/`: original native library and original extracted assets.
 - `vendor/`: emulator and zlib, licenses and corresponding emulator source.

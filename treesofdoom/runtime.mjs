@@ -215,6 +215,9 @@ export class ArmRuntime {
   call(address,args=[],options={}) {
     if(this.inInlineImport)throw new Error('Reentrant guest call from an inline import; use the slow path for this handler.');
     options={...this.options,...options};
+    // Count a conservative instruction bound once per cap32 block when the
+    // native helper is present, retaining the standard Unicorn fallback.
+    const blockBudget=options.blockBudget!==false&&typeof this.uc._nttod_emu_start_budget==='function';
     const saved=this.engine.context_alloc();this.engine.context_save(saved);const savedTrap=this.pendingTrap;let steps=0;
     const beginTime=performance.now();this.depth++;this.stats.calls++;this.pendingTrap=undefined;
     try {
@@ -223,7 +226,11 @@ export class ArmRuntime {
       this.setReg(14,this.returnAddress);let next=address;
       while(true){
         this.pendingTrap=undefined;this.pendingError=undefined;
-        this.engine.emu_start(next,this.returnAddress,0,options.batchInstructions||2_000_000);this.stats.batches++;
+        if(blockBudget){
+          const error=this.uc._nttod_emu_start_budget(this.handle,next,this.returnAddress,options.batchInstructions||2_000_000);
+          if(error)throw new Error(this.uc.strerror(error));
+        }else this.engine.emu_start(next,this.returnAddress,0,options.batchInstructions||2_000_000);
+        this.stats.batches++;
         if(this.pendingError)throw this.pendingError;
         const pc=this.getReg(15);if(pc===this.returnAddress)break;
         if(this.pendingTrap!==undefined){
@@ -232,7 +239,7 @@ export class ArmRuntime {
           if(!stub.fn)throw new Error('Unimplemented Android import: '+stub.name+' (caller '+hex(ctx.lr)+')');
           const result=stub.fn(ctx);if(result?.then)throw new Error('Native import returned a Promise: '+stub.name);
           this.setResult(result);next=ctx.lr;
-        }else{steps+=(options.batchInstructions||2_000_000);next=pc|((this.engine.reg_read_i32(this.uc.ARM_REG_CPSR)&32)?1:0);}
+        }else{steps+=blockBudget?this.uc._nttod_budget_used(this.handle):(options.batchInstructions||2_000_000);next=pc|((this.engine.reg_read_i32(this.uc.ARM_REG_CPSR)&32)?1:0);}
         const elapsedMs=performance.now()-beginTime;
         if(steps>(options.maxInstructions||100_000_000)||elapsedMs>(options.maxMillis||30_000))throw new Error('Native call budget exceeded at '+hex(this.getReg(15))+' (elapsed '+Math.round(elapsedMs)+' ms; counted instructions '+steps+')');
       }
@@ -243,5 +250,5 @@ export class ArmRuntime {
     } finally {this.depth--;this.engine.context_restore(saved);this.engine.context_free(saved);this.pendingTrap=savedTrap;}
   }
   constructors(options={}) {for(const image of this.images)for(const address of image.constructors)this.call(address,[],options);}
-  dispose(){this.uc._nttod_clear_f32_hooks?.(this.handle);this.engine.close();for(const r of this.regions)this.uc._free(r.ptr);this.uc._free(this.regScratch);}
+  dispose(){this.uc._nttod_clear_budget?.(this.handle);this.uc._nttod_clear_f32_hooks?.(this.handle);this.engine.close();for(const r of this.regions)this.uc._free(r.ptr);this.uc._free(this.regScratch);}
 }

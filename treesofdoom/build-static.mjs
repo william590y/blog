@@ -5,9 +5,10 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const output = path.resolve(process.argv[2] || path.join(root, 'dist'));
 if (output === root) throw new Error('Output must be separate from source');
 await mkdir(output, {recursive:true});
-for (const name of ['index.html','main.mjs','runtime.mjs','libc.mjs','jni.mjs','gles.mjs','audio.mjs','save-store.mjs','README.md','package.json','package-lock.json','build-static.mjs','RUNTIME-VALIDATION.md']) {
+for (const name of ['index.html','main.mjs','display.mjs','app.webmanifest','runtime.mjs','libc.mjs','jni.mjs','gles.mjs','audio.mjs','save-store.mjs','README.md','package.json','package-lock.json','build-static.mjs','RUNTIME-VALIDATION.md']) {
   await cp(path.join(root,name), path.join(output,name));
 }
+await cp(path.join(root,'tests'), path.join(output,'tests'), {recursive:true});
 await mkdir(path.join(output,'vendor'), {recursive:true});
 await rm(path.join(output,'vendor/rebuild'), {recursive:true,force:true});
 for (const name of ['unicorn_arm.js','pako-zlib.mjs','LICENSE.unicorn-js','PAKO-LICENSE','README.md','rebuild']) {

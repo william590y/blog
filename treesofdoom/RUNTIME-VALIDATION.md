@@ -48,3 +48,54 @@ longer time allowance, and CPU context restoration permits the next valid call.
 Budget errors now include elapsed time and counted instructions. Loading may
 still be slow; this fix increases the loading allowance rather than speeding
 up the emulator. Direct phone validation remains outstanding.
+
+
+## Fullscreen and runtime optimization (2026-09-28)
+
+The page now includes a Full screen button, a Home Screen web-app manifest,
+iOS standalone metadata, installation instructions, safe-area padding, and
+aspect-preserving canvas fitting. Rendering remains 320 x 480, so touch
+coordinates and original game logic do not change. Native fullscreen is used
+when available, with a fitted page view otherwise. Direct iPhone testing is
+still outstanding; system status/gesture indicators are controlled by iOS.
+
+Profiling found expensive per-instruction counting and repeated Wasm table
+lookups. The new backend adds a C translation-block budget and caches function
+pointers with invalidation on every table mutation. No original game bytes
+are changed. CPU guard, wall-clock deadline, nested callbacks, and the legacy
+instruction-count API remain available. Soft-float hooks remain disabled.
+
+A controlled 1,080-frame Mesa/ANGLE comparison used identical touch events and
+a deterministic guest clock (30 Hz); measured host time remained real. All
+37 PNG checkpoints were byte-identical. Both runs completed with no CPU or
+GL errors. Measured durations in this environment:
+
+| Work | Previous runtime | Optimized candidate | Speed ratio |
+| --- | ---: | ---: | ---: |
+| Main asset-loading update | 19,446 ms | 11,292 ms | 1.72x |
+| Menu updates, median (frames 271-300) | 87.68 ms | 49.13 ms | 1.78x |
+| Gameplay updates, median (frames 651-900) | 170.75 ms | 93.05 ms | 1.83x |
+| All updates, median | 108.82 ms | 58.05 ms | 1.87x |
+
+These are desktop software-renderer timings, not phone FPS. The measured
+candidate stopped before a block that exceeded its remaining batch allowance.
+The final helper permits that last block to finish, bounding overshoot to one
+cap32 block so unusually small batches cannot stall. CPU regression tests cover
+this boundary change, ARM and Thumb loops, nested guest calls, recovery after
+a budget failure, legacy fallback, and callback-table slot reuse. Original
+SQLite save round trips and the original 169-instruction translation regression
+also passed on this final helper.
+
+The test workspace restarted after the completed comparison; the above timing
+summary was retained, while its raw logs and PNGs were lost. Final-build
+regression checks are recorded separately below.
+
+Final bundle `4480e248...` completed a fresh 1,200-frame real Mesa/ANGLE run
+with no CPU or GL errors: title -> shop -> Back -> shop -> scroll -> Back ->
+Classic loading -> gameplay, followed by pause/resume. Shop states at frames
+300/330/360/390/420 were 2/6/2/6/2; gameplay state was 3 from frame 780 onward.
+The untouched game library SHA-256 remains `beebb0f4...`. Results and the
+replay harness are retained in `tests/native-render-result.json` and
+`tests/native-render.mjs`. The harness requires Node, `gl`, `pngjs`, and a real
+GLES-capable display (the test used Xvfb/Mesa). Copy the browser vendor bundle
+to `.cjs` for Node as described in the emulator rebuild instructions.

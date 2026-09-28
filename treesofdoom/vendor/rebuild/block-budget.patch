@@ -1,0 +1,21 @@
+--- a/build.py
++++ b/build.py
+@@ -213,6 +213,9 @@
+     # Native ARM EABI hooks are optional; the default build is plain cap32.
+     with_softfloat = os.environ.get('NTTOD_SOFTFLOAT') == '1'
+     exported = list(EXPORTED_FUNCTIONS)
++    with_block_budget = os.environ.get('NTTOD_BLOCK_BUDGET') == '1'
++    if with_block_budget:
++        exported += ['_nttod_emu_start_budget', '_nttod_budget_used', '_nttod_clear_budget']
+     if with_softfloat:
+         exported += ['_nttod_add_f32_hook', '_nttod_hook_count',
+                      '_nttod_fallback_count', '_nttod_clear_f32_hooks']
+@@ -239,6 +242,8 @@
+     if with_softfloat:
+         cmd += ['src/nttod-softfloat.c', '-I' + os.path.join(UNICORN_DIR, 'include'),
+                 '-fno-fast-math', '-ffp-contract=off']
++    if with_block_budget:
++        cmd += ['src/nttod-block-budget.c', '-I' + os.path.join(UNICORN_DIR, 'include')]
+     for path in constant_files(archs):
+         cmd += ['--post-js', path]
+     cmd += ['--post-js', 'src/unicorn-wrapper.js']

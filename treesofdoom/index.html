@@ -4,27 +4,63 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101718">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Trees of Doom">
+  <link rel="manifest" href="./app.webmanifest">
+  <link rel="apple-touch-icon" href="/favicon.png">
   <title>Trees of Doom · William Liaw</title>
   <style>
     * {box-sizing:border-box} html,body {margin:0;min-height:100%;background:#101718;color:#f5f8f7;font:16px system-ui,sans-serif}
     body {min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
     main {display:flex;flex-direction:column;align-items:center;width:100%;gap:12px;padding:14px}
-    h1 {font-size:1.4rem;margin:0} #screen {display:block;width:min(100%,calc((100dvh - 120px)*2/3),480px);height:auto;aspect-ratio:2/3;touch-action:none;background:#000}
+    h1 {font-size:1.4rem;margin:0}
+    #stage {display:flex;align-items:center;justify-content:center;width:100%;height:clamp(200px,calc(100dvh - 190px),720px);min-height:0}
+    #screen {display:block;width:320px;height:480px;max-width:100%;max-height:100%;aspect-ratio:2/3;touch-action:none;background:#000;object-fit:contain}
+    #controls {display:flex;justify-content:center;flex-wrap:wrap;gap:8px;flex-shrink:0}
     button {font:inherit;border:0;border-radius:7px;padding:12px 22px;background:#d9efb1;color:#17220a;cursor:pointer} button:disabled {opacity:.6;cursor:wait}
-    #status {margin:0;max-width:34rem;text-align:center;font-size:.9rem;color:#c7d3d2}
+    button.secondary {background:#253331;color:#f5f8f7;padding:10px 14px;font-size:.85rem;min-height:44px}
+    button:focus-visible {outline:3px solid white;outline-offset:3px}
+    #status {margin:0;max-width:34rem;text-align:center;font-size:.9rem;color:#c7d3d2;max-height:25dvh;overflow:auto;overflow-wrap:anywhere;flex-shrink:0}
+    #status:empty {display:none}
     #diagnostics {width:100%;max-width:900px;font:12px ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto}
+    html.immersive,html.immersive body {height:100%;overflow:hidden;overscroll-behavior:none}
+    main.immersive {position:fixed;inset:0;height:100dvh;background:#101718;gap:6px;padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left))}
+    main.immersive h1,main.immersive #diagnostics {display:none}
+    main.immersive #stage {flex:1;height:auto}
+    main.immersive #controls {gap:6px}
+    dialog {max-width:min(90vw,26rem);background:#1d2b29;color:#f5f8f7;border:1px solid #52645c;border-radius:14px;padding:24px;line-height:1.5}
+    dialog::backdrop {background:#000a} dialog h2 {font-size:1.2rem;margin-top:0} dialog ol {padding-left:22px} dialog button {width:100%}
     [hidden] {display:none!important}
   </style>
 </head>
 <body>
-  <main>
+  <main id="player">
     <h1>Trees of Doom</h1>
-    <canvas id="screen" width="320" height="480" aria-label="Trees of Doom game"></canvas>
-    <button id="play">Play</button>
+    <div id="stage"><canvas id="screen" width="320" height="480" aria-label="Trees of Doom game"></canvas></div>
+    <div id="controls">
+      <button id="play">Play</button>
+      <button id="fullscreen" class="secondary" aria-pressed="false">Full screen</button>
+      <button id="install" class="secondary">Add to Home Screen</button>
+    </div>
     <p id="status" role="status">Original game · Runs on your device · First download about 44 MB</p>
     <pre id="diagnostics" hidden></pre>
   </main>
+  <dialog id="install-help" aria-labelledby="install-title">
+    <h2 id="install-title">Play without Safari’s toolbars</h2>
+    <ol>
+      <li>Open this page in <strong>Safari</strong> and tap <strong>Share</strong>.</li>
+      <li>Choose <strong>Add to Home Screen</strong>.</li>
+      <li>Keep <strong>Open as Web App</strong> on, if shown, then tap <strong>Add</strong>.</li>
+      <li>Launch <strong>Trees of Doom</strong> from your Home Screen.</li>
+    </ol>
+    <p>On other browsers, use Full screen or the browser’s Install app option.</p>
+    <form method="dialog"><button>Got it</button></form>
+  </dialog>
+  <script type="module" src="./display.mjs"></script>
   <script src="./vendor/unicorn_arm.js"></script>
   <script type="module" src="./main.mjs"></script>
+
+
 </body>
 </html>

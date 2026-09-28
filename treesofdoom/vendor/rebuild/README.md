@@ -69,3 +69,39 @@ configuration defines `CONFIG_TCG_INTERPRETER`, `CONFIG_POSIX`, and
 
 Unicorn.js and local changes are GPL-2.0. Original per-file license notices and
 the complete upstream LICENSE files are retained in the source archive.
+
+## Performance build (2026-09-28)
+
+The current bundle adds the separately included source and patches to the
+complete source archive above. With the same toolchain, rebuild using:
+
+```sh
+source /path/to/emsdk/emsdk_env.sh
+tar -xzf unicorn-arm-cap32-source.tar.gz
+cp nttod-block-budget.c unicorn-arm-cap32-source/src/
+cd unicorn-arm-cap32-source
+patch -p1 < ../block-budget.patch
+NTTOD_SOFTFLOAT=0 NTTOD_BLOCK_BUDGET=1 python build-cap32.py
+python ../cache-wasm-table.py dist/unicorn_arm.js dist/unicorn_arm.js
+```
+
+Current SHA-256:
+`4480e24814966a39e052e711601c3d33e245aeaf047bb4de29af210f5720b4c4`.
+The wrapper opts into the block budget when its exports are present. The
+standard instruction-at-a-time Unicorn API remains intact. ARM blocks are
+charged by size / 4; Thumb blocks by size / 2, a conservative upper bound.
+Execution may finish at most one cap32 block beyond a batch boundary. Small
+batches still make progress. The existing guard counts completed batches, with
+wall-clock checks also applying to host traps. The 120-second browser deadline
+is unchanged. No game instructions are modified.
+
+The JavaScript table cache tracks callback removal and slot reuse. All new
+source and patches are GPL-2.0, like the underlying emulator. The optional
+soft-float hooks remain disabled.
+
+For the CPU regression test, from the `treesofdoom` directory:
+
+```sh
+cp vendor/unicorn_arm.js vendor/unicorn_arm.cjs
+node tests/runtime-budget.mjs
+```

@@ -9,7 +9,14 @@ Upstream sources:
 
 The JavaScript bundle embeds its WebAssembly binary. The `.js` and `.cjs`
 files are identical browser/CommonJS copies, SHA-256:
-`f1677557413836c8e5b2071ac269b53e582a36415e31f79531868bd77d98dc4c`.
+`4480e24814966a39e052e711601c3d33e245aeaf047bb4de29af210f5720b4c4`.
+
+The current performance build adds a native translation-block budget and a
+coherent JavaScript cache of WebAssembly function pointers. The instruction
+guard and wall-clock deadline remain active. Apply `block-budget.patch`,
+`nttod-block-budget.c`, and `cache-wasm-table.py` to the baseline archive as
+described in `rebuild/README.md` to reproduce the current bundle.
+For Node, copy `unicorn_arm.js` to `unicorn_arm.cjs` without changing its bytes.
 
 The emulator caps translation blocks at 32 guest instructions. This fixes a
 WebAssembly memory corruption failure when translating long original ARM
@@ -20,7 +27,7 @@ Neither change patches the game executable.
 Complete corresponding emulator sources, licenses, local patches, and build
 instructions are in `rebuild/unicorn-arm-cap32-source.tar.gz` and `rebuild/`.
 The archive contains optional native EABI float helper hooks, disabled in the
-default source build. The installed backend above is the plain cap32 build.
+default source build. The installed backend above has no float-helper hooks.
 The optional hooks passed bit-equivalence tests but made the measured preload
 about 17% slower, so they are not included in the installed bundle.
 
