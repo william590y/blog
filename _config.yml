@@ -59,6 +59,10 @@ collections:
 #   - vendor/gems/
 #   - vendor/ruby/
 
+# Keep Trees of Doom out of the published website.
+exclude:
+  - treesofdoom/
+
 markdown: kramdown
 kramdown:
   input: GFM
