@@ -144,6 +144,9 @@ function build(i) {
       v.dataset.src = m.src; v.dataset.webm = m.webm || ''; fillCrop(v, m); box.appendChild(v);
       // stay transparent until frames arrive, so the slide image (which shows the clip's first frame) is never blacked out
       v.style.opacity = 0; v.style.transition = 'opacity .2s'; v.addEventListener('playing', () => { v.style.opacity = 1; });
+      // Safari starts gesture-less (muted) playback only for a VISIBLE video: reveal it once its first frame is decoded (the same
+      // picture as the slide image under it, so nothing flashes), then (re)start it while its slide is showing
+      v.addEventListener('loadeddata', () => { if (!v.firstChild) return; v.style.opacity = 1; if (v.closest('.slide.on') && v.paused) v.play().catch(() => {}); });
     } else if (m.kind === 'video') {
       box.classList.add('ctl');
       const v = document.createElement('video');
@@ -183,11 +186,12 @@ function activate(el, on) {
         }
         v.load();
       }
+      v.autoplay = true;   // WebKit starts a muted autoplay video by itself as soon as it becomes visible
       try { v.currentTime = 0; } catch (e) {}
       v.play().catch(() => {});
     }
     else {  // release the decoder: phones only allow a handful of live video players
-      v.pause(); v.style.opacity = 0;
+      v.autoplay = false; v.pause(); v.style.opacity = 0;
       while (v.firstChild) v.removeChild(v.firstChild);
       v.removeAttribute('src'); v.load();
     }
@@ -262,6 +266,11 @@ stage.addEventListener('touchend', e => {
   if (tx === null) return; const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
   if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) go(cur + (dx < 0 ? 1 : -1)); tx = null;
 });
+// a browser that still refuses gesture-less playback (Low Power Mode, autoplay settings) starts the current slide's loops on the
+// first tap, click or key press, or when the tab comes back into view
+function kickLoops() { const el = built.get(cur); if (el) el.querySelectorAll('video[data-src]').forEach(v => { if (v.firstChild && v.paused) v.play().catch(() => {}); }); }
+['pointerdown', 'touchstart', 'keydown'].forEach(t => addEventListener(t, kickLoops, { passive: true }));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) kickLoops(); });
 addEventListener('hashchange', () => { const h = parseInt(location.hash.slice(1)); if (h && h - 1 !== cur) go(h - 1, false); });
 go((parseInt(location.hash.slice(1)) || 1) - 1, false);
 </script>
