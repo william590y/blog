@@ -47,6 +47,24 @@
   #tip .bar { height: 7px; background: var(--cand); border-radius: 3px; display: inline-block; vertical-align: middle; }
   #tip .hd { color: var(--muted); border-bottom: 1px solid var(--grid); }
   #entLegend .swatch { width: 48px; }
+  #oursVar { max-width: 440px; }
+  .ldesc { padding: 2px 12px 0; color: var(--muted); font-size: 12px; line-height: 1.4; max-width: 1100px; }
+  .ldesc b { color: var(--text); font-weight: 600; }
+  .tag { display: inline-block; font-size: 10px; padding: 0 5px; border-radius: 3px; margin-left: 6px;
+         border: 1px solid var(--grid); color: var(--muted); vertical-align: 1px; }
+  .tag.warn { border-color: #8a5a2a; color: #e0a060; }
+  #allBtn { margin-left: auto; margin-right: 10px; }
+  #allWrap { display: none; overflow-x: auto; padding: 4px 12px 12px; }
+  #allTable { border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+  #allTable th { text-align: right; padding: 2px 4px 2px 14px; font-weight: 500; opacity: .7; position: sticky; top: 0; background: var(--panel); }
+  #allTable th.l, #allTable td.l { text-align: left; padding-left: 0; }
+  #allTable td { text-align: right; padding: 1px 4px 1px 14px; font-variant-numeric: tabular-nums; }
+  #allTable tr.grp td { padding-top: 8px; color: var(--muted); font-weight: 600; text-align: left; }
+  #allTable tr.lane { cursor: pointer; }
+  #allTable tr.lane:hover td { background: #262a31; }
+  #allTable tr.sel td { background: #233246; }
+  #allTable td.na { opacity: .35; }
+  #allTable td.g { color: var(--muted); text-align: left; }
   #aggImgs { display: none; padding: 8px 12px 12px; }
   #aggImgs img { max-width: 100%; border-radius: 6px; margin-top: 8px; background: #fff; }
   #hint { padding: 6px 16px 14px; color: var(--muted); font-size: 12px; }
@@ -85,7 +103,7 @@
   <button id="backBtn" title="back to the windowed-mode visualizer">&larr; windowed mode</button>
   <select id="perfSel"></select>
   <span class="lbl">ours =</span>
-  <select id="oursVar" title="Which of our checkpoints / decode regimes fills the OURS panel, metrics row, entropy heatmap and DTW curve. Beyer / Zeng panels stay fixed."></select>
+  <select id="oursVar" title="Which system (model, checkpoint, decode regime) fills the OURS panel, metrics row, entropy heatmap and DTW curve; grouped by model (AMT v1 original / AMT v1 with the attention fix / AMT v2). Beyer / Zeng panels stay fixed."></select>
   <span class="lbl">metric</span>
   <select id="metricSel" title="Which score family fills the metrics table">
     <option value="base">tol1 F1</option>
@@ -130,8 +148,15 @@
 </header>
 
 <div class="panel">
-  <h2>Metrics <span class="hint" id="metricsHint"></span></h2>
+  <h2>Metrics <span class="hint" id="metricsHint"></span>
+    <button id="allBtn" title="Every system in the dropdown, with this song's score and the test-set mean for the selected metric. Click a row to show that system.">all systems &#9662;</button></h2>
   <div id="metricsWrap"><table id="metricsTable"></table></div>
+  <div id="allWrap">
+    <div class="lbl" style="padding:2px 0 6px">
+      <label class="key"><input type="checkbox" id="allSort"> sort by test-set mean</label>
+      <span id="allHint" style="margin-left:12px"></span></div>
+    <table id="allTable"></table>
+  </div>
 </div>
 
 <div class="panel"><h2><span style="color:var(--perf)">Performance</span>
@@ -140,6 +165,7 @@
     <span class="hint" id="perfHint" style="margin-left:auto"></span></h2>
   <div class="rollwrap"><canvas id="rollPerf"></canvas></div></div>
 <div class="panel"><h2><span style="color:var(--ours)">Ours</span> <span class="hint" id="oursHint"></span></h2>
+  <div class="ldesc" id="oursDesc"></div>
   <div class="rollwrap"><canvas id="rollOurs"></canvas></div></div>
 <div class="panel"><h2><span style="color:var(--beyer)">Beyer &amp; Dai</span> <span class="hint">MIDI2ScoreTransformer (ISMIR 2024)</span></h2>
   <div class="rollwrap"><canvas id="rollBeyer"></canvas></div></div>
@@ -178,9 +204,9 @@
 </div>
 
 <div id="hint">Same drawing conventions as the windowed visualizer: <span style="color:var(--gt)">green outlines</span> are the ground-truth score, <span style="color:var(--pred)">orange bars</span> the system's predicted score, 0.5 s beat grid with a heavier line every 2 s, one row per semitone with C labels. Each system is re-anchored to its own first onset (whole-song eval convention). <b>scale-normalize</b> multiplies a system's clock by its per-song scale-max argmax ratio (the panel label shows the factor; the metrics table shows it for the scale-max families) — the view the scale-max / IOI scale-max scores are computed on. Hover OUR notes
-for decode-time perplexity, entropy and top-5 alternatives per channel (trace lanes only); the PERFORMANCE panel maps performance note <i>i</i> to generated note <i>i</i>
-(one score note per control) and paints in <span style="color:var(--miss)">red</span> the performance notes the tokenizer's aligner could not match to any score note. Click a note to pin its tooltip (Esc/click to release). Deep-link with
-#&lt;split/perf&gt;. Boundary geometry: slide-69 re-packs every 69 notes after 138; slide-by-1 every note; reset = disjoint windows.</div>
+for decode-time perplexity, entropy and top-5 alternatives per channel (trace lanes only); the PERFORMANCE panel maps performance note <i>i</i> to the score note generated for it
+(one score note per control, unless the lane predicted REST there) and paints in <span style="color:var(--miss)">red</span> the performance notes the tokenizer's aligner could not match to any score note. Click a note to pin its tooltip (Esc/click to release). Deep-link with
+#&lt;split/perf&gt; (append <code>&amp;lane=&lt;key&gt;</code> to pick the system). Boundary geometry: AMT v1 packs 138 score notes per window — slide-69 re-packs every 69 notes after 138, slide-by-1 every note, reset = disjoint windows; AMT v2's 4096-token windows hold ~600 notes and re-pack whenever the context would overflow (slide-K keeps the model's last K notes; those boundaries are not recorded, so the animation shows no window band for v2). Systems are grouped by model in the <b>ours</b> dropdown and in <b>all systems</b>: <i>AMT v1 (original)</i> was trained with the base model's attention-scale bug (and its DAgger lanes marked index-paired are superseded); <i>AMT v1 — attention fix</i> reruns the whole pipeline from the correctly scaled base; <i>AMT v2</i> is the 1.14B model. Lanes decoded with the fixed end-of-piece decoder say so in their description; the older lanes use the original decoder. Some lanes (aligned-target DAgger) can predict "no score note" (REST) for a performance note: those slots are not drawn, and the performance-note ↔ generated-note pairing skips them.</div>
 <div id="tip"></div>
 
 <div id="entropyScalePane" aria-hidden="true">
@@ -252,8 +278,25 @@ function ensurePpl(v) {
 }
 // Note arrays ship the same way — one file per variant lane.
 D.lanes = D.lanes || {};
+// Control slots whose prediction was REST / NOSCORE ("no score note"), per lane and song. Those
+// slots are not in the lane's note list, so generated note i pairs with performance note
+// ctlOf[i], not i. Shipped inside the lane file (window.FULLSONG_REST); absent = identity.
+D.rest = D.rest || {};
 const LANE_VARIANTS = new Set(D.lane_variants || Object.keys(D.lanes));
 const laneWait = new Map();
+// Lanes written by build_fullsong_payload_v2.py in the compact encoding:
+// {enc: "dt3", songs: {key: [t0, d0, p0, t1 - t0, d1, p1, ...]}} (onset deltas in emission order).
+function decodeLane(x) {
+  if (!x || x.enc !== "dt3") return x || {};
+  const out = {};
+  for (const [k, flat] of Object.entries(x.songs || {})) {
+    const a = new Array(Math.floor(flat.length / 3));
+    let t = 0;
+    for (let i = 0, j = 0; j < a.length; i += 3, j++) { t += flat[i]; a[j] = [t, flat[i + 1], flat[i + 2]]; }
+    out[k] = a;
+  }
+  return out;
+}
 function ensureLane(v, cb) {
   if (!LANE_VARIANTS.has(v) || D.lanes[v]) { if (cb) cb(); return; }
   if (laneWait.has(v)) { if (cb) laneWait.get(v).push(cb); return; }
@@ -261,7 +304,10 @@ function ensureLane(v, cb) {
   const sc = document.createElement("script");
   sc.src = `fullsong_lanes/${v}.js`;
   sc.onload = () => {
-    D.lanes[v] = (window.FULLSONG_LANES || {})[v] || {};
+    const raw = (window.FULLSONG_LANES || {})[v];
+    D.lanes[v] = decodeLane(raw);
+    if (raw && raw.enc) window.FULLSONG_LANES[v] = null;   // keep only the decoded copy
+    D.rest[v] = (window.FULLSONG_REST || {})[v] || {};
     const cbs = laneWait.get(v) || [];
     laneWait.delete(v);
     cbs.forEach(f => f());
@@ -300,7 +346,34 @@ const VAR_LABEL = {
   m75_pf: "mask 0.75 · pitch-forced",
 };
 const LABEL = v => (D.labels || {})[v] || VAR_LABEL[v] || v;
-const OVERLAP = v => v.endsWith("_s1") ? 137 : (v.endsWith("_rst") ? 0 : 69);
+// Per-lane metadata (build_fullsong_payload_v2.py, from visualizer/fullsong_extra_lanes.py):
+// g = group key, desc = description, geom = {win: score notes per window (0 = not recorded),
+// ov: overlap}. Payloads built before 2026-10-21 have none; fall back to the lane-key rules.
+const LMETA = D.lane_meta || {};
+const FALLBACK_GROUPS = [
+  { key: "v1orig", title: "AMT v1 (original, attention-scale bug)" },
+  { key: "v1origdag", title: "AMT v1 (original) · DAgger, index-paired targets (superseded)",
+    desc: "Index-paired DAgger (superseded 2026-09-22): the harvested continuation targets were the k-th score note rather than the performed note's aligned partner. Kept for the record." },
+  { key: "v1early", title: "AMT v1 (original) · early AdamW / mask-dropout lanes" },
+];
+const GROUPS = (D.groups && D.groups.length) ? D.groups : FALLBACK_GROUPS;
+const GROUP_BY_KEY = Object.fromEntries(GROUPS.map(g => [g.key, g]));
+function laneGroup(v) {
+  if (LMETA[v] && LMETA[v].g) return LMETA[v].g;
+  const p = v.split("_")[0];
+  if (["base", "m25", "m50", "m75"].includes(p)) return "v1early";
+  return /dag\d+$/.test(p) ? "v1origdag" : "v1orig";
+}
+function laneDesc(v) {
+  const m = LMETA[v] || {}, g = GROUP_BY_KEY[laneGroup(v)] || {};
+  return m.desc || g.desc || "";
+}
+function GEOM(v) {
+  const m = LMETA[v];
+  if (m && m.geom) return m.geom;
+  return { win: 138, ov: v.endsWith("_s1") ? 137 : (v.endsWith("_rst") ? 0 : 69) };
+}
+const OVERLAP = v => GEOM(v).ov;
 const MKEYS = ["pitch_error_rate","missing_note_rate","extra_note_rate",
                "onset_time_error_rate","offset_time_error_rate","mean_error_rate"];
 const MHDR = ["pitch","missing","extra","onset","offset","mean"];
@@ -317,8 +390,27 @@ const css = name => getComputedStyle(document.documentElement).getPropertyValue(
 const $ = id => document.getElementById(id);
 const perfSel = $("perfSel"), oursVar = $("oursVar");
 for (const k of D.order) perfSel.appendChild(new Option(k, k));
-for (const v of D.variants) if (LANE_VARIANTS.has(v))
-  oursVar.appendChild(new Option(LABEL(v), v));
+// Lanes in dropdown order: by group (GROUPS order), then the payload's variant order.
+const LANE_ORDER = [];
+{
+  const avail = D.variants.filter(v => LANE_VARIANTS.has(v));
+  const known = new Set(GROUPS.map(g => g.key));
+  const groups = GROUPS.map(g => [g, avail.filter(v => laneGroup(v) === g.key)]);
+  const other = avail.filter(v => !known.has(laneGroup(v)));
+  if (other.length) groups.push([{ key: "other", title: "other" }, other]);
+  for (const [g, vars] of groups) {
+    if (!vars.length) continue;
+    const og = document.createElement("optgroup");
+    og.label = g.title;
+    for (const v of vars) {
+      const o = new Option(LABEL(v), v);
+      o.title = laneDesc(v);
+      og.appendChild(o);
+      LANE_ORDER.push(v);
+    }
+    oursVar.appendChild(og);
+  }
+}
 // default OURS lane: the slide-69 lane with the best test-set tol1 F1
 function bestLane() {
   let best = null, bv = -Infinity;
@@ -356,10 +448,41 @@ let perfHitRects = [];
 let HOVER = -1;       // hovered/pinned note index, shared by the performance and OURS panels
 let PINNED = false;
 
-function boundaryIdxs(n, ov) {
-  const out = []; let b = 138; const fresh = Math.max(1, 138 - ov);
-  if (ov === 0) { for (let x = 138; x < n; x += 138) out.push(x); return out; }
+// Re-pack boundaries in CONTROL (performance-note) indices; win = 0 means not recorded.
+function boundaryIdxs(n, ov, win = 138) {
+  const out = [];
+  if (!win) return out;
+  let b = win; const fresh = Math.max(1, win - ov);
+  if (ov === 0) { for (let x = win; x < n; x += win) out.push(x); return out; }
   while (b < n) { out.push(b); b += fresh; } return out;
+}
+// Generated-note index <-> control index for lane v on the current song (REST slots skipped).
+const slotMaps = new Map();
+function slotMap(v) {
+  const k = key(), id = v + "|" + k;
+  if (slotMaps.has(id)) return slotMaps.get(id);
+  const rest = ((D.rest || {})[v] || {})[k] || [];
+  let m = null;
+  if (rest.length) {
+    const n = laneNotes(v).length, ctlOf = new Array(n), predOf = new Array(n + rest.length).fill(-1);
+    let r = 0, c = 0;
+    for (let i = 0; i < n; i++) {
+      while (r < rest.length && rest[r] === c) { r++; c++; }
+      ctlOf[i] = c; predOf[c] = i; c++;
+    }
+    m = { ctlOf, predOf, rest: new Set(rest) };
+  }
+  if (laneNotes(v).length) slotMaps.set(id, m);   // do not cache before the lane has loaded
+  return m;
+}
+const ctlOfPred = (m, i) => (m ? m.ctlOf[i] : i);
+const predOfCtl = (m, c) => (m ? (m.predOf[c] ?? -1) : c);
+// first generated note whose control index is >= c (binary search over ctlOf)
+function predAtOrAfter(m, c) {
+  if (!m) return c;
+  let lo = 0, hi = m.ctlOf.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (m.ctlOf[mid] < c) lo = mid + 1; else hi = mid; }
+  return lo;
 }
 function windowStart(i, bounds, ov) {
   let s = 0; for (const b of bounds) { if (i >= b) s = b - ov; else break; }
@@ -586,8 +709,11 @@ function drawPanel(cvs, v, rawNotes, isOurs) {
   const rgbR = heatOn && isRgb ? rgbRangesOf(tr) : null;
   if (isOurs) updateEntropyScale(heatOn, chan, hr, rgbR);
   const heatReady = heatOn && (isRgb ? rgbR : hr);
-  const ov = OVERLAP(oursVar.value);
-  const bounds = boundaryIdxs(notes.length, ov);
+  // window geometry and the generated-note <-> control pairing of the OURS lane
+  const geo = GEOM(oursVar.value), ov = geo.ov;
+  const sm = isOurs ? slotMap(v) : null;
+  const nCtl = notes.length + (sm ? sm.rest.size : 0);
+  const bounds = boundaryIdxs(nCtl, ov, geo.win);     // control indices
   let upto = notes.length, dim = 1;
   if (ANIM.on) { if (isOurs) upto = Math.floor(ANIM.i); else dim = 0.18; }
   if (isOurs) hitRects = [];
@@ -599,9 +725,10 @@ function drawPanel(cvs, v, rawNotes, isOurs) {
       const n = notes[i];
       let fill = C.pred;
       if (heatReady) {
-        if (isRgb) fill = entropyRgbColor(tr, i, rgbR) || fill;
+        const ci = ctlOfPred(sm, i);       // traces are per control slot
+        if (isRgb) fill = entropyRgbColor(tr, ci, rgbR) || fill;
         else {
-          const lh = traceLogH(tr, i, chan);
+          const lh = traceLogH(tr, ci, chan);
           if (lh != null) fill = entropyColor((lh - hr.lo) / (hr.hi - hr.lo), mono);
         }
       }
@@ -616,23 +743,33 @@ function drawPanel(cvs, v, rawNotes, isOurs) {
     for (const n of gt) { rrect(g, xOf(n[0]), yOf(n[2]), Math.max(n[1] * px, 2), noteH, 2); g.stroke(); }
   }
   g.globalAlpha = 1;
-  if (isOurs && HOVER >= 0 && HOVER < notes.length) {
-    const n = notes[HOVER];
+  const hp = isOurs && HOVER >= 0 ? predOfCtl(sm, HOVER) : -1;     // HOVER is a control index
+  if (hp >= 0 && hp < notes.length) {
+    const n = notes[hp];
     g.strokeStyle = css("--sel"); g.lineWidth = 2;
     rrect(g, xOf(n[0]) - 1.5, yOf(n[2]) - 1.5, Math.max(n[1] * px, 2) + 3, noteH + 3, 3); g.stroke();
   }
   if (isOurs && ANIM.on && upto > 0) {
-    const i = Math.max(0, upto - 1);
-    const sIdx = windowStart(i, bounds, ov);
-    const x0 = xOf(notes[sIdx][0]);
-    let xr = 0; for (let k2 = sIdx; k2 <= i; k2++) xr = Math.max(xr, xOf(notes[k2][0]));
-    g.fillStyle = "rgba(90,169,255,0.10)"; g.fillRect(x0, PAD_T - 4, Math.max(2, xr - x0), H - PAD_T - PAD_B + 8);
-    g.strokeStyle = "rgba(90,169,255,0.8)"; g.lineWidth = 1;
-    g.strokeRect(x0 + .5, PAD_T - 3.5, Math.max(2, xr - x0), H - PAD_T - PAD_B + 7);
-    g.fillStyle = "#8a93a0";
-    for (const b of bounds) { if (b > i) break; g.fillRect(xOf(notes[b][0]), PAD_T - 4, 1, H - PAD_T - PAD_B + 8); }
-    const wno = bounds.filter(b => i >= b).length;
-    $("animInfo").textContent = `note ${i+1}/${notes.length} · window ${wno+1} (ctx ${sIdx}–${i})`;
+    const i = Math.max(0, upto - 1), ci = ctlOfPred(sm, i);
+    if (geo.win) {
+      // window start / boundaries live in control indices; draw them at the generated notes
+      const sIdx = Math.min(i, predAtOrAfter(sm, windowStart(ci, bounds, ov)));
+      const x0 = xOf(notes[sIdx][0]);
+      let xr = 0; for (let k2 = sIdx; k2 <= i; k2++) xr = Math.max(xr, xOf(notes[k2][0]));
+      g.fillStyle = "rgba(90,169,255,0.10)"; g.fillRect(x0, PAD_T - 4, Math.max(2, xr - x0), H - PAD_T - PAD_B + 8);
+      g.strokeStyle = "rgba(90,169,255,0.8)"; g.lineWidth = 1;
+      g.strokeRect(x0 + .5, PAD_T - 3.5, Math.max(2, xr - x0), H - PAD_T - PAD_B + 7);
+      g.fillStyle = "#8a93a0";
+      for (const b of bounds) {
+        if (b > ci) break;
+        const pb = predAtOrAfter(sm, b);
+        if (pb < notes.length) g.fillRect(xOf(notes[pb][0]), PAD_T - 4, 1, H - PAD_T - PAD_B + 8);
+      }
+      const wno = bounds.filter(b => ci >= b).length;
+      $("animInfo").textContent = `note ${i+1}/${notes.length} · window ${wno+1} (ctx ${sIdx}–${i})`;
+    } else {
+      $("animInfo").textContent = `note ${i+1}/${notes.length} · window boundaries not recorded for this lane`;
+    }
   }
   g.fillStyle = C.muted;
   g.fillText(`${notes.length} notes` + (rr !== 1 ? `  ·  ×${+rr.toFixed(4)} (scale-max argmax)` : ($("scaleNorm").checked ? "  ·  ×1" : "")), PAD_L + 4, 10);
@@ -670,7 +807,69 @@ function metricsTable() {
     }
   }
   T.innerHTML = html;
+  allTable();
 }
+
+// Every system: this song's score and the test-set mean for the selected metric family.
+const PAPER_ROWS = [["beyer", "Beyer & Dai — MIDI2ScoreTransformer (ISMIR 2024)"],
+                    ["zeng", "Zeng+ — joint-apt-epr (ICLR 2026)"]];
+function allTable() {
+  const wrap = $("allWrap");
+  if (wrap.style.display !== "block") return;
+  const m = $("metricSel").value, k = key(), mus = m === "muster";
+  const songVal = v => {
+    if (mus) { const r = ((D.muster || {})[v] || {})[k]; return r ? r.mean_error_rate : null; }
+    const r = ((D.f1 || {})[v] || {})[k]; return r && r[m] != null ? 100 * r[m] : null;
+  };
+  const meanVal = v => { const a = (D.agg || {})[v] || {}; return a[mus ? "muster" : m] ?? null; };
+  const f = x => x == null ? "–" : x.toFixed(2);
+  const cell = x => `<td${x == null ? ' class="na"' : ""}>${f(x)}</td>`;
+  const sorted = $("allSort").checked;
+  const rowsOf = vars => vars.map(v => [v, LABEL(v), songVal(v), meanVal(v)]);
+  let html = `<tr><th class="l">system</th>${sorted ? '<th class="l">group</th>' : ""}<th>this song</th><th>test mean</th></tr>`;
+  const laneRow = ([v, lbl, sv, mv], grp) =>
+    `<tr class="lane${v === oursVar.value ? " sel" : ""}" data-v="${v}" title="${laneDesc(v).replace(/"/g, "&quot;")}">` +
+    `<td class="l">${lbl}</td>${grp != null ? `<td class="g">${grp}</td>` : ""}${cell(sv)}${cell(mv)}</tr>`;
+  const paperRow = ([v, lbl], grp) => `<tr><td class="l">${lbl}</td>${grp != null ? `<td class="g">${grp}</td>` : ""}${cell(songVal(v))}${cell(meanVal(v))}</tr>`;
+  if (sorted) {
+    const all = rowsOf(LANE_ORDER).map(r => [r, (GROUP_BY_KEY[laneGroup(r[0])] || {}).title || ""]);
+    for (const [v, lbl] of PAPER_ROWS) all.push([[v, lbl, songVal(v), meanVal(v)], "papers", true]);
+    // MUSTER is an error rate: lower first
+    all.sort((a, b) => (a[0][3] == null) - (b[0][3] == null) || (mus ? a[0][3] - b[0][3] : b[0][3] - a[0][3]));
+    for (const [r, grp, isPaper] of all) html += isPaper ? paperRow([r[0], r[1]], grp) : laneRow(r, grp);
+  } else {
+    for (const g of GROUPS) {
+      const vars = LANE_ORDER.filter(v => laneGroup(v) === g.key);
+      if (!vars.length) continue;
+      html += `<tr class="grp"><td colspan="3">${g.title}</td></tr>`;
+      for (const r of rowsOf(vars)) html += laneRow(r, null);
+    }
+    const other = LANE_ORDER.filter(v => !GROUP_BY_KEY[laneGroup(v)]);
+    if (other.length) {
+      html += `<tr class="grp"><td colspan="3">other</td></tr>`;
+      for (const r of rowsOf(other)) html += laneRow(r, null);
+    }
+    html += `<tr class="grp"><td colspan="3">Papers (fixed panels below)</td></tr>`;
+    for (const r of PAPER_ROWS) html += paperRow(r, null);
+  }
+  $("allTable").innerHTML = html;
+  $("allHint").textContent = (mus ? "MUSTER mean error %, lower is better" :
+    ({ base: "tol1 F1 %", smax: "scale-max F1 %", ioi: "IOI F1 %", ioi_smax: "IOI scale-max F1 %" }[m])) +
+    " · test mean over the 59 test performances · click a row to show that system";
+}
+$("allTable").addEventListener("click", ev => {
+  const tr = ev.target.closest("tr.lane");
+  if (!tr || tr.dataset.v === oursVar.value) return;
+  oursVar.value = tr.dataset.v;
+  oursVar.dispatchEvent(new Event("change"));
+});
+$("allBtn").addEventListener("click", () => {
+  const w = $("allWrap"), open = w.style.display !== "block";
+  w.style.display = open ? "block" : "none";
+  $("allBtn").innerHTML = open ? "all systems &#9652;" : "all systems &#9662;";
+  allTable();
+});
+$("allSort").addEventListener("change", allTable);
 
 function drawDtw() {
   const cvs = $("dtwCanvas");
@@ -796,7 +995,9 @@ function drawPpl() {
     xs.forEach((v, i) => { if (v == null) { started = false; return; } const x = X(i), y = Y(v); started ? g.lineTo(x, y) : g.moveTo(x, y); started = true; });
     g.stroke();
   }
-  g.fillStyle = css("--ours"); g.fillText(`ours (${LABEL(oursVar.value)})`, W - 330, 12);
+  g.fillStyle = css("--ours");
+  g.fillText(series.some(r => r[0] === "ours") ? `ours (${LABEL(oursVar.value)})`
+             : "ours: not computed for this lane (GT only)", W - 330, 12);
   g.fillStyle = css("--gt"); g.fillText("ground-truth score", W - 120, 12);
   g.fillStyle = css("--muted");
   g.fillText(`${chan === "all" ? "per-note mean token" : chan} perplexity under base AMT, ${variant === "u" ? "unconstrained" : "slot-constrained"}${sigma > 0 ? `, σ=${sigma} notes` : ""}`, 48, 12);
@@ -807,35 +1008,39 @@ function fmtAltTok(ch, rel) {
   if (ch === 2) return rel >= 128 ? "rest" : pname(rel);   // pitch channel
   return rel;                                               // grid units
 }
-function showTip(ev, i) {
+function showTip(ev, ci) {
+  // ci = control (performance-note) index; generated note i pairs with control ctlOf[i]
   const tr = traceRec(), tip = $("tip");
-  const n = oursNotes()[i];
-  if (!n) return;
-  let html = `<table><tr class="hd"><td colspan="3">generated note ${i} · ${pname(n[2])} · t=${n[0]} d=${n[1]} (score grid)</td></tr>`;
-  const pn = perfNotes()[i];
+  const sm = slotMap(oursVar.value), i = predOfCtl(sm, ci);
+  const n = i >= 0 ? oursNotes()[i] : null;
+  const pn = perfNotes()[ci];
+  if (!n && !pn) return;
+  let html = n
+    ? `<table><tr class="hd"><td colspan="3">generated note ${i} · ${pname(n[2])} · t=${n[0]} d=${n[1]} (score grid)</td></tr>`
+    : `<table><tr class="hd"><td colspan="3">${sm && sm.rest.has(ci) ? `performance note ${ci}: the model predicted <b>no score note</b> (REST) here` : `no generated note for performance note ${ci}`}</td></tr>`;
   if (pn) {
     const gtn = pn[3] >= 0 ? gtNotes()[pn[3]] : null;
-    html += `<tr><td colspan="3" style="color:${pn[3] < 0 ? "var(--miss)" : "var(--perf)"}">performance note ${i} · ${pname(pn[2])} · t=${(pn[0]/100).toFixed(2)}s d=${(pn[1]/100).toFixed(2)}s · ` +
+    html += `<tr><td colspan="3" style="color:${pn[3] < 0 ? "var(--miss)" : "var(--perf)"}">performance note ${ci} · ${pname(pn[2])} · t=${(pn[0]/100).toFixed(2)}s d=${(pn[1]/100).toFixed(2)}s · ` +
       (pn[3] < 0 ? "<b>NOT aligned to any score note</b>" : `aligned → GT note ${pn[3]}${gtn ? ` (${pname(gtn[2])} t=${gtn[0]} d=${gtn[1]})` : ""}`) + `</td></tr>`;
   }
-  if (tr) {
+  if (tr && n) {
     const chn = ["onset", "dur", "pitch"];
-    const H = tr.H[i] || [];
+    const H = tr.H[ci] || [];
     html += `<tr class="hd"><td>chan</td><td>ppl</td><td>top-5 alternatives</td></tr>`;
     for (let c = 0; c < 3; c++) {
-      const alts = (tr.alts[i] || [])[c] || [];
+      const alts = (tr.alts[ci] || [])[c] || [];
       const bars = alts.map(([tok, p]) =>
         `<span title="p=${p}">${fmtAltTok(c, tok)}<span class="bar" style="width:${Math.max(2, p*38)}px;margin:0 5px 0 2px"></span></span>`).join("");
-      html += `<tr><td>${chn[c]} (H=${H[c] != null ? (+H[c]).toFixed(2) : "–"})</td><td>${(tr.ppl[i]||[])[c] ?? "–"}</td><td>${bars}</td></tr>`;
+      html += `<tr><td>${chn[c]} (H=${H[c] != null ? (+H[c]).toFixed(2) : "–"})</td><td>${(tr.ppl[ci]||[])[c] ?? "–"}</td><td>${bars}</td></tr>`;
     }
     if ($("entHeat").checked) {
       const chan = $("entChan").value || "triplet";
       const bits = chan === "rgb"
-        ? ["time", "pitch", "dur"].map((c, j) => `${"RGB"[j]}(${CHAN_LABEL[c]})=${fmtTick(traceLogH(tr, i, c) ?? NaN)}`).join(" ")
-        : `${CHAN_LABEL[chan]} logH=${fmtTick(traceLogH(tr, i, chan) ?? NaN)}`;
+        ? ["time", "pitch", "dur"].map((c, j) => `${"RGB"[j]}(${CHAN_LABEL[c]})=${fmtTick(traceLogH(tr, ci, c) ?? NaN)}`).join(" ")
+        : `${CHAN_LABEL[chan]} logH=${fmtTick(traceLogH(tr, ci, chan) ?? NaN)}`;
       html += `<tr><td colspan="3" style="color:var(--muted)">${bits} nats</td></tr>`;
     }
-  } else {
+  } else if (n) {
     html += `<tr><td colspan="3" style="color:var(--muted)">no trace for this lane (trace-decoded slide-69 lanes only)</td></tr>`;
   }
   tip.innerHTML = html + "</table>";
@@ -854,28 +1059,33 @@ function setHover(i) {
   drawPerfPanel();
   drawPanel($("rollOurs"), oursVar.value, oursNotes(), true);
 }
-function bindRoll(id, rectsOf) {
+function bindRoll(id, rectsOf, toCtl) {
   const el = $(id);
   el.addEventListener("mousemove", ev => {
     if (PINNED) return;
     const hit = hitAt(ev, rectsOf());
-    if (hit) { showTip(ev, hit[4]); setHover(hit[4]); } else { $("tip").style.display = "none"; setHover(-1); }
+    if (hit) { const c = toCtl(hit[4]); showTip(ev, c); setHover(c); } else { $("tip").style.display = "none"; setHover(-1); }
   });
   el.addEventListener("mouseleave", () => { if (!PINNED) { $("tip").style.display = "none"; setHover(-1); } });
   el.addEventListener("click", ev => {
     const hit = hitAt(ev, rectsOf());
     if (PINNED) { PINNED = false; $("tip").style.display = "none"; setHover(-1); return; }
-    if (hit) { PINNED = true; showTip(ev, hit[4]); setHover(hit[4]); }
+    if (hit) { const c = toCtl(hit[4]); PINNED = true; showTip(ev, c); setHover(c); }
   });
 }
-bindRoll("rollOurs", () => hitRects);
-bindRoll("rollPerf", () => perfHitRects);
+bindRoll("rollOurs", () => hitRects, i => ctlOfPred(slotMap(oursVar.value), i));
+bindRoll("rollPerf", () => perfHitRects, i => i);
 document.addEventListener("keydown", ev => { if (ev.key === "Escape" && PINNED) { PINNED = false; $("tip").style.display = "none"; setHover(-1); } });
 
 function draw() {
   ensureTrace(oursVar.value);
   ensureDtw(oursVar.value); ensureDtw("beyer"); ensureDtw("zeng");
-  $("oursHint").textContent = LABEL(oursVar.value);
+  {
+    const v = oursVar.value, g = GROUP_BY_KEY[laneGroup(v)] || {};
+    $("oursHint").innerHTML = `${LABEL(v)}<span class="tag${laneGroup(v) === "v1origdag" ? " warn" : ""}">${g.title || laneGroup(v)}</span>`;
+    const nrest = (((D.rest || {})[v] || {})[key()] || []).length;
+    $("oursDesc").textContent = laneDesc(v) + (nrest ? `  This song: ${nrest} performance note${nrest === 1 ? "" : "s"} predicted as REST (no score note).` : "");
+  }
   SPAN = computeSpan();
   $("timeScaleVal").textContent = SPAN.pxps < SPAN.want - 1e-9
     ? `${SPAN.pxps.toFixed(0)} px/s (max width)` : `${SPAN.want} px/s`;
@@ -922,18 +1132,33 @@ $("aggBtn").addEventListener("click", () => {
 $("backBtn").addEventListener("click", () => { window.location = "index.html"; });
 for (const id of ["timeScale", "showGt", "showPred", "scaleNorm", "entHeat", "entChan", "entMono", "metricSel"])
   $(id).addEventListener(id === "timeScale" ? "input" : "change", draw);
+function setHash() {
+  const h = "#" + encodeURIComponent(perfSel.value) + "&lane=" + encodeURIComponent(oursVar.value);
+  try { history.replaceState(null, "", h); } catch (e) { location.hash = h; }   // file:// may refuse
+}
 oursVar.addEventListener("change", () => {
+  HOVER = -1; PINNED = false; $("tip").style.display = "none";
+  setHash();
   ensureLanes([oursVar.value], () => {
     ANIM.i = 0; $("animScrub").max = oursNotes().length; draw();
   });
 });
 perfSel.addEventListener("change", () => {
   HOVER = -1; PINNED = false; $("tip").style.display = "none";
-  location.hash = encodeURIComponent(perfSel.value);
+  setHash();
   ANIM.i = 0; ANIM.playing = false; $("animScrub").max = oursNotes().length; draw();
 });
-const want = decodeURIComponent(location.hash.slice(1));
-if (want && D.meta[want]) perfSel.value = want;
+// deep link: #<split/perf>[&lane=<key>] (the old #<split/perf> form still works)
+{
+  const [h, ...rest] = location.hash.slice(1).split("&");
+  const want = decodeURIComponent(h || "");
+  if (want && D.meta[want]) perfSel.value = want;
+  for (const kv of rest) {
+    const [kk, vv] = kv.split("=");
+    const lane = decodeURIComponent(vv || "");
+    if (kk === "lane" && LANE_VARIANTS.has(lane) && D.variants.includes(lane)) oursVar.value = lane;
+  }
+}
 ensureLanes([oursVar.value, "beyer", "zeng"], draw);
 for (const id of ["pplVar", "pplChan", "pplSigma", "pplLog"])
   $(id).addEventListener(id === "pplSigma" ? "input" : "change", drawPpl);
