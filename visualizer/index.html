@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Score Infilling Visualizer</title>
 <style>
   :root {
@@ -136,6 +137,51 @@
                                  border: 1px solid var(--grid); }
   #entropyRgbLegend .rgb-lbl { flex: 1; color: var(--muted); }
   #entropyRgbLegend .rgb-range { font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+
+  /* ---- phones / small screens (2026-10-21). Desktop is untouched: #hdrMore is display:contents
+     and .mobile-only is hidden above the breakpoint. */
+  .mobile-only { display: none; }
+  #hdrMore { display: contents; }
+  @media (pointer: coarse) {
+    select, button { min-height: 40px; }
+    .key input[type=checkbox] { width: 20px; height: 20px; }
+  }
+  @media (max-width: 760px), (pointer: coarse) and (max-height: 520px) {
+    body { font-size: 14px; }
+    header { position: static; padding: 8px 10px; gap: 8px; }
+    header h1 { font-size: 16px; margin: 0; flex: 1 1 100%; }
+    #exampleSel { flex: 1 1 200px; min-width: 0; }
+    #exampleSel, #hdrMore select { font-size: 16px; min-height: 42px; }    /* 16px: no iOS focus zoom */
+    #rolloutModeBtn { min-height: 42px; margin-left: 0 !important; }
+    .mobile-only { display: inline-flex; align-items: center; }
+    #ctrlToggle { min-height: 42px; }
+    #hdrMore { display: none; flex: 1 1 100%; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+               padding: 6px 0 2px; border-top: 1px solid var(--grid); }
+    #hdrMore.open { display: flex; }
+    #hdrMore select { max-width: 100%; }
+    #meta { margin-left: 0; flex: 1 1 100%; }
+    select, button { min-height: 40px; font-size: 15px; }
+    .key { min-height: 40px; }
+    .key input[type=checkbox] { width: 20px; height: 20px; }
+    .panel { margin: 8px 6px; border-radius: 8px; }
+    .panel h2 { flex-wrap: wrap; row-gap: 2px; }
+    .panel h2 .hint { font-size: 12px; }
+    #candinfo { font-size: 13px; }
+    #candinfo table { display: block; overflow-x: auto; }
+    /* the accuracy / F1 pane floats over the rolls on desktop; on a phone it joins the page flow */
+    #accPane, #accPane.heat-open { position: static; width: auto; max-width: none; max-height: none;
+                                    margin: 8px 6px 96px; font-size: 13px; }
+    #f1Table, #f1PieceTable { font-size: 12px; }
+    #pplSection { margin-bottom: 8px; }
+    #pplLegend { flex-wrap: wrap; font-size: 12px; }
+    #rankPane { top: auto; bottom: 76px; left: 8px; right: 8px; width: auto; height: 56px;
+                flex-direction: row; padding: 4px 10px; }
+    #rankSlider { writing-mode: horizontal-tb; direction: ltr; width: auto; flex: 1; }
+    #entropyScalePane { right: 4px; bottom: 76px; transform: scale(0.85); transform-origin: bottom right; }
+    #pplTip { white-space: normal; max-width: calc(100vw - 12px); }
+    .engraved-sheet { margin: 8px 6px 10px; padding: 8px; }
+    #sequenceDock h2 .hint { display: none; }     /* keep the fixed dock short on a phone */
+  }
 </style>
 </head>
 <body>
@@ -145,6 +191,8 @@
   <select id="exampleSel"></select>
   <button id="rolloutModeBtn" style="margin-left:8px;padding:4px 12px;background:#2a78d6;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600"
     title="open the FULL-SONG rollout viewer for this window's performance (ours + pitch-forced + Beyer + Zeng vs ground truth)">&#127925; rollout mode</button>
+  <button id="ctrlToggle" class="mobile-only" aria-expanded="false" aria-controls="hdrMore">controls &#9662;</button>
+  <div id="hdrMore">
   <span class="lbl">stream</span>
   <select id="streamSel" title="Unfiltered = raw performance including notes the aligner dropped (performer mistakes)">
     <option value="raw" selected>unfiltered (raw)</option>
@@ -207,6 +255,7 @@
   <span class="key"><span class="swatch" style="background:var(--miss)"></span> unmatched (mistake)</span>
   <span class="key"><span class="swatch" style="background:transparent;border:2px solid var(--miss)"></span> generated pitch error</span>
   <span class="key"><span class="swatch" style="background:var(--cand)"></span> slot candidates</span>
+  </div>
   <span id="meta"></span>
 </header>
 
@@ -2388,6 +2437,18 @@
   }
 
   loadExample(sel.value = orderedIds[0]);
+})();
+</script>
+<script>
+// phones: collapsible header controls (2026-10-21); a separate block so it works even if the data failed to load
+(() => {
+  const b = document.getElementById('ctrlToggle'), m = document.getElementById('hdrMore');
+  if (!b || !m) return;
+  b.addEventListener('click', () => {
+    const o = m.classList.toggle('open');
+    b.setAttribute('aria-expanded', String(o));
+    b.innerHTML = o ? 'controls &#9652;' : 'controls &#9662;';
+  });
 })();
 </script>
 </body>
