@@ -62,6 +62,9 @@ collections:
 # Keep Trees of Doom out of the published website.
 exclude:
   - treesofdoom/
+  # Cloudflare Pages Function source for the Cornell MCP server at /mcp, not site pages.
+  - functions/
+  - cornell_mcp/
 
 markdown: kramdown
 kramdown:
