@@ -413,6 +413,103 @@ export async function diningMenuSearch(args = {}) {
   };
 }
 
+// Weekend halls serve Brunch instead of Breakfast/Lunch; fall back so "lunch on Saturday" still finds it.
+const MEAL_FALLBACK = { breakfast: 'brunch', lunch: 'brunch', brunch: 'lunch' };
+
+function mealEvents(events, meal) {
+  const hits = events.filter((ev) => normalize(ev.label).includes(meal));
+  if (hits.length || !MEAL_FALLBACK[meal]) return hits;
+  return events.filter((ev) => normalize(ev.label).includes(MEAL_FALLBACK[meal]));
+}
+
+/** { station: [item, ...] }, keeping the feed's station order; optionally only stations matching `station`. */
+function stationMenu(menu, station) {
+  const out = {};
+  for (const c of menu) {
+    if (station && !normalize(c.category).includes(station)) continue;
+    (out[c.category] ||= []).push(...c.items.map((i) => i.item));
+  }
+  return out;
+}
+
+export async function diningMenus(args = {}) {
+  const day = resolveDate(args.date);
+  const { eateries, fetchedAt, stale } = await loadEateries();
+  const now = Date.now();
+  const isToday = day.iso === easternDate(now);
+  const type = args.type && normalize(args.type) === 'all' ? undefined : args.type || 'dining hall';
+  const pool = filterEateries(eateries, { ...args, type });
+  const meal = args.meal ? normalize(args.meal) : null;
+  const allMeals = meal === 'all' || meal === 'all day' || meal === 'all meals';
+  const station = args.station ? normalize(args.station) : null;
+  const status = (ev) => (ev.end <= now ? 'over' : ev.start <= now ? 'serving now' : 'upcoming');
+
+  const menus = [];
+  const closed = [];
+  const doneForToday = [];
+  const notServingMeal = [];
+  for (const e of pool) {
+    const todays = eventsOnDate(e, day.iso);
+    if (!todays.length) {
+      closed.push(e.name);
+      continue;
+    }
+    let events;
+    if (meal && !allMeals) events = mealEvents(todays, meal);
+    else if (allMeals || !isToday) events = todays;
+    else events = todays.filter((ev) => ev.end > now).slice(0, 1); // serving now, else next today
+    if (!events.length) {
+      (meal && !allMeals ? notServingMeal : doneForToday).push(e.name);
+      continue;
+    }
+    const meals = events.map((ev) => {
+      const stations = stationMenu(ev.menu, station);
+      return {
+        meal: ev.label,
+        hours: span(ev),
+        ...(isToday ? { status: status(ev) } : {}),
+        ...(Object.keys(stations).length
+          ? { stations }
+          : { note: ev.menu.length ? `No station matches "${args.station}".` : 'Menu not posted.' }),
+      };
+    });
+    // Cafés and markets have a standing menu instead of per-meal menus.
+    const regular = events.some((ev) => ev.menu.length) ? {} : stationMenu(menuFromItems(e.diningItems), station);
+    menus.push({
+      eatery: e.name,
+      area: e.area,
+      ...(type === 'dining hall' ? {} : { type: typeLabel(e) }),
+      accepts_swipes: e.acceptsSwipes,
+      meals: Object.keys(regular).length ? meals.map(({ note, ...m }) => m) : meals,
+      ...(Object.keys(regular).length ? { regular_menu: regular } : {}),
+    });
+  }
+  menus.sort((a, b) => (a.area || '').localeCompare(b.area || '') || a.eatery.localeCompare(b.eatery));
+
+  return {
+    date: day.iso,
+    meal: allMeals ? 'all meals' : args.meal || (isToday ? 'serving now, else next today' : 'all meals'),
+    filters: pick({ ...args, type: args.type || 'dining hall' }, ['area', 'type', 'accepts_swipes', 'station']),
+    eatery_count: menus.length,
+    menus,
+    ...(notServingMeal.length ? { not_serving_that_meal: notServingMeal } : {}),
+    ...(doneForToday.length ? { done_for_today: doneForToday } : {}),
+    ...(closed.length ? { closed } : {}),
+    ...coverageNote(eateries, day.iso),
+    ...sourceNote(fetchedAt, stale),
+  };
+}
+
+function menuFromItems(items) {
+  const groups = new Map();
+  for (const i of items) {
+    const c = i.category || 'Menu';
+    if (!groups.has(c)) groups.set(c, { category: c, items: [] });
+    groups.get(c).items.push({ item: i.item });
+  }
+  return [...groups.values()];
+}
+
 export async function diningListEateries(args = {}) {
   const day = resolveDate(args.date);
   const { eateries, fetchedAt, stale } = await loadEateries();
