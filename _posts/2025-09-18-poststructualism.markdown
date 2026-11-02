@@ -6,7 +6,7 @@ categories: jekyll update
 author: William
 tags: Philosophy
 permalink: poststructuralism
-description: an obituary for the turing test and what it means for us
+description: an obituary for the Turing test and what it means for us
 excerpt_separator: <!--more-->
 ---
 
@@ -40,7 +40,7 @@ This question was a major point of contention between [rationalists and empirici
 
 In hindsight, this result makes a large degree of intuitive sense from the hyper-empiricist standpoint of statistical learning theory. How would a person with newly restored vision after years of blindness have any intuition about what their senses are indicating? But it is also easy to see how absent this framework, such a question poses quite the dilemma.
 
-Another example of this phenomenon is Einstein's theory of General Relativity. For a long time, there was extensive debate between the so called A and B theories of time. A theory, often referred to as **presentism**, posits that the past and future are unreal and only the present truly exists. B theory, often called **eternalism**, instead posits that the past, present, and future are all equally real.
+Another example of this phenomenon is Einstein's theory of General Relativity. For a long time, there was extensive debate between the so-called A and B theories of time. A theory, often referred to as **presentism**, posits that the past and future are unreal and only the present truly exists. B theory, often called **eternalism**, instead posits that the past, present, and future are all equally real.
 
 In special relativity, the notion of simultaneity depends on your frame of reference, meaning that there is no universal notion of the present. In general relativity, simultaneity is even weaker, and is not only **relative** but **local**, meaning there is no notion of what is happening "now" for objects far away. This essentially kills off the A theory of time. Gravity emerging from the curvature of a unified block of spacetime hammers down the last nail in the coffin for presentism.
 
@@ -102,7 +102,7 @@ To which the robot replies:
 <i> Can you? </i>
 </blockquote>
 
-Setting aside a potential [no-true scotsman fallacy](https://en.wikipedia.org/wiki/No_true_Scotsman), I think a point that is commonly unaddressed here is in what sense a "world" is necessary for cognition. If one is arguing that language models currently struggle to understand 3D space and physics, [I couldn't agree more](https://adamkarvonen.github.io/machine_learning/2025/04/13/llm-manufacturing-eval.html). I think one of the best litmus tests for whether an LLM can solve a problem is whether drawing a diagram or geometric intuition is necessary. LLMs seem to struggle with 3D space in the same way we struggle with 4D space.
+Setting aside a potential [no-true Scotsman fallacy](https://en.wikipedia.org/wiki/No_true_Scotsman), I think a point that is commonly unaddressed here is in what sense a "world" is necessary for cognition. If one is arguing that language models currently struggle to understand 3D space and physics, [I couldn't agree more](https://adamkarvonen.github.io/machine_learning/2025/04/13/llm-manufacturing-eval.html). I think one of the best litmus tests for whether an LLM can solve a problem is whether drawing a diagram or geometric intuition is necessary. LLMs seem to struggle with 3D space in the same way we struggle with 4D space.
 
 But if what is being argued is that statistical learning methods are intrinsically unable to rival human beings due to their data driven nature, I would wildly disagree. How is human vision that different from a camera sensor? Contemporary philosophers frequently characterize our interaction of the world as collecting [sense data](https://plato.stanford.edu/entries/sense-data/). When you revise or study for an exam with practice problems, is that qualitatively different from a machine learning from its training data? Is an engineering student who blindly memorizes equations without understanding their significance and derivation not [overfitting](https://williamliaw.com/overfitting)?
 
