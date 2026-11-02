@@ -7,6 +7,7 @@ statelessly (JSON-RPC over POST, no sessions, no auth).
 | Tool | What it answers |
 |---|---|
 | `dining_open_now` | what's open to eat now or at a time, by area, type or swipes |
+| `dining_menus` | every dining hall's menu in one call, by station (meal, area, type, station filters) |
 | `dining_eatery` | one eatery's hours and menu (nicknames like Okies, RPME, Appel work) |
 | `dining_menu_search` | where a dish is served on a day |
 | `dining_list_eateries` | every eatery's hours for a day |

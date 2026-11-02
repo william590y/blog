@@ -1,4 +1,4 @@
-// Cornell campus MCP server: live Cornell Dining hours, menus and dish search, plus gym crowding
+// Cornell campus MCP server: live Cornell Dining hours, every hall's menu in one call, dish search, plus gym crowding
 // and hours. A Cloudflare Pages Function served at https://williamliaw.com/mcp, speaking MCP's
 // Streamable HTTP transport statelessly: every POST carries JSON-RPC and gets a JSON reply, with
 // no sessions and no SSE stream. Add it in Claude under Settings -> Connectors -> Add custom
@@ -10,12 +10,13 @@ import {
   diningEatery,
   diningListEateries,
   diningMenuSearch,
+  diningMenus,
   diningOpenNow,
 } from '../cornell_mcp/lib/dining.mjs';
 import { gymOccupancy, gymSchedule } from '../cornell_mcp/lib/gym.mjs';
 import { InputError } from '../cornell_mcp/lib/util.mjs';
 
-const SERVER_INFO = { name: 'cornell-campus', title: 'Cornell Campus', version: '0.1.0' };
+const SERVER_INFO = { name: 'cornell-campus', title: 'Cornell Campus', version: '0.2.0' };
 const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 
 const INSTRUCTIONS = `Live Cornell University dining and gym data. Always call a tool instead of answering from memory: hours, menus and crowd levels change by semester, break and day.
@@ -24,6 +25,7 @@ const INSTRUCTIONS = `Live Cornell University dining and gym data. Always call a
 - Nicknames work: Okies (Okenshields), RPME (Robert Purcell), Appel (North Star), Morrison, Becker/Cook/Rose/Keeton/Bethe (West Campus houses), 104West (kosher/multicultural).
 - If nothing is open, lead with what opens next (opening_soon). If a result notes unpublished dates, say hours or menus are not out yet.
 - Gym level: quiet < 25% <= moderate < 50% <= busy < 75% <= very busy. Give the headcount and percent, not only the label. If minutes_since_update > 20 while open, say the count may be stale. "closed" means closed: report the next opening. Gym hours are regular-semester hours; breaks may differ.
+- Menus: for "what's for dinner" or "what's on the menu", call dining_menus once (every dining hall, by station); dining_eatery for one place; dining_menu_search only to find where a specific dish is.
 - Summarize menus (main entrees, stations, notable vegetarian items) unless the full menu is asked for. Lead with the answer and keep it short.
 - If a tool reports a source error, say so and point to https://now.dining.cornell.edu or https://scl.cornell.edu/recreation/cornell-fitness-centers.`;
 
@@ -60,10 +62,34 @@ const TOOLS = [
     run: (a) => diningOpenNow(a),
   },
   {
+    name: 'dining_menus',
+    title: "Every dining hall's menu",
+    description:
+      'Full menus at ALL Cornell dining halls in one call, grouped by station (Grill, Pizza, Vegan/Vegetarian, Dessert...). Use for "what\'s for dinner tonight", "what are the dining halls serving", "best lunch on West". Defaults: dining halls only; today = the meal each hall is serving now or next; another day = all meals. Set meal to pick one, or "all".',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        date: DATE,
+        meal: {
+          type: 'string',
+          description: 'Breakfast, Brunch, Lunch, Dinner, Late Night, or "all" (default: serving now or next today)',
+        },
+        area: AREA,
+        type: {
+          type: 'string',
+          description: 'Default "dining hall"; "cafe", "market", etc., or "all" for every eatery',
+        },
+        accepts_swipes: SWIPES,
+        station: { type: 'string', description: 'Only stations matching this, e.g. "grill", "vegan", "dessert"' },
+      },
+    },
+    run: (a) => diningMenus(a),
+  },
+  {
     name: 'dining_eatery',
     title: 'One eatery: hours and menu',
     description:
-      "One Cornell eatery's hours and menu for a day, e.g. Okies dinner tonight. Accepts nicknames (Okies, RPME, Appel).",
+      "One Cornell eatery's hours and full menu for a day, e.g. Okies dinner tonight. Accepts nicknames (Okies, RPME, Appel). For every dining hall at once, use dining_menus.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -79,7 +105,8 @@ const TOOLS = [
   {
     name: 'dining_menu_search',
     title: 'Where is a dish served',
-    description: 'Find which Cornell eateries serve a dish or ingredient on a day, e.g. "where\'s ramen today".',
+    description:
+      'Find which Cornell eateries serve one specific dish or ingredient on a day, e.g. "where\'s ramen today". Returns only matching items; to see whole menus use dining_menus.',
     inputSchema: {
       type: 'object',
       properties: {
