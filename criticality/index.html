@@ -1,0 +1,880 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Wilson–Cowan Flow Field</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<style>
+/* Layout: lab bench — phase plane on the left, control rail on the right, explainer below in one reading column */
+:root{
+  --bg:#f2f4f7; --panel:#ffffff; --ink:#151d27; --muted:#5a6675; --line:#d4dae2;
+  --r1:#d8dee6; --r2:#e9edf2; --r3:#fbfcfd;
+  --se:#1690cc; --si:#22489a; --traj:#d2346c; --nE:#c07410; --nI:#2c8a55;
+  --f-display:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1117; --panel:#131a22; --ink:#e3e8ee; --muted:#93a0ae; --line:#27323e;
+    --r1:#26323f; --r2:#19222c; --r3:#10161d;
+    --se:#4cc0f0; --si:#8eaef5; --traj:#ff6c9c; --nE:#eaa648; --nI:#5ec68b;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1117; --panel:#131a22; --ink:#e3e8ee; --muted:#93a0ae; --line:#27323e;
+  --r1:#26323f; --r2:#19222c; --r3:#10161d;
+  --se:#4cc0f0; --si:#8eaef5; --traj:#ff6c9c; --nE:#eaa648; --nI:#5ec68b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+a{color:var(--se)}
+.page{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 72px}
+header{display:grid;gap:8px;max-width:76ch;margin-bottom:22px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.03em;color:var(--muted);margin:0}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(28px,4.2vw,42px);line-height:1.08;margin:0;text-wrap:balance}
+.dek{color:var(--muted);margin:0;max-width:70ch}
+.v{font-family:var(--f-display);font-style:italic;font-size:1.08em}
+sub,sup{font-size:.72em;line-height:0}
+
+.bench{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
+@media (max-width:920px){.bench{grid-template-columns:minmax(0,1fr)}}
+.stage{min-width:0;display:grid;gap:12px}
+.plot{position:relative;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.plot canvas{position:absolute;left:0;top:0;display:block}
+#cTraj{cursor:crosshair;touch-action:manipulation}
+.badges{position:absolute;inset:0;pointer-events:none}
+.badge{position:absolute;display:grid;justify-items:center;gap:1px;padding:4px 9px 5px;border:1px solid var(--line);border-radius:4px;background:var(--panel);background:color-mix(in srgb,var(--panel) 84%,transparent);font-size:11.5px;line-height:1.25;white-space:nowrap;text-align:center}
+.badge b{font-family:var(--f-display);font-size:17px;font-weight:600;letter-spacing:.03em;line-height:1.1}
+.badge .sg{font-family:var(--f-mono);font-size:11px}
+.badge .what{color:var(--muted);font-size:11px}
+.badge.compact .sg,.badge.compact .what{display:none}
+@media (max-width:560px){.badge .what{display:none}}
+
+.hover{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);min-height:20px;display:flex;flex-wrap:wrap;gap:4px 14px;font-variant-numeric:tabular-nums}
+.hover b{color:var(--ink);font-weight:500}
+.hover .rg{padding:0 6px;border-radius:3px;border:1px solid var(--line);color:var(--ink)}
+.legend{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.legend li{display:flex;align-items:center;gap:7px}
+.legend svg{flex:none}
+.legend .tr-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+.ts{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px 6px;min-width:0}
+.ts-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:baseline}
+.ts h3{margin:0;font-size:13px;font-weight:600}
+.ts-meta{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+#cTS{display:block;width:100%}
+
+.rail{display:grid;gap:14px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:grid;gap:10px;min-width:0}
+.card h2{margin:0;font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.circuit svg{width:100%;height:auto;display:block}
+.circuit .box{fill:var(--r2);stroke:var(--ink);stroke-width:1.6}
+.circuit .pop{font-family:var(--f-display);font-style:italic;font-weight:600;font-size:25px;fill:var(--ink)}
+.circuit .ex{fill:none;stroke:var(--ink)}
+.circuit .inh{fill:none;stroke:var(--ink)}
+.circuit .mk{fill:var(--ink)}
+.circuit .lab{font-family:var(--f-display);font-style:italic;font-size:15px;fill:var(--ink)}
+.circuit .val{font-family:var(--f-mono);font-size:11.5px;fill:var(--muted)}
+.cap{font-size:12.5px;color:var(--muted);margin:0}
+
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;color:inherit}
+.pbtn{font-size:13px;padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);cursor:pointer}
+.pbtn:hover{border-color:var(--muted)}
+.pbtn[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--se);outline-offset:2px}
+
+.sliders{display:grid;gap:9px}
+.sl{display:grid;grid-template-columns:64px minmax(0,1fr) 46px;align-items:center;gap:10px}
+.sl label{display:grid;line-height:1.15}
+.sl .nm{font-family:var(--f-display);font-style:italic;font-size:16px}
+.sl .ds{font-size:11px;color:var(--muted)}
+.sl input[type=range]{width:100%;accent-color:var(--se);margin:0}
+.sl output{font-family:var(--f-mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums}
+
+.phase{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14.5px}
+.phase .dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.phase[data-kind="critical"] .dot{background:var(--se)}
+.phase[data-kind="excitable"] .dot{background:var(--nE)}
+.phase[data-kind="active"] .dot{background:var(--traj)}
+.phase[data-kind="bistable"] .dot{background:var(--si)}
+.phase[data-kind="driven"] .dot{background:var(--nI)}
+.pdesc{margin:0;font-size:13px;color:var(--muted)}
+.nums{margin:0;display:grid;gap:4px}
+.nums div{display:flex;justify-content:space-between;gap:10px;font-size:13px;border-top:1px solid var(--line);padding-top:4px}
+.nums dt{color:var(--muted)}
+.nums dd{margin:0;font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right}
+.fplist{font-size:13px;margin:0}
+.fplist span{font-family:var(--f-mono);font-size:12.5px}
+.dim{opacity:.55}
+
+.ctrls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px}
+.ctrls label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.ctrls input[type=checkbox]{accent-color:var(--se);margin:0}
+.ctrls select{font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+
+.explain{max-width:74ch;margin-top:48px;display:grid;gap:14px}
+.explain h2{font-family:var(--f-display);font-weight:600;font-size:24px;line-height:1.2;margin:26px 0 0;text-wrap:balance}
+.explain h2:first-child{margin-top:0}
+.explain p,.explain li{margin:0}
+.explain ul{margin:0;padding-left:20px;display:grid;gap:8px}
+.eq{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+mjx-container[display="true"]{margin:6px 0!important}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td:first-child{font-family:var(--f-display);font-weight:600;font-size:16px}
+.note{font-size:13.5px;color:var(--muted);border-left:2px solid var(--line);padding-left:12px}
+footer{margin-top:40px;font-size:12.5px;color:var(--muted);max-width:74ch}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+  svg: { fontCache: 'global' },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code','canvas'] }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js" async></script>
+
+<div class="page">
+  <header>
+    <p class="eyebrow">Mean-field Eqs. (3)–(4) · Piuvezam, Marin, Copelli &amp; Muñoz · <a href="https://arxiv.org/abs/2301.06839">arXiv:2301.06839</a></p>
+    <h1>Wilson–Cowan flow field</h1>
+    <p class="dek">Every point on the plane is a state of the network: <span class="v">E</span> is the fraction of excitatory neurons that are active, <span class="v">I</span> the fraction of inhibitory ones. The moving tracers ride the velocity field (<span class="v">Ė</span>, <span class="v">İ</span>). Click anywhere on the plane to launch a trajectory.</p>
+  </header>
+
+  <div class="bench">
+    <section class="stage" aria-label="Phase plane">
+      <div class="plot" id="plot">
+        <canvas id="cStatic" aria-hidden="true"></canvas>
+        <canvas id="cPart" aria-hidden="true"></canvas>
+        <canvas id="cTraj" aria-label="Phase plane. Click to launch a trajectory from that point."></canvas>
+        <div class="badges" id="badges"></div>
+      </div>
+      <div class="hover" id="hover">Hover over the plane to read the state there. Click a path's start ring to show it below.</div>
+      <ul class="legend">
+        <li><svg width="26" height="10" aria-hidden="true"><line x1="0" y1="5" x2="26" y2="5" style="stroke:var(--se)" stroke-width="2.2"/></svg><span><span class="v">s<sup>E</sup></span> = 0 switching line</span></li>
+        <li><svg width="26" height="10" aria-hidden="true"><line x1="0" y1="5" x2="26" y2="5" style="stroke:var(--si)" stroke-width="2.2" stroke-dasharray="7 3 2 3"/></svg><span><span class="v">s<sup>I</sup></span> = 0 switching line</span></li>
+        <li><svg width="26" height="10" aria-hidden="true"><line x1="0" y1="5" x2="26" y2="5" style="stroke:var(--nE)" stroke-width="1.8"/></svg><span><span class="v">Ė</span> = 0 nullcline</span></li>
+        <li><svg width="26" height="10" aria-hidden="true"><line x1="0" y1="5" x2="26" y2="5" style="stroke:var(--nI)" stroke-width="1.8"/></svg><span><span class="v">İ</span> = 0 nullcline</span></li>
+        <li><svg width="30" height="10" aria-hidden="true"><line x1="0" y1="5" x2="22" y2="5" style="stroke:var(--traj)" stroke-width="2" stroke-dasharray="5 3"/><path d="M22 1 L30 5 L22 9 Z" style="fill:var(--traj)"/></svg><span>trajectory</span></li>
+        <li><svg width="52" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" style="fill:var(--ink)"/><circle cx="24" cy="6" r="4.5" stroke-width="1.5" style="fill:var(--panel);stroke:var(--ink)"/><circle cx="43" cy="6" r="4.5" stroke-width="1.5" style="fill:var(--panel);stroke:var(--ink)"/><line x1="39.5" y1="9.5" x2="46.5" y2="2.5" style="stroke:var(--ink)" stroke-width="1.5"/></svg><span>stable · unstable · saddle</span></li>
+        <li><span class="tr-dot" style="background:var(--ink)"></span><span class="tr-dot" style="background:var(--se)"></span><span class="tr-dot" style="background:var(--muted)"></span><span>tracer color = region I · II · III</span></li>
+      </ul>
+      <div class="ts">
+        <div class="ts-head"><h3>Selected path: <span class="v">E</span>(<span class="v">t</span>) and <span class="v">I</span>(<span class="v">t</span>), shaded by region</h3><span class="ts-meta" id="tsMeta"></span></div>
+        <canvas id="cTS" aria-label="E and I versus time for the selected trajectory, shaded by region"></canvas>
+      </div>
+    </section>
+
+    <aside class="rail">
+      <div class="card circuit">
+        <h2>Circuit, Fig. 1(a)</h2>
+        <svg viewBox="0 0 320 158" role="img" aria-label="Two populations, E and I, with four couplings">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path class="mk" d="M0,0 L10,5 L0,10 Z"/></marker>
+            <marker id="bar" viewBox="0 0 4 14" refX="2" refY="7" markerWidth="4" markerHeight="13" markerUnits="userSpaceOnUse" orient="auto"><rect class="mk" x="0" y="0" width="4" height="14"/></marker>
+          </defs>
+          <path id="pIE" class="ex" d="M103 54 C125 14 195 14 217 54" marker-end="url(#arr)"/>
+          <path id="pEI" class="inh" d="M217 98 C195 138 125 138 103 98" marker-end="url(#bar)"/>
+          <path id="pEE" class="ex" d="M78 66 C36 46 36 106 78 86" marker-end="url(#arr)"/>
+          <path id="pII" class="inh" d="M242 66 C284 46 284 106 242 86" marker-end="url(#bar)"/>
+          <rect class="box" x="78" y="54" width="50" height="44" rx="3"/>
+          <rect class="box" x="192" y="54" width="50" height="44" rx="3"/>
+          <text class="pop" x="103" y="84" text-anchor="middle">E</text>
+          <text class="pop" x="217" y="84" text-anchor="middle">I</text>
+          <text class="lab" x="150" y="14" text-anchor="end">w<tspan font-size="10" dy="3">IE</tspan></text><text class="val" id="vIE" x="156" y="15">1.50</text>
+          <text class="lab" x="150" y="153" text-anchor="end">−w<tspan font-size="10" dy="3">EI</tspan></text><text class="val" id="vEI" x="156" y="154">1.50</text>
+          <text class="lab" x="22" y="72" text-anchor="middle">w<tspan font-size="10" dy="3">EE</tspan></text><text class="val" id="vEE" x="22" y="92" text-anchor="middle">2.50</text>
+          <text class="lab" x="298" y="72" text-anchor="middle">−w<tspan font-size="10" dy="3">II</tspan></text><text class="val" id="vII" x="298" y="92" text-anchor="middle">0.50</text>
+        </svg>
+        <p class="cap">Arrows excite, bars inhibit. Line weight follows the sliders below.</p>
+      </div>
+
+      <div class="card">
+        <h2>Presets</h2>
+        <div class="presets" id="presets"></div>
+        <p class="cap" id="presetNote"></p>
+      </div>
+
+      <div class="card">
+        <h2>Weights and rates</h2>
+        <div class="sliders" id="sliders"></div>
+      </div>
+
+      <div class="card">
+        <h2>What the origin is doing</h2>
+        <div class="phase" id="phase" data-kind="critical"><span class="dot"></span><span id="phaseTitle">—</span></div>
+        <p class="pdesc" id="phaseDesc"></p>
+        <dl class="nums" id="nums">
+          <div><dt>λ<sub>±</sub> at origin (Eq. 7)</dt><dd id="lam">—</dd></div>
+          <div><dt><span class="v">w</span><sub>EE</sub><sup>T</sup> transcritical (Eq. 8)</dt><dd id="wT">—</dd></div>
+          <div><dt><span class="v">w</span><sub>EE</sub><sup>H</sup> Hopf (Eq. 9)</dt><dd id="wH">—</dd></div>
+          <div><dt>Δ = <span class="v">w</span><sub>EE</sub> − <span class="v">w</span><sub>EE</sub><sup>T</sup></dt><dd id="delta">—</dd></div>
+        </dl>
+        <p class="fplist" id="fpList"></p>
+      </div>
+
+      <div class="card">
+        <h2>Display</h2>
+        <div class="ctrls">
+          <label for="tgPart"><input type="checkbox" id="tgPart" checked> Tracers</label>
+          <label for="tgNull"><input type="checkbox" id="tgNull" checked> Nullclines</label>
+          <label for="tgFP"><input type="checkbox" id="tgFP" checked> Fixed points</label>
+        </div>
+        <div class="ctrls">
+          <label for="speed">Speed
+            <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+          </label>
+          <div class="row">
+            <button class="pbtn" id="playBtn" type="button">Pause</button>
+            <button class="pbtn" id="clearBtn" type="button">Clear paths</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <article class="explain" id="explain">
+    <h2>How to read the plot</h2>
+    <p>The horizontal axis is \(E\), the fraction of excitatory neurons that are active. The vertical axis is \(I\), the same for inhibitory neurons. A single point is the state of the whole population. The model gives every point a velocity, and the tracers are carried along by it, so their streaks trace out the flow:</p>
+    <div class="eq">\[\dot E = -\alpha E + (1-E)\,\Phi\!\left(s^E\right),\qquad \dot I = -\alpha I + (1-I)\,\Phi\!\left(s^I\right)\]</div>
+    <div class="eq">\[s^E = w_{EE}E - w_{EI}I + h,\qquad s^I = w_{IE}E - w_{II}I + h,\qquad \Phi(s)=\begin{cases}\tanh s, & s>0\\[2pt] 0, & s\le 0\end{cases}\]</div>
+    <p>Each equation balances losses against gains. Active units switch off at rate \(\alpha\), which gives the \(-\alpha E\) term. The inactive fraction \(1-E\) switches on at rate \(\Phi(s^E)\), where \(s^E\) is the net input: excitation from \(E\) minus inhibition from \(I\), plus any external drive \(h\). These are the large-network, fully connected limit of the stochastic binary-neuron model that the paper actually simulates.</p>
+
+    <h2>Why the plane splits into three regions</h2>
+    <p>\(\Phi\) has a kink at zero: it follows \(\tanh\) for positive input and is exactly zero for negative input. So the right-hand side changes formula on the two lines \(s^E=0\) and \(s^I=0\), which the paper calls switching manifolds. With \(h=0\) both pass through the origin, along \(I=(w_{EE}/w_{EI})\,E\) and \(I=(w_{IE}/w_{II})\,E\). For the Fig. 1 weights those slopes are \(5/3\) and \(3\).</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Region</th><th>Inputs</th><th>Equations become</th><th>What happens</th></tr></thead>
+        <tbody>
+          <tr><td>I</td><td>\(s^E>0,\ s^I>0\)</td><td>the full nonlinear system</td><td>The only place an active fixed point can exist.</td></tr>
+          <tr><td>II</td><td>\(s^E\le 0,\ s^I>0\)</td><td>\(\dot E=-\alpha E\)</td><td>Excitation decays exponentially while \(I\) is still driven.</td></tr>
+          <tr><td>III</td><td>\(s^E\le 0,\ s^I\le 0\)</td><td>\(\dot E=-\alpha E,\ \dot I=-\alpha I\)</td><td>Both decay at the same rate, straight into the origin.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Why regions II and III are traps</h2>
+    <p>In region III both variables shrink by the same factor \(e^{-\alpha t}\), so the ratio \(I/E\) never changes. Every trajectory there is a straight ray into the origin, which you can see in the grey tracer streaks. It cannot leave, because region III is defined by \(I/E\) being large enough.</p>
+    <p>For region II, follow the excitatory input along a trajectory, \(\dot s^E = w_{EE}\dot E - w_{EI}\dot I\). On the line \(s^E=0\) we have \(w_{EE}E=w_{EI}I\) and \(\Phi(s^E)=0\), and substituting both equations gives the same answer from either side:</p>
+    <div class="eq">\[\left.\frac{d s^E}{dt}\right|_{s^E=0} = -\,w_{EI}\,(1-I)\,\tanh\!\left(s^I\right) \;<\; 0 .\]</div>
+    <p>So the excitatory input is always falling where the state meets the line. Trajectories cross from region I into region II, never the other way. This is the crossing (rather than sliding) result of the paper's Appendix C. Launch a path near the cyan line in the Fig. 1 preset and watch its time series change shading.</p>
+
+    <h2>Quiescent or active: the origin decides</h2>
+    <p>With \(h=0\), \(E=I=0\) is always a fixed point: the quiescent, or absorbing, state. Kicks into regions II and III die out no matter what. Kicks into region I see the linearization</p>
+    <div class="eq">\[J=\begin{pmatrix} w_{EE}-\alpha & -w_{EI}\\ w_{IE} & -(\alpha+w_{II})\end{pmatrix},\qquad \lambda_\pm=\tfrac12\Big[\,w_{EE}-2\alpha-w_{II}\;\pm\;\sqrt{(w_{EE}+w_{II})^2-4w_{EI}w_{IE}}\,\Big].\]</div>
+    <p>Two thresholds on \(w_{EE}\) come out of this matrix:</p>
+    <ul>
+      <li><b>Transcritical line</b>, where \(\det J=0\): \(\;w_{EE}^{T}=\alpha+\dfrac{w_{EI}w_{IE}}{\alpha+w_{II}}\). Above it the origin is unstable and an active fixed point appears in region I. When this happens continuously it is a directed-percolation transition.</li>
+      <li><b>Hopf line</b>, where \(\operatorname{tr}J=0\) with complex \(\lambda\): \(\;w_{EE}^{H}=2\alpha+w_{II}\). Past it the linearized flow would spiral outward, but the spiral runs into \(s^E=0\), enters region II and dies. The oscillation is frustrated, and the quiescent state becomes excitable: a small kick can grow into a large excursion before it decays. The Fig. 2b preset shows this.</li>
+    </ul>
+    <p class="note">The paper does not state \(\alpha\) for Fig. 1. Taking \(\alpha=1\), as in Figs. 2–3, the Fig. 1 weights give \(\operatorname{tr}J=0\), \(\det J=0\) and a zero discriminant. Both eigenvalues vanish and \(J\) is nilpotent (Bogdanov–Takens form). The weights satisfy \(w_{IE}=w_{EI}=\alpha+w_{II}\) and \(w_{EE}=2\alpha+w_{II}\), which is exactly the Hopf-tricritical point \(T_5\), the paper's new H+TDP class. That is why decay near the origin is so slow in that preset: it is algebraic, \(E\propto 1/t\), not exponential.</p>
+
+    <h2>Things to try</h2>
+    <ul>
+      <li>In the Fig. 1 preset, click just right of the origin, near \((0.05, 0.01)\). The path swings out to about \((0.13, 0.12)\) before it creeps back. That transient growth is the mechanism behind the anomalous spreading exponent \(\eta=2\) at \(T_5\).</li>
+      <li>Raise \(w_{EE}\) above 2.5. A stable active fixed point appears in region I; at \(w_{EE}=3\) it sits near \((0.38, 0.29)\). Starts in region III still die, since the trap argument does not depend on \(w_{EE}\).</li>
+      <li>Load <b>Bistable</b>. The saddle splits the plane: starts on one side reach the active state, the rest decay to quiescence.</li>
+      <li>Load <b>Fig. 2b</b> and watch the path from \((0.3, 0.05)\): the time series is non-monotonic before the collapse in region II.</li>
+      <li>Make \(w_{EE}/w_{EI} > w_{IE}/w_{II}\), for example \(w_{EI}=0.5\). The two lines swap order, and the middle region becomes \(s^E>0,\ s^I<0\), where only inhibition is switched off.</li>
+      <li>Set \(h>0\). The lines no longer meet at the origin, the input there is positive, and the quiescent state is gone.</li>
+    </ul>
+  </article>
+  <footer>Velocities are computed from Eqs. (3)–(4) directly; tracers use a midpoint step and trajectories use fourth-order Runge–Kutta with step 0.01. Fixed points are found by Newton's method inside region I.</footer>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const P = { a: 1, wEE: 2.5, wEI: 1.5, wIE: 1.5, wII: 0.5, h: 0 };
+  const SL = [
+    { k: 'wEE', min: 0, max: 5, step: 0.05, nm: 'w<sub>EE</sub>', ds: 'E → E' },
+    { k: 'wEI', min: 0, max: 4, step: 0.05, nm: 'w<sub>EI</sub>', ds: 'I ⊣ E' },
+    { k: 'wIE', min: 0, max: 4, step: 0.05, nm: 'w<sub>IE</sub>', ds: 'E → I' },
+    { k: 'wII', min: 0, max: 2, step: 0.05, nm: 'w<sub>II</sub>', ds: 'I ⊣ I' },
+    { k: 'a',   min: 0.2, max: 2, step: 0.05, nm: 'α', ds: 'decay rate' },
+    { k: 'h',   min: 0, max: 0.2, step: 0.005, nm: 'h', ds: 'external input' },
+  ];
+  const PRESETS = {
+    fig1: { name: 'Fig. 1', p: { a: 1, wEE: 2.5, wEI: 1.5, wIE: 1.5, wII: 0.5, h: 0 },
+      starts: [[0.88, 0.18], [0.58, 0.9], [0.14, 0.66]],
+      note: 'The paper\u2019s Fig. 1(b) weights. With \u03b1 = 1 this lands exactly on the Hopf-tricritical point T<sub>5</sub>.' },
+    fig2a: { name: 'Fig. 2a', p: { a: 1, wEE: 1.2, wEI: 2.0, wIE: 0.2, wII: 0.2, h: 0 },
+      starts: [[0.85, 0.1], [0.5, 0.6], [0.2, 0.9]],
+      note: 'Standard quiescent phase: the origin is a stable node and every path decays smoothly.' },
+    fig2b: { name: 'Fig. 2b', p: { a: 1, wEE: 2.2, wEI: 2.0, wIE: 1.0, wII: 0.2, h: 0 },
+      starts: [[0.3, 0.05], [0.7, 0.3], [0.1, 0.7]],
+      note: 'Excitable quiescent phase, sitting on the Hopf line: paths curl upward, cross s<sup>E</sup> = 0 and collapse.' },
+    active: { name: 'Active', p: { a: 1, wEE: 3.0, wEI: 1.5, wIE: 1.5, wII: 0.5, h: 0 },
+      starts: [[0.9, 0.1], [0.05, 0.01], [0.6, 0.95], [0.1, 0.6]],
+      note: 'Fig. 1 with w<sub>EE</sub> raised past the transcritical value 2.5: a stable active state appears in region I.' },
+    bistable: { name: 'Bistable', p: { a: 1, wEE: 1.8, wEI: 0.3, wIE: 3.0, wII: 0, h: 0 },
+      starts: [[0.3, 0.1], [0.08, 0.15], [0.04, 0.15], [0.9, 0.6], [0.1, 0.45]],
+      note: 'Case A of Fig. 3 (w<sub>IE</sub> = 3, w<sub>II</sub> = 0): an active state coexists with the quiescent one.' },
+  };
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const show = { part: true, nul: true, fp: true };
+  let playing = !reduceMotion, speed = 1, activePreset = 'fig1';
+
+  // ---------- model ----------
+  const th = Math.tanh;
+  function rates(E, I, o) {
+    const sE = P.wEE * E - P.wEI * I + P.h, sI = P.wIE * E - P.wII * I + P.h;
+    o[0] = -P.a * E + (1 - E) * (sE > 0 ? th(sE) : 0);
+    o[1] = -P.a * I + (1 - I) * (sI > 0 ? th(sI) : 0);
+    return o;
+  }
+  function regionOf(E, I) {
+    const sE = P.wEE * E - P.wEI * I + P.h, sI = P.wIE * E - P.wII * I + P.h;
+    return sE > 0 ? (sI > 0 ? 1 : 4) : (sI > 0 ? 2 : 3);
+  }
+  const fEfun = (E, I) => { const s = P.wEE * E - P.wEI * I + P.h; return -P.a * E + (1 - E) * (s > 0 ? th(s) : 0); };
+  const fIfun = (E, I) => { const s = P.wIE * E - P.wII * I + P.h; return -P.a * I + (1 - I) * (s > 0 ? th(s) : 0); };
+
+  // ---------- canvases ----------
+  const plot = $('plot'), cS = $('cStatic'), cP = $('cPart'), cT = $('cTraj'), cTS = $('cTS');
+  const gS = cS.getContext('2d'), gP = cP.getContext('2d'), gT = cT.getContext('2d'), gTS = cTS.getContext('2d');
+  const M = { l: 48, r: 12, t: 12, b: 42 };
+  let W = 0, H = 0, pw = 0, ph = 0, dpr = 1, tsW = 0, tsH = 168;
+  const X = e => M.l + e * pw, Y = i => M.t + (1 - i) * ph;
+  const invX = x => (x - M.l) / pw, invY = y => 1 - (y - M.t) / ph;
+
+  let C = {};
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    ['bg','panel','ink','muted','line','r1','r2','r3','se','si','traj','nE','nI'].forEach(k => C[k] = cs.getPropertyValue('--' + k).trim());
+  }
+  const FD = '"Source Serif 4", Georgia, serif', FM = '"IBM Plex Mono", ui-monospace, Menlo, monospace', FB = '"IBM Plex Sans", system-ui, sans-serif';
+
+  function sizeCanvas(c, g, w, h) {
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+    c.style.width = w + 'px'; c.style.height = h + 'px';
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function resize() {
+    const avail = plot.parentElement.clientWidth;
+    const w = Math.max(280, Math.min(760, avail));
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = w; pw = W - M.l - M.r; ph = pw; H = ph + M.t + M.b;
+    plot.style.width = W + 'px'; plot.style.height = H + 'px';
+    [[cS, gS], [cP, gP], [cT, gT]].forEach(([c, g]) => sizeCanvas(c, g, W, H));
+    tsW = cTS.parentElement.clientWidth - 24; tsH = tsW < 420 ? 150 : 168;
+    sizeCanvas(cTS, gTS, Math.max(240, tsW), tsH);
+    drawStatic(); placeBadges(); resetParticles(); prewarm(50); tsDirty = true;
+  }
+
+  // ---------- geometry ----------
+  const SQ = [[0, 0], [1, 0], [1, 1], [0, 1]];
+  function clip(poly, L, sign) {
+    const out = [], val = p => L[0] * p[0] + L[1] * p[1] + L[2];
+    const inside = v => sign > 0 ? v > 0 : v <= 0;
+    for (let i = 0; i < poly.length; i++) {
+      const p = poly[i], q = poly[(i + 1) % poly.length], vp = val(p), vq = val(q);
+      if (inside(vp)) out.push(p);
+      if (inside(vp) !== inside(vq)) { const t = vp / (vp - vq); out.push([p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1])]); }
+    }
+    return out;
+  }
+  function area(poly) { let s = 0; for (let i = 0; i < poly.length; i++) { const p = poly[i], q = poly[(i + 1) % poly.length]; s += p[0] * q[1] - q[0] * p[1]; } return Math.abs(s) / 2; }
+  function segInSquare(L) {
+    const [a, b, c] = L, pts = [], ok = v => v >= -1e-9 && v <= 1 + 1e-9;
+    if (Math.abs(b) > 1e-12) for (const x of [0, 1]) { const y = -(a * x + c) / b; if (ok(y)) pts.push([x, y]); }
+    if (Math.abs(a) > 1e-12) for (const y of [0, 1]) { const x = -(b * y + c) / a; if (ok(x)) pts.push([x, y]); }
+    let best = null, bd = 1e-6;
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+      const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]); if (d > bd) { bd = d; best = [pts[i], pts[j]]; }
+    }
+    return best;
+  }
+  function contour(fn, N) {
+    const lo = 0.0015, hi = 0.9985, st = (hi - lo) / N, n1 = N + 1, v = new Float64Array(n1 * n1), segs = [];
+    for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) v[j * n1 + i] = fn(lo + i * st, lo + j * st);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const x0 = lo + i * st, y0 = lo + j * st;
+      const a = v[j * n1 + i], b = v[j * n1 + i + 1], c = v[(j + 1) * n1 + i + 1], d = v[(j + 1) * n1 + i];
+      const pts = [];
+      if ((a > 0) !== (b > 0)) pts.push([x0 + st * a / (a - b), y0]);
+      if ((b > 0) !== (c > 0)) pts.push([x0 + st, y0 + st * b / (b - c)]);
+      if ((d > 0) !== (c > 0)) pts.push([x0 + st * d / (d - c), y0 + st]);
+      if ((a > 0) !== (d > 0)) pts.push([x0, y0 + st * a / (a - d)]);
+      if (pts.length === 2) segs.push(pts); else if (pts.length === 4) { segs.push([pts[0], pts[1]]); segs.push([pts[2], pts[3]]); }
+    }
+    return segs;
+  }
+
+  // ---------- fixed points & analysis ----------
+  let fixedPts = [], originStable = true, regionPolys = {};
+  function newton(E, I) {
+    const { a, wEE, wEI, wIE, wII, h } = P;
+    for (let k = 0; k < 80; k++) {
+      const sE = wEE * E - wEI * I + h, sI = wIE * E - wII * I + h;
+      if (sE <= 0 || sI <= 0) return null;
+      const tE = th(sE), tI = th(sI);
+      const f1 = -a * E + (1 - E) * tE, f2 = -a * I + (1 - I) * tI;
+      const qE = 1 - tE * tE, qI = 1 - tI * tI;
+      const j11 = -a - tE + (1 - E) * qE * wEE, j12 = -(1 - E) * qE * wEI;
+      const j21 = (1 - I) * qI * wIE, j22 = -a - tI - (1 - I) * qI * wII;
+      if (Math.abs(f1) + Math.abs(f2) < 1e-13) return { E, I, j11, j12, j21, j22 };
+      const det = j11 * j22 - j12 * j21; if (Math.abs(det) < 1e-14) return null;
+      let dE = (f1 * j22 - f2 * j12) / det, dI = (j11 * f2 - j21 * f1) / det;
+      const n = Math.hypot(dE, dI); if (n > 0.08) { dE *= 0.08 / n; dI *= 0.08 / n; }
+      E -= dE; I -= dI;
+      if (E <= 1e-6 || E >= 1 || I <= 1e-6 || I >= 1) return null;
+    }
+    return null;
+  }
+  function computeFPs() {
+    const seeds = [0.004, 0.012, 0.03, 0.06, 0.1, 0.16, 0.24, 0.33, 0.44, 0.56, 0.7, 0.84, 0.95];
+    const out = [];
+    for (const e of seeds) for (const i of seeds) {
+      const r = newton(e, i); if (!r) continue;
+      if (out.some(o => Math.hypot(o.E - r.E, o.I - r.I) < 1e-5)) continue;
+      const tr = r.j11 + r.j22, det = r.j11 * r.j22 - r.j12 * r.j21, disc = tr * tr - 4 * det;
+      let kind, label;
+      if (det < 0) { kind = 'saddle'; label = 'saddle'; }
+      else if (tr < 0) { kind = 'stable'; label = disc < 0 ? 'stable focus' : 'stable node'; }
+      else { kind = 'unstable'; label = disc < 0 ? 'unstable focus' : 'unstable node'; }
+      out.push({ E: r.E, I: r.I, kind, label });
+    }
+    fixedPts = out;
+  }
+  const f2 = x => (Math.abs(x) < 0.005 ? 0 : x).toFixed(2);
+  const f3 = x => (Math.abs(x) < 0.0005 ? 0 : x).toFixed(3);
+  const sgn = x => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(3);
+  function analyze() {
+    computeFPs();
+    const { a, wEE, wEI, wIE, wII, h } = P, eps = 1e-6;
+    const tr = wEE - 2 * a - wII, disc = (wEE + wII) ** 2 - 4 * wEI * wIE;
+    const wT = a + wEI * wIE / (a + wII), wH = 2 * a + wII;
+    let lam;
+    if (disc >= 0) { const s = Math.sqrt(disc); lam = `${f2((tr + s) / 2)}, ${f2((tr - s) / 2)}`; }
+    else lam = `${f2(tr / 2)} ± ${f2(Math.sqrt(-disc) / 2)}i`;
+    $('lam').textContent = lam; $('wT').textContent = wT.toFixed(3); $('wH').textContent = wH.toFixed(3);
+    $('delta').textContent = (wEE - wT >= 0 ? '+' : '−') + Math.abs(wEE - wT).toFixed(3);
+    $('nums').classList.toggle('dim', h > 0);
+    const stable = fixedPts.filter(f => f.kind === 'stable');
+    const hasSaddle = fixedPts.some(f => f.kind === 'saddle');
+    let kind, title, desc;
+    originStable = wEE <= wT + eps;
+    if (h > 0) {
+      kind = 'driven'; title = 'Driven by h > 0';
+      desc = 'The input at the origin is positive, so E = I = 0 is no longer a fixed point and activity never fully dies. The numbers below use the h = 0 formulas.';
+    } else if (Math.abs(tr) < eps && Math.abs(disc) < eps) {
+      kind = 'critical'; title = 'Hopf-tricritical point T₅';
+      desc = 'Both eigenvalues are zero. Decay near the origin is algebraic (E ∝ 1/t) rather than exponential, and small kicks grow before they fade.';
+    } else if (Math.abs(wEE - wT) < eps) {
+      kind = 'critical'; title = 'On the transcritical line';
+      desc = 'One eigenvalue is exactly zero: the quiescent state is marginal, right at the edge of the active phase. Decay is slow here.';
+    } else if (wEE > wT) {
+      kind = 'active'; title = 'Active phase';
+      desc = stable.length
+        ? 'The origin is unstable to excitatory kicks, so paths in region I settle on the active fixed point. Starts in regions II and III still die out.'
+        : 'The origin is unstable to excitatory kicks, but no stable fixed point was found in region I.';
+    } else {
+      const exc = disc < 0 && tr > -eps, q = exc ? 'excitable quiescent' : 'standard quiescent';
+      if (stable.length) {
+        kind = 'bistable'; title = 'Bistable';
+        desc = `An active state coexists with a ${q} state.` + (hasSaddle ? ' The saddle’s stable manifold divides the plane between them.' : '');
+      } else if (exc) {
+        kind = 'excitable'; title = 'Excitable quiescent';
+        desc = 'The eigenvalues are complex with non-negative real part, so paths swing upward, hit the sᴱ = 0 line and collapse in region II. Small kicks can be amplified first.';
+      } else {
+        kind = 'quiescent'; title = 'Standard quiescent';
+        desc = disc < 0 ? 'The origin is a stable focus and every trajectory decays to it.' : 'The origin is a stable node and every trajectory decays to it.';
+      }
+    }
+    const ph = $('phase'); ph.dataset.kind = kind; $('phaseTitle').textContent = title; $('phaseDesc').textContent = desc;
+    $('fpList').innerHTML = fixedPts.length
+      ? 'Fixed points in region I: ' + fixedPts.map(f => `${f.label} at <span>(${f3(f.E)}, ${f3(f.I)})</span>`).join('; ') + '.'
+      : (h > 0 ? 'No fixed point found in region I.' : 'No fixed point in region I besides the origin.');
+  }
+
+  // ---------- static layer ----------
+  function symText(g, x, y, base, sup, rest, size) {
+    g.font = `italic 600 ${size}px ${FD}`; const w1 = g.measureText(base).width;
+    g.font = `italic 600 ${size * 0.68}px ${FD}`; const w2 = g.measureText(sup).width;
+    g.font = `500 ${size * 0.86}px ${FB}`; const w3 = g.measureText(rest).width;
+    const tot = w1 + w2 + w3; let cx = x - tot / 2;
+    const parts = [[base, `italic 600 ${size}px ${FD}`, 0, w1], [sup, `italic 600 ${size * 0.68}px ${FD}`, -size * 0.42, w2], [rest, `500 ${size * 0.86}px ${FB}`, 0, w3]];
+    for (const [t, f, dy, w] of parts) { g.font = f; g.textAlign = 'left'; g.strokeText(t, cx, y + dy); g.fillText(t, cx, y + dy); cx += w; }
+  }
+  function lineLabel(g, L, color, sup) {
+    const seg = segInSquare(L); if (!seg) return;
+    let [p, q] = seg; if (Math.hypot(p[0], p[1]) > Math.hypot(q[0], q[1])) [p, q] = [q, p];
+    const t = 0.8, ex = p[0] + t * (q[0] - p[0]), ey = p[1] + t * (q[1] - p[1]);
+    let ang = Math.atan2(Y(q[1]) - Y(p[1]), X(q[0]) - X(p[0]));
+    if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;
+    g.save(); g.translate(X(ex), Y(ey)); g.rotate(ang); g.translate(0, -9);
+    g.fillStyle = color; g.strokeStyle = C.panel; g.lineWidth = 4; g.lineJoin = 'round'; g.textBaseline = 'alphabetic';
+    symText(g, 0, 0, 's', sup, ' = 0', 14);
+    g.restore();
+  }
+  function drawLine(g, L, color, dash, lw) {
+    const seg = segInSquare(L); if (!seg) return;
+    g.save(); g.strokeStyle = color; g.lineWidth = lw; g.setLineDash(dash); g.lineCap = 'butt';
+    g.beginPath(); g.moveTo(X(seg[0][0]), Y(seg[0][1])); g.lineTo(X(seg[1][0]), Y(seg[1][1])); g.stroke(); g.restore();
+  }
+  function drawContour(g, fn, color) {
+    const segs = contour(fn, 120); if (!segs.length) return;
+    g.save(); g.strokeStyle = color; g.lineWidth = 1.7; g.beginPath();
+    for (const [a, b] of segs) { g.moveTo(X(a[0]), Y(a[1])); g.lineTo(X(b[0]), Y(b[1])); }
+    g.stroke(); g.restore();
+  }
+  function drawFPs(g) {
+    g.save(); g.textBaseline = 'middle';
+    for (const fp of fixedPts) {
+      const x = X(fp.E), y = Y(fp.I), r = 5.5;
+      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
+      if (fp.kind === 'stable') { g.fillStyle = C.ink; g.fill(); g.strokeStyle = C.panel; g.lineWidth = 1.5; g.stroke(); }
+      else { g.fillStyle = C.panel; g.fill(); g.strokeStyle = C.ink; g.lineWidth = 1.6; g.stroke();
+        if (fp.kind === 'saddle') { g.beginPath(); g.moveTo(x - 3.8, y + 3.8); g.lineTo(x + 3.8, y - 3.8); g.stroke(); } }
+      const right = fp.E < 0.72;
+      g.font = `500 11.5px ${FB}`; g.textAlign = right ? 'left' : 'right';
+      g.strokeStyle = C.panel; g.lineWidth = 3.5; g.lineJoin = 'round'; g.fillStyle = C.ink;
+      const tx = x + (right ? 9 : -9), ty = y - 10;
+      g.strokeText(fp.label, tx, ty); g.fillText(fp.label, tx, ty);
+    }
+    if (P.h === 0) {
+      const x = X(0), y = Y(0); g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2);
+      if (originStable) { g.fillStyle = C.ink; g.fill(); g.strokeStyle = C.panel; g.lineWidth = 1.5; g.stroke(); }
+      else { g.fillStyle = C.panel; g.fill(); g.strokeStyle = C.ink; g.lineWidth = 1.6; g.stroke(); }
+    }
+    g.restore();
+  }
+  function drawStatic() {
+    const g = gS; g.clearRect(0, 0, W, H);
+    g.fillStyle = C.panel; g.fillRect(0, 0, W, H);
+    const LE = [P.wEE, -P.wEI, P.h], LI = [P.wIE, -P.wII, P.h];
+    const signs = { 1: [1, 1], 2: [-1, 1], 3: [-1, -1], 4: [1, -1] };
+    const fills = { 1: C.r1, 2: C.r2, 3: C.r3, 4: C.r2 };
+    for (const id of [3, 2, 4, 1]) {
+      let poly = clip(SQ, LE, signs[id][0]); poly = clip(poly, LI, signs[id][1]);
+      regionPolys[id] = poly;
+      if (poly.length > 2) { g.beginPath(); poly.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1]))); g.closePath(); g.fillStyle = fills[id]; g.fill(); }
+    }
+    // grid
+    g.save(); g.strokeStyle = C.line; g.lineWidth = 1; g.globalAlpha = 0.7; g.beginPath();
+    for (let k = 1; k < 5; k++) { const v = k / 5; g.moveTo(X(v), Y(0)); g.lineTo(X(v), Y(1)); g.moveTo(X(0), Y(v)); g.lineTo(X(1), Y(v)); }
+    g.stroke(); g.restore();
+    if (show.nul) { drawContour(g, fEfun, C.nE); drawContour(g, fIfun, C.nI); }
+    drawLine(g, LE, C.se, [], 2.3);
+    drawLine(g, LI, C.si, [9, 4, 2, 4], 2.3);
+    // frame and ticks
+    g.strokeStyle = C.muted; g.lineWidth = 1; g.strokeRect(X(0) + 0.5, Y(1) + 0.5, pw - 1, ph - 1);
+    g.fillStyle = C.muted; g.font = `11px ${FM}`; g.textBaseline = 'top'; g.textAlign = 'center';
+    g.beginPath();
+    for (let k = 0; k <= 5; k++) {
+      const v = k / 5, lab = v === 0 ? '0' : v === 1 ? '1.0' : v.toFixed(1);
+      g.moveTo(X(v), Y(0)); g.lineTo(X(v), Y(0) + 4); g.fillText(lab, X(v), Y(0) + 7);
+      g.moveTo(X(0), Y(v)); g.lineTo(X(0) - 4, Y(v));
+    }
+    g.stroke();
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    for (let k = 0; k <= 5; k++) { const v = k / 5; g.fillText(v === 0 ? '0' : v === 1 ? '1.0' : v.toFixed(1), X(0) - 7, Y(v)); }
+    // axis titles
+    g.fillStyle = C.ink; g.textBaseline = 'alphabetic';
+    const axT = (sym, desc) => {
+      g.font = `italic 600 15px ${FD}`; const w1 = g.measureText(sym + '  ').width;
+      g.font = `12px ${FB}`; const w2 = g.measureText(desc).width; return [w1, w2];
+    };
+    let [w1, w2] = axT('E', 'active excitatory fraction');
+    let x0 = X(0.5) - (w1 + w2) / 2, yb = H - 7;
+    g.textAlign = 'left'; g.font = `italic 600 15px ${FD}`; g.fillStyle = C.ink; g.fillText('E', x0, yb);
+    g.font = `12px ${FB}`; g.fillStyle = C.muted; g.fillText('active excitatory fraction', x0 + w1, yb);
+    [w1, w2] = axT('I', 'active inhibitory fraction');
+    g.save(); g.translate(13, Y(0.5) + (w1 + w2) / 2); g.rotate(-Math.PI / 2);
+    g.font = `italic 600 15px ${FD}`; g.fillStyle = C.ink; g.fillText('I', 0, 0);
+    g.font = `12px ${FB}`; g.fillStyle = C.muted; g.fillText('active inhibitory fraction', w1, 0); g.restore();
+    // line labels
+    lineLabel(g, LE, C.se, 'E'); lineLabel(g, LI, C.si, 'I');
+    if (show.fp) drawFPs(g);
+  }
+
+  // ---------- region badges ----------
+  const badgesEl = $('badges');
+  function roman(id) { if (id === 4) return (regionPolys[2] && area(regionPolys[2]) > 1e-4) ? 'II′' : 'II'; return ['', 'I', 'II', 'III'][id]; }
+  const WHAT = { 1: 'full dynamics', 2: 'Ė = −αE', 3: 'Ė = −αE, İ = −αI', 4: 'İ = −αI' };
+  function placeBadges() {
+    badgesEl.innerHTML = '';
+    for (const id of [1, 2, 3, 4]) {
+      const poly = regionPolys[id]; if (!poly || poly.length < 3 || area(poly) < 0.004) continue;
+      const el = document.createElement('div'); el.className = 'badge';
+      const gE = id === 1 || id === 4, gI = id === 1 || id === 2;
+      el.innerHTML = `<b>${roman(id)}</b><span class="sg">s<sup>E</sup>${gE ? '&gt;' : '&lt;'}0 · s<sup>I</sup>${gI ? '&gt;' : '&lt;'}0</span><span class="what">${WHAT[id]}</span>`;
+      badgesEl.appendChild(el);
+      let spot = findSpot(id, el.offsetWidth, el.offsetHeight);
+      if (!spot) { el.classList.add('compact'); spot = findSpot(id, el.offsetWidth, el.offsetHeight); }
+      if (!spot) { el.remove(); continue; }
+      el.style.left = (X(spot[0]) - el.offsetWidth / 2) + 'px'; el.style.top = (Y(spot[1]) - el.offsetHeight / 2) + 'px';
+    }
+  }
+  function findSpot(id, bw, bh) {
+    const hw = (bw / 2 + 6) / pw, hh = (bh / 2 + 6) / ph;
+    const nE = Math.hypot(P.wEE, P.wEI) || 1, nI = Math.hypot(P.wIE, P.wII) || 1;
+    let best = null, bs = -1;
+    const N = 44;
+    for (let i = 0; i <= N; i++) for (let j = 0; j <= N; j++) {
+      const e = i / N, v = j / N;
+      if (e - hw < 0.01 || e + hw > 0.99 || v - hh < 0.01 || v + hh > 0.99) continue;
+      let ok = true;
+      for (const [dx, dy] of [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]]) if (regionOf(e + dx, v + dy) !== id) { ok = false; break; }
+      if (!ok) continue;
+      if (show.fp && fixedPts.some(f => Math.abs(f.E - e) < hw + 0.03 && Math.abs(f.I - v) < hh + 0.03)) continue;
+      const dE = Math.abs(P.wEE * e - P.wEI * v + P.h) / nE, dI = Math.abs(P.wIE * e - P.wII * v + P.h) / nI;
+      const s = Math.min(dE, dI, e, 1 - e, v, 1 - v);
+      if (s > bs) { bs = s; best = [e, v]; }
+    }
+    return best;
+  }
+
+  // ---------- tracers ----------
+  let parts = [];
+  const k1 = [0, 0], k2 = [0, 0];
+  function spawn(p) { p.x = Math.random(); p.y = Math.random(); p.life = 50 + (Math.random() * 170 | 0); }
+  function resetParticles() {
+    const n = Math.round(Math.max(450, Math.min(1700, pw * ph / 300)));
+    parts = Array.from({ length: n }, () => { const p = {}; spawn(p); p.life = Math.random() * 220 | 0; return p; });
+    gP.clearRect(0, 0, W, H);
+  }
+  const PATHS = { 1: null, 2: null, 3: null, 4: null };
+  function stepParticles(dt) {
+    const g = gP;
+    g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,0.075)'; g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = 'source-over';
+    if (!show.part) return;
+    for (const k of [1, 2, 3, 4]) PATHS[k] = new Path2D();
+    for (const p of parts) {
+      if (--p.life <= 0) { spawn(p); continue; }
+      const x0 = p.x, y0 = p.y;
+      rates(x0, y0, k1); rates(x0 + 0.5 * dt * k1[0], y0 + 0.5 * dt * k1[1], k2);
+      p.x = x0 + dt * k2[0]; p.y = y0 + dt * k2[1];
+      if (p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1) { spawn(p); continue; }
+      const path = PATHS[regionOf(p.x, p.y)];
+      path.moveTo(X(x0), Y(y0)); path.lineTo(X(p.x), Y(p.y));
+    }
+    g.lineWidth = 1.2; g.lineCap = 'round'; g.globalAlpha = 0.62;
+    g.strokeStyle = C.ink; g.stroke(PATHS[1]);
+    g.strokeStyle = C.se; g.stroke(PATHS[2]);
+    g.strokeStyle = C.muted; g.stroke(PATHS[3]);
+    g.strokeStyle = C.si; g.stroke(PATHS[4]);
+    g.globalAlpha = 1;
+  }
+  function prewarm(n) { for (let i = 0; i < n; i++) stepParticles(0.016 * speed); }
+
+  // ---------- trajectories ----------
+  let trajs = [], selected = -1, tsDirty = true;
+  function integrate(E0, I0) {
+    let E = E0, I = I0, t = 0; const dt = 0.01;
+    const xs = [E], ys = [I], ts = [0];
+    let lE = E, lI = I, lT = 0;
+    const a1 = [0, 0], a2 = [0, 0], a3 = [0, 0], a4 = [0, 0];
+    while (t < 120) {
+      rates(E, I, a1); rates(E + 0.5 * dt * a1[0], I + 0.5 * dt * a1[1], a2);
+      rates(E + 0.5 * dt * a2[0], I + 0.5 * dt * a2[1], a3); rates(E + dt * a3[0], I + dt * a3[1], a4);
+      E += dt / 6 * (a1[0] + 2 * a2[0] + 2 * a3[0] + a4[0]); I += dt / 6 * (a1[1] + 2 * a2[1] + 2 * a3[1] + a4[1]); t += dt;
+      if (Math.hypot(E - lE, I - lI) > 0.0025 || t - lT > 0.25) { xs.push(E); ys.push(I); ts.push(t); lE = E; lI = I; lT = t; }
+      if (Math.hypot(a1[0], a1[1]) < 1e-7) break;
+      if (P.h === 0 && Math.hypot(E, I) < 0.003) break;
+    }
+    xs.push(E); ys.push(I); ts.push(t);
+    const s = [0]; for (let i = 1; i < xs.length; i++) s.push(s[i - 1] + Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]));
+    const n = xs.length, fE = xs[n - 1], fI = ys[n - 1];
+    let k = n - 1; while (k > 0 && Math.hypot(xs[k] - fE, ys[k] - fI) < 0.008) k--;
+    const tPlot = Math.max(3, Math.min(60, ts[k] * 1.12 + 0.5));
+    const rg = xs.map((x, i) => regionOf(x, ys[i]));
+    return { xs, ys, ts, s, L: s[n - 1], tPlot, rg };
+  }
+  function makeTraj(E0, I0, born) { return Object.assign({ E0, I0, born }, integrate(E0, I0)); }
+  function dur(tr) { return (0.9 + 2.0 * Math.min(tr.L, 2)) * 1000; }
+  function prog(tr, now) { return Math.max(0, Math.min(1, (now - tr.born) / dur(tr))); }
+  function idxAt(tr, sv) { let lo = 0, hi = tr.s.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (tr.s[m] <= sv) lo = m; else hi = m - 1; } return lo; }
+  function headOf(tr, u) {
+    const sv = u * tr.L, k = idxAt(tr, sv); if (k >= tr.s.length - 1) return [tr.xs[k], tr.ys[k], tr.ts[k], k];
+    const seg = tr.s[k + 1] - tr.s[k], f = seg > 0 ? (sv - tr.s[k]) / seg : 0;
+    return [tr.xs[k] + f * (tr.xs[k + 1] - tr.xs[k]), tr.ys[k] + f * (tr.ys[k + 1] - tr.ys[k]), tr.ts[k] + f * (tr.ts[k + 1] - tr.ts[k]), k];
+  }
+  function drawTrajs(now) {
+    const g = gT; g.clearRect(0, 0, W, H);
+    let animating = false;
+    trajs.forEach((tr, i) => {
+      if (now < tr.born) { animating = true; return; }
+      const sel = i === selected, u = prog(tr, now); if (u < 1) animating = true;
+      const [hx, hy, , k] = headOf(tr, u);
+      g.save(); g.strokeStyle = C.traj; g.fillStyle = C.traj; g.globalAlpha = sel ? 1 : 0.55;
+      g.lineWidth = sel ? 2.3 : 1.7; g.setLineDash([6, 4]); g.lineJoin = 'round';
+      g.beginPath(); g.moveTo(X(tr.xs[0]), Y(tr.ys[0]));
+      for (let j = 1; j <= k; j++) g.lineTo(X(tr.xs[j]), Y(tr.ys[j]));
+      g.lineTo(X(hx), Y(hy)); g.stroke(); g.setLineDash([]);
+      const sT = u * tr.L, sz = sel ? 8 : 7;
+      for (let a = 0.12; a < sT - 0.02; a += 0.22) {
+        const j = idxAt(tr, a), j2 = Math.min(tr.xs.length - 1, j + 2); if (j2 === j) continue;
+        const ax = X(tr.xs[j]), ay = Y(tr.ys[j]), ang = Math.atan2(Y(tr.ys[j2]) - ay, X(tr.xs[j2]) - ax);
+        g.save(); g.translate(ax, ay); g.rotate(ang); g.beginPath(); g.moveTo(sz * 0.6, 0); g.lineTo(-sz * 0.5, -sz * 0.45); g.lineTo(-sz * 0.5, sz * 0.45); g.closePath(); g.fill(); g.restore();
+      }
+      g.beginPath(); g.arc(X(tr.xs[0]), Y(tr.ys[0]), sel ? 4.5 : 3.8, 0, Math.PI * 2); g.fillStyle = C.panel; g.fill(); g.lineWidth = 1.8; g.stroke();
+      if (u < 1) { g.globalAlpha = 1; g.beginPath(); g.arc(X(hx), Y(hy), 4.6, 0, Math.PI * 2); g.fillStyle = C.traj; g.fill(); g.strokeStyle = C.panel; g.lineWidth = 1.5; g.stroke(); }
+      g.restore();
+    });
+    return animating;
+  }
+
+  // ---------- time series ----------
+  function niceStep(span, target) { const raw = span / target, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; }
+  function drawTS(now) {
+    const g = gTS, w = parseFloat(cTS.style.width), h = tsH; g.clearRect(0, 0, w, h);
+    const tr = trajs[selected];
+    if (!tr) { $('tsMeta').textContent = ''; g.fillStyle = C.muted; g.font = `13px ${FB}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('Click the plane to launch a path.', w / 2, h / 2); return; }
+    const m = { l: 40, r: 26, t: 8, b: 26 }, iw = w - m.l - m.r, ih = h - m.t - m.b;
+    const tmax = tr.tPlot; let ymax = 0;
+    for (let i = 0; i < tr.ts.length && tr.ts[i] <= tmax; i++) ymax = Math.max(ymax, tr.xs[i], tr.ys[i]);
+    ymax = Math.min(1, Math.max(0.1, Math.ceil(ymax * 1.08 * 10) / 10));
+    const tx = t => m.l + Math.min(t, tmax) / tmax * iw, ty = v => m.t + (1 - v / ymax) * ih;
+    const fills = { 1: C.r1, 2: C.r2, 3: C.r3, 4: C.r2 };
+    let st = 0;
+    for (let i = 1; i <= tr.ts.length; i++) {
+      if (i === tr.ts.length || tr.rg[i] !== tr.rg[st]) {
+        const t0 = tr.ts[st], t1 = i === tr.ts.length ? tmax : tr.ts[i];
+        if (t0 < tmax) { g.fillStyle = fills[tr.rg[st]]; g.fillRect(tx(t0), m.t, tx(t1) - tx(t0) + 0.5, ih);
+          const lab = roman(tr.rg[st]); const xw = tx(t1) - tx(t0);
+          if (xw > 34) { g.fillStyle = C.muted; g.font = `600 12px ${FD}`; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(lab, tx(t0) + 5, m.t + 4); } }
+        st = i;
+      }
+    }
+    g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(m.l + 0.5, m.t + 0.5, iw - 1, ih - 1);
+    g.fillStyle = C.muted; g.font = `11px ${FM}`; g.textAlign = 'center'; g.textBaseline = 'top';
+    const step = niceStep(tmax, 6);
+    for (let t = 0; t <= tmax + 1e-9; t += step) g.fillText(+t.toFixed(4) + '', tx(t), m.t + ih + 5);
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    for (const v of [0, ymax / 2, ymax]) g.fillText(v.toFixed(2), m.l - 6, ty(v));
+    const drawSeries = (arr, color, dash, lw) => {
+      g.save(); g.beginPath(); g.rect(m.l, m.t, iw, ih); g.clip();
+      g.strokeStyle = color; g.lineWidth = lw; g.setLineDash(dash); g.beginPath();
+      for (let i = 0; i < tr.ts.length; i++) { const x = tx(tr.ts[i]), y = ty(arr[i]); i ? g.lineTo(x, y) : g.moveTo(x, y); if (tr.ts[i] > tmax) break; }
+      g.stroke(); g.restore();
+    };
+    drawSeries(tr.ys, C.si, [5, 3], 1.7);
+    drawSeries(tr.xs, C.ink, [], 2);
+    // end labels
+    let li = tr.ts.length - 1; while (li > 0 && tr.ts[li] > tmax) li--;
+    g.font = `italic 600 13px ${FD}`; g.textBaseline = 'middle'; g.textAlign = 'left';
+    let yE = Math.min(ty(tr.xs[li]), m.t + ih - 7), yI = Math.min(ty(tr.ys[li]), m.t + ih - 7); if (Math.abs(yE - yI) < 12) { if (yE <= yI) { yE -= 6; yI += 6; } else { yE += 6; yI -= 6; } }
+    g.fillStyle = C.ink; g.fillText('E', m.l + iw + 6, yE); g.fillStyle = C.si; g.fillText('I', m.l + iw + 6, yI);
+    const u = prog(tr, now);
+    if (u < 1 && now >= tr.born) {
+      const [, , ht] = headOf(tr, u);
+      if (ht <= tmax) { g.strokeStyle = C.traj; g.lineWidth = 1.5; g.beginPath(); g.moveTo(tx(ht), m.t); g.lineTo(tx(ht), m.t + ih); g.stroke(); }
+    }
+    const peakE = Math.max(...tr.xs);
+    $('tsMeta').textContent = `start (${f2(tr.E0)}, ${f2(tr.I0)}) · peak E ${f3(peakE)} · ends (${f3(tr.xs[tr.xs.length - 1])}, ${f3(tr.ys[tr.ys.length - 1])})`;
+  }
+
+  // ---------- UI ----------
+  const slEls = {};
+  function buildSliders() {
+    const box = $('sliders');
+    for (const s of SL) {
+      const row = document.createElement('div'); row.className = 'sl';
+      row.innerHTML = `<label for="s_${s.k}"><span class="nm">${s.nm}</span><span class="ds">${s.ds}</span></label><input type="range" id="s_${s.k}" min="${s.min}" max="${s.max}" step="${s.step}" value="${P[s.k]}"><output id="o_${s.k}" for="s_${s.k}"></output>`;
+      box.appendChild(row);
+      const inp = row.querySelector('input'); slEls[s.k] = { inp, out: row.querySelector('output'), s };
+      inp.addEventListener('input', () => { P[s.k] = parseFloat(inp.value); setPreset(null); apply(); });
+    }
+  }
+  function syncSliders() {
+    for (const k in slEls) { const { inp, out, s } = slEls[k]; inp.value = P[k]; out.textContent = P[k].toFixed(s.step < 0.01 ? 3 : 2); }
+  }
+  function updateCircuit() {
+    const map = { wEE: ['pEE', 'vEE'], wEI: ['pEI', 'vEI'], wIE: ['pIE', 'vIE'], wII: ['pII', 'vII'] };
+    for (const k in map) { const [p, v] = map[k]; $(p).style.strokeWidth = (0.6 + 1.1 * P[k]).toFixed(2); $(p).style.opacity = P[k] === 0 ? 0.2 : 1; $(v).textContent = P[k].toFixed(2); }
+  }
+  function buildPresets() {
+    const box = $('presets');
+    for (const key in PRESETS) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'pbtn'; b.textContent = PRESETS[key].name; b.dataset.key = key;
+      b.addEventListener('click', () => loadPreset(key)); box.appendChild(b);
+    }
+  }
+  function setPreset(key) {
+    activePreset = key;
+    document.querySelectorAll('#presets .pbtn').forEach(b => b.setAttribute('aria-pressed', b.dataset.key === key ? 'true' : 'false'));
+    $('presetNote').innerHTML = key ? PRESETS[key].note : 'Custom parameters. Paths re-run as you drag.';
+  }
+  function apply(starts) {
+    syncSliders(); updateCircuit(); analyze(); drawStatic(); placeBadges();
+    const now = performance.now();
+    if (starts) {
+      trajs = starts.map((s, i) => makeTraj(s[0], s[1], reduceMotion ? -1e12 : now + i * 260)); selected = 0;
+    } else {
+      trajs = trajs.map(t => makeTraj(t.E0, t.I0, -1e12));
+    }
+    tsDirty = true;
+  }
+  function loadPreset(key) { Object.assign(P, PRESETS[key].p); setPreset(key); apply(PRESETS[key].starts); }
+
+  // pointer
+  let down = null;
+  function evPos(e) { const r = cT.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  cT.addEventListener('pointerdown', e => { down = evPos(e); });
+  cT.addEventListener('pointerup', e => {
+    const [x, y] = evPos(e); if (!down || Math.hypot(x - down[0], y - down[1]) > 7) { down = null; return; } down = null;
+    const E = invX(x), I = invY(y); if (E < 0 || E > 1 || I < 0 || I > 1) return;
+    const hit = trajs.findIndex(t => Math.hypot(X(t.E0) - x, Y(t.I0) - y) < 9);
+    if (hit >= 0) { selected = hit; tsDirty = true; return; }
+    trajs.push(makeTraj(E, I, reduceMotion ? -1e12 : performance.now()));
+    if (trajs.length > 10) trajs.shift();
+    selected = trajs.length - 1; tsDirty = true;
+  });
+  const hoverEl = $('hover'), hv = [0, 0];
+  const hoverDefault = hoverEl.innerHTML;
+  cT.addEventListener('pointermove', e => {
+    const [x, y] = evPos(e), E = invX(x), I = invY(y);
+    if (E < 0 || E > 1 || I < 0 || I > 1) { hoverEl.innerHTML = hoverDefault; return; }
+    const sE = P.wEE * E - P.wEI * I + P.h, sI = P.wIE * E - P.wII * I + P.h; rates(E, I, hv); const r = regionOf(E, I);
+    hoverEl.innerHTML = `<span><i>E</i> <b>${f3(E)}</b></span><span><i>I</i> <b>${f3(I)}</b></span><span>s<sup>E</sup> <b>${sgn(sE)}</b></span><span>s<sup>I</sup> <b>${sgn(sI)}</b></span><span class="rg">region ${roman(r)}</span><span><i>Ė</i> <b>${sgn(hv[0])}</b></span><span><i>İ</i> <b>${sgn(hv[1])}</b></span>`;
+  });
+  cT.addEventListener('pointerleave', () => { hoverEl.innerHTML = hoverDefault; });
+
+  $('tgPart').addEventListener('change', e => { show.part = e.target.checked; if (!show.part) gP.clearRect(0, 0, W, H); else prewarm(40); });
+  $('tgNull').addEventListener('change', e => { show.nul = e.target.checked; drawStatic(); });
+  $('tgFP').addEventListener('change', e => { show.fp = e.target.checked; drawStatic(); placeBadges(); });
+  $('speed').addEventListener('change', e => { speed = parseFloat(e.target.value); });
+  const playBtn = $('playBtn');
+  function setPlay(v) { playing = v; playBtn.textContent = v ? 'Pause' : 'Play flow'; }
+  playBtn.addEventListener('click', () => setPlay(!playing));
+  $('clearBtn').addEventListener('click', () => { trajs = []; selected = -1; tsDirty = true; });
+
+  function onTheme() { readColors(); drawStatic(); gP.clearRect(0, 0, W, H); prewarm(40); tsDirty = true; }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onTheme);
+  new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  // ---------- boot ----------
+  readColors(); buildSliders(); buildPresets(); setPreset('fig1'); setPlay(playing);
+  Object.assign(P, PRESETS.fig1.p);
+  syncSliders(); updateCircuit(); analyze();
+  resize();
+  apply(PRESETS.fig1.starts);
+  let rt = 0;
+  new ResizeObserver(() => { cancelAnimationFrame(rt); rt = requestAnimationFrame(resize); }).observe(plot.parentElement);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { drawStatic(); placeBadges(); tsDirty = true; });
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (playing) stepParticles(dt * 0.95 * speed);
+    const anim = drawTrajs(now);
+    if (anim || tsDirty) { drawTS(now); tsDirty = anim; }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
