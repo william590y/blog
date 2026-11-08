@@ -6,7 +6,7 @@ permalink: /about/
 date:   2025-02-15 08:30:27 -0500
 ---
 
-Hi there! I am an undergraduate at Cornell University studying Computer Science and Applied Physics.
+Hi there! I am an undergraduate at Cornell University studying Computer Science.
 
 I am interested in machine learning, scientific computing, and fundamental physics.
 
