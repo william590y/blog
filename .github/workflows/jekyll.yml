@@ -10,6 +10,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["gh-pages"]
+    # Class-demo link updates (data-only commits by splash_links/publish_host.sh) only matter on williamliaw.com
+    # (Cloudflare Pages); skip the full GitHub Pages rebuild for them.
+    paths-ignore:
+      - "live/**"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:

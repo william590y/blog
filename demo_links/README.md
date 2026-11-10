@@ -45,4 +45,32 @@ rendezvous file in this repo, and the Pages Functions `functions/listen.js` and 
 4. `live` but no host answers: a "Connecting to the class demo..." page that retries every 5 s and, after two retries,
    offers direct links built in the browser with the fragment (HTTP 200, `x-demo-state: unreachable`).
 
+Both pages also say "Class already started? Scan the QR code on the projector screen.", for a student whose seat card
+meets a stale link (Cloudflare slow to deploy a new host).
+
+## Status: `/live/status/listen`, `/live/status/scene`
+
+`functions/live/status/[demo].js` (logic: `status` in `redirect.mjs`) answers what the permanent link does right now,
+as JSON with `Access-Control-Allow-Origin: *` and `Cache-Control: no-store`:
+
+```json
+{"demo": "listen", "state": "live", "host": "https://primary-name.trycloudflare.com",
+ "hosts": ["https://primary-name.trycloudflare.com", "https://backup-name.trycloudflare.com"], "updated": "..."}
+```
+
+`state` is `live` (the link redirects to `host` now), `unreachable` (listed, but no host answered) or `offline`. It runs
+the same code as the redirect, so the demos' projector QR checks read it instead of the static file: if the Functions
+runtime is down while static files still serve, their QR falls back to the direct tunnel link.
+
+## Typing the link
+
+Pages Functions routes are case-sensitive. `404.html` sends `/Listen`, `/SCENE/` and other case variants to the
+lowercase link (keeping the query and fragment). `www.williamliaw.com` has no DNS record: show the link in lowercase and
+without `www.`.
+
+## GitHub Pages
+
+`.github/workflows/jekyll.yml` ignores pushes that only touch `live/**`, so the demos' data-only commits do not start a
+full GitHub Pages rebuild (williamliaw.com is served by Cloudflare Pages, which builds every commit).
+
 Every response is `Cache-Control: no-store`, so a newly published host takes effect as soon as the deploy finishes.
