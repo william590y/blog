@@ -1,6 +1,6 @@
 {
   "demo": "scene",
-  "state": "offline",
-  "hosts": [],
-  "updated": "2026-11-10T01:19:21Z"
+  "state": "live",
+  "hosts": ["https://physical-metro-dean-fans.trycloudflare.com", "https://telecharger-consequently-investors-helicopter.trycloudflare.com"],
+  "updated": "2026-11-10T01:57:17Z"
 }
