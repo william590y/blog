@@ -20,7 +20,7 @@ class ScriptoriumSettings extends PluginSettingTab {
 module.exports = class Scriptorium extends Plugin {
   async onload() {
     const saved = await this.loadData();
-    this.settings = { fancyMode: typeof saved?.fancyMode === 'boolean' ? saved.fancyMode : true };
+    this.settings = { fancyMode: typeof saved?.fancyMode === 'boolean' ? saved.fancyMode : false };
     this.ribbon = this.addRibbonIcon('feather', 'Toggle fancy mode', () => {
       void this.setFancyMode(!this.settings.fancyMode);
     });
