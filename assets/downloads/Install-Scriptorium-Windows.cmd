@@ -7,6 +7,56 @@ pause
 exit /b %RESULT%
 # POWERSHELL_START
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'Continue'
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
+function Get-ScriptoriumDownload($Uri, $OutFile) {
+    $activity = 'Downloading ' + [IO.Path]::GetFileName($OutFile)
+    $response = $null
+    $inputStream = $null
+    $outputStream = $null
+    $complete = $false
+    try {
+        $request = [Net.HttpWebRequest]::Create($Uri)
+        $request.UserAgent = 'Scriptorium-Installer'
+        $request.Timeout = 60000
+        $request.ReadWriteTimeout = 60000
+        $response = $request.GetResponse()
+        $total = $response.ContentLength
+        $inputStream = $response.GetResponseStream()
+        $outputStream = [IO.File]::Open($OutFile, [IO.FileMode]::Create, [IO.FileAccess]::Write)
+        $buffer = New-Object byte[] 1048576
+        $downloaded = [long]0
+        $timer = [Diagnostics.Stopwatch]::StartNew()
+        do {
+            $count = $inputStream.Read($buffer, 0, $buffer.Length)
+            if ($count -gt 0) {
+                $outputStream.Write($buffer, 0, $count)
+                $downloaded += $count
+            }
+            if ($timer.ElapsedMilliseconds -ge 150 -or $count -eq 0) {
+                if ($total -gt 0) {
+                    $percent = [Math]::Min(100, [Math]::Floor(100.0 * $downloaded / $total))
+                    $status = '{0}% - {1:N0} / {2:N0} bytes' -f $percent, $downloaded, $total
+                    Write-Progress -Activity $activity -Status $status -PercentComplete $percent
+                } else {
+                    Write-Progress -Activity $activity -Status ('{0:N0} bytes downloaded (total size unavailable)' -f $downloaded) -PercentComplete -1
+                }
+                $timer.Restart()
+            }
+        } while ($count -gt 0)
+        if ($total -ge 0 -and $downloaded -ne $total) { throw "Incomplete download: $OutFile" }
+        $complete = $true
+        Write-Host ('Downloaded {0:N0} bytes - {1}' -f $downloaded, [IO.Path]::GetFileName($OutFile))
+    } finally {
+        if ($outputStream) { $outputStream.Dispose() }
+        if ($inputStream) { $inputStream.Dispose() }
+        if ($response) { $response.Dispose() }
+        Write-Progress -Activity $activity -Completed
+        if (!$complete) { Remove-Item -LiteralPath $OutFile -Force -ErrorAction SilentlyContinue }
+    }
+}
+
 Write-Host 'Scriptorium - Obsidian configuration installer'
 $defaultPath = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Scriptorium'
 $answer = Read-Host "New vault folder (Enter for $defaultPath)"
@@ -16,7 +66,7 @@ $tempPath = Join-Path ([IO.Path]::GetTempPath()) ('obsidian-writing-' + [guid]::
 New-Item -ItemType Directory -Path $tempPath | Out-Null
 try {
     $archive = Join-Path $tempPath 'Writing.zip'
-    Invoke-WebRequest -UseBasicParsing -Uri 'https://williamliaw.com/assets/downloads/Scriptorium.zip' -OutFile $archive
+    Get-ScriptoriumDownload -Uri 'https://williamliaw.com/assets/downloads/Scriptorium.zip' -OutFile $archive
     $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actualHash -ne '3c7353f7822f0bd31d51fab2f1a94b5160d163cc10b76828005e8ba7762b5683') { throw 'Package verification failed. Please download the current installer from the Projects page.' }
     $staging = Join-Path $tempPath 'vault'
@@ -38,7 +88,7 @@ try {
     if (!$exe -and !(Test-Path -LiteralPath $protocol)) {
         Write-Host 'Installing Obsidian for the current user ...'
         $setup = Join-Path $tempPath 'Obsidian-Setup.exe'
-        Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/obsidianmd/obsidian-releases/releases/download/v1.15.0/Obsidian-1.15.0.exe' -OutFile $setup
+        Get-ScriptoriumDownload -Uri 'https://github.com/obsidianmd/obsidian-releases/releases/download/v1.15.0/Obsidian-1.15.0.exe' -OutFile $setup
         if ((Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash -ne 'b0f60c75a12f96d54cb16b9fc32919966f2ebf029d9af75d67a19ba6555e1da0') { throw 'Obsidian download verification failed.' }
         $process = Start-Process -FilePath $setup -ArgumentList '/S', '/currentuser' -Wait -PassThru
         if ($process.ExitCode -ne 0) { throw "Obsidian setup exited with code $($process.ExitCode)." }
@@ -68,7 +118,7 @@ public static class ScriptoriumFontRegistration {
             if ((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $hash) { throw "Existing font differs: $target" }
         } else {
             $download = Join-Path $tempPath $file
-            Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $download
+            Get-ScriptoriumDownload -Uri $url -OutFile $download
             if ((Get-FileHash -LiteralPath $download -Algorithm SHA256).Hash -ne $hash) { throw "Font verification failed: $file" }
             New-Item -ItemType Directory -Path $fontDir -Force | Out-Null
             Copy-Item -LiteralPath $download -Destination $target
