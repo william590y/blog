@@ -24,7 +24,7 @@ else
   printf 'Please install shasum or sha256sum for package verification.\n'; exit 1
 fi
 actual_hash="${actual_hash%% *}"
-[ "$actual_hash" = 'd649a72d5fed91df9d9c3d305c6675bc7ac7418261da80b086e3a462865352f1' ] || { printf 'Package verification failed. Download the current installer from the Projects page.\n'; exit 1; }
+[ "$actual_hash" = '3c7353f7822f0bd31d51fab2f1a94b5160d163cc10b76828005e8ba7762b5683' ] || { printf 'Package verification failed. Download the current installer from the Projects page.\n'; exit 1; }
 unzip -q "$work_dir/Writing.zip" -d "$work_dir/vault"
 [ -f "$work_dir/vault/.obsidian/appearance.json" ] || { printf 'Invalid configuration archive.\n'; exit 1; }
 # mkdir fails if the destination appeared during the download; never merge into an existing vault.
