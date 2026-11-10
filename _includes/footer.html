@@ -1,0 +1,20 @@
+<footer>
+  <!-- tailpiece: a vine with ivy leaves and gilded dots -->
+  <svg class="tailpiece" viewBox="0 0 240 30" aria-hidden="true" focusable="false">
+    <path d="M20 15 C50 3, 70 27, 100 15 S150 3, 170 15 S205 27, 220 15" fill="none" style="stroke: var(--verdigris)" stroke-width="1.2" stroke-linecap="round"/>
+    <g style="fill: var(--verdigris)">
+      <path d="M58 10 c4-6 10-5 11 0 c-4 4-8 4-11 0z"/><path d="M138 20 c4 6 10 5 11 0 c-4-4-8-4-11 0z"/>
+      <path d="M182 10 c4-6 10-5 11 0 c-4 4-8 4-11 0z"/>
+    </g>
+    <g fill="#c9a13b" stroke="#6b5014" stroke-width=".5">
+      <circle cx="20" cy="15" r="2.6"/><circle cx="220" cy="15" r="2.6"/><circle cx="120" cy="15" r="3.4"/>
+    </g>
+    <circle cx="120" cy="15" r="1.4" style="fill: var(--rubric)"/>
+  </svg>
+  <span class="explicit">Explicit</span>
+  <span class="colophon">
+    &copy; <time datetime="{{ site.time | date_to_xmlschema }}">{{ site.time | date: '%Y' }}</time>
+    {{ site.title }} &middot; written by hand, illuminated by script, in the year <span class="anno">{{ site.time | date: '%Y' }}</span>.
+    Set in EB Garamond, Cormorant, Uncial Antiqua and Unifraktur. Made with Jekyll using the <a href="https://github.com/chesterhow/tale/">Tale</a> theme.
+  </span>
+</footer>

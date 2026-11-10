@@ -10,5 +10,29 @@
         <li><a href="{{ '/projects' | prepend: site.baseurl }}">Projects</a></li>
         <li><a href="{{ '/talks' | prepend: site.baseurl }}">Talks</a></li>
       </ul>
+      <!-- headpiece: a rubricated rule with a gilded lozenge and vine leaves -->
+      <svg class="headpiece" viewBox="0 0 320 28" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="hp-gold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#fff4bf"/><stop offset=".45" stop-color="#d9b24f"/><stop offset="1" stop-color="#8a6a1d"/>
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+          <path d="M14 14 H128"/><path d="M192 14 H306"/>
+          <path d="M40 14 c6-9 16-9 18 0" /><path d="M58 14 c6 9 16 9 18 0"/>
+          <path d="M244 14 c6-9 16-9 18 0"/><path d="M262 14 c6 9 16 9 18 0"/>
+          <path d="M128 14 c8-10 20-10 24 0 c-4 10-16 10-24 0z"/><path d="M192 14 c-8-10-20-10-24 0 c4 10 16 10 24 0z"/>
+        </g>
+        <g style="fill: var(--verdigris)">
+          <ellipse cx="49" cy="7.5" rx="4.2" ry="1.8" transform="rotate(-25 49 7.5)"/>
+          <ellipse cx="67" cy="20.5" rx="4.2" ry="1.8" transform="rotate(-25 67 20.5)"/>
+          <ellipse cx="253" cy="7.5" rx="4.2" ry="1.8" transform="rotate(25 253 7.5)"/>
+          <ellipse cx="271" cy="20.5" rx="4.2" ry="1.8" transform="rotate(25 271 20.5)"/>
+        </g>
+        <path d="M160 2 L171 14 L160 26 L149 14z" fill="url(#hp-gold)" stroke="#6b5014" stroke-width=".8"/>
+        <circle cx="160" cy="14" r="3.2" style="fill: var(--lapis)"/>
+        <circle cx="14" cy="14" r="2.2" fill="url(#hp-gold)"/><circle cx="306" cy="14" r="2.2" fill="url(#hp-gold)"/>
+        <circle cx="100" cy="14" r="1.6" style="fill: var(--lapis)"/><circle cx="220" cy="14" r="1.6" style="fill: var(--lapis)"/>
+      </svg>
     </div>
   </nav>
