@@ -31,13 +31,13 @@ The preview switch above compares real screenshots of the two modes.
 
 ### Easy setup
 
-Download the installer for your operating system. It creates a new vault with the configuration and a Lorem Ipsum demonstration, then opens it in Obsidian. Existing vaults are preserved.
+Download the installer for your operating system. It checks for Obsidian and installs it if needed, then creates a new Scriptorium vault with the Lorem Ipsum sample. When Obsidian opens, choose **Open folder as vault** and select the folder printed by the installer.
 
 - <a href="{{ '/assets/downloads/Install-Scriptorium-Windows.cmd' | relative_url }}" download>Windows installer</a> — open the downloaded `.cmd` file.
 - <a href="{{ '/assets/downloads/Install-Scriptorium-macOS.command' | relative_url }}" download>macOS installer</a> — run `bash ~/Downloads/Install-Scriptorium-macOS.command` in Terminal.
-- <a href="{{ '/assets/downloads/Install-Scriptorium-Linux.sh' | relative_url }}" download>Linux installer</a> — run `bash ~/Downloads/Install-Scriptorium-Linux.sh` in Terminal. Requires `curl` and `unzip`.
+- <a href="{{ '/assets/downloads/Install-Scriptorium-Linux.sh' | relative_url }}" download>Linux installer</a> — run `bash ~/Downloads/Install-Scriptorium-Linux.sh` in Terminal. Requires `curl` and `unzip`. New Linux installs use the official x86-64 or ARM64 AppImage and require AppImage support.
 
-If Obsidian is missing, the installer opens its official download page. Install it, then open the new vault folder. Install **EB Garamond** and **Cormorant Garamond** for the intended fonts.
+Install **EB Garamond** and **Cormorant Garamond** for the intended fonts.
 
 ### Manual setup
 
