@@ -1,6 +1,6 @@
 {
   "demo": "scene",
-  "state": "offline",
-  "hosts": [],
-  "updated": "2026-11-10T02:10:00Z"
+  "state": "live",
+  "hosts": ["https://por-story-election-optional.trycloudflare.com", "https://int-weight-rfc-kay.trycloudflare.com"],
+  "updated": "2026-11-10T02:13:35Z"
 }
