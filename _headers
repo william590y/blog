@@ -1,0 +1,9 @@
+# Cloudflare Pages response headers (Jekyll copies this file: see `include` in _config.yml).
+# Class-demo rendezvous files (demo_links/README.md): phone pages on the demos' tunnel hosts poll them, and a new
+# host has to take effect as soon as Cloudflare deploys the commit.
+/live/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
+  X-Content-Type-Options: nosniff
