@@ -1,6 +1,6 @@
 {
   "demo": "listen",
-  "state": "offline",
-  "hosts": [],
-  "updated": "2026-11-10T02:26:14Z"
+  "state": "live",
+  "hosts": ["https://trends-forecasts-loves-sat.trycloudflare.com", "https://examples-pillow-publishers-easy.trycloudflare.com"],
+  "updated": "2026-11-10T02:30:23Z"
 }
