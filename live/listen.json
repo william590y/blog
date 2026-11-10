@@ -1,6 +1,6 @@
 {
   "demo": "listen",
-  "state": "offline",
-  "hosts": [],
-  "updated": "2026-11-10T02:05:48Z"
+  "state": "live",
+  "hosts": ["https://controversial-control-config-tournaments.trycloudflare.com", "https://amounts-impressive-product-rider.trycloudflare.com"],
+  "updated": "2026-11-10T02:11:39Z"
 }
