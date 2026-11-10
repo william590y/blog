@@ -1,6 +1,6 @@
 {
   "demo": "listen",
-  "state": "live",
-  "hosts": ["https://assessment-market-brown-reflects.trycloudflare.com", "https://crest-ltd-vendor-integration.trycloudflare.com"],
-  "updated": "2026-11-10T02:14:21Z"
+  "state": "offline",
+  "hosts": [],
+  "updated": "2026-11-10T02:26:14Z"
 }
