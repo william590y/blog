@@ -1,6 +1,6 @@
 {
   "demo": "scene",
-  "state": "offline",
-  "hosts": [],
-  "updated": "2026-11-10T02:15:25Z"
+  "state": "live",
+  "hosts": ["https://fragrances-included-avenue-precipitation.trycloudflare.com", "https://pin-qualified-accounts-treatments.trycloudflare.com"],
+  "updated": "2026-11-10T02:16:20Z"
 }
