@@ -1,6 +1,6 @@
 {
   "demo": "scene",
-  "state": "live",
-  "hosts": ["https://leadership-seeds-commerce-george.trycloudflare.com", "https://magical-conferences-processing-contributor.trycloudflare.com"],
-  "updated": "2026-11-10T13:40:50Z"
+  "state": "offline",
+  "hosts": [],
+  "updated": "2026-11-10T13:42:59Z"
 }
