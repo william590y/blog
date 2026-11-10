@@ -1,6 +1,6 @@
 {
   "demo": "scene",
-  "state": "offline",
-  "hosts": [],
-  "updated": "2026-11-10T00:46:31Z"
+  "state": "live",
+  "hosts": ["https://singing-employee-girlfriend-dis.trycloudflare.com", "https://mentor-novelty-harder-gap.trycloudflare.com"],
+  "updated": "2026-11-10T01:00:25Z"
 }
