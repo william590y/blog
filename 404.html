@@ -23,3 +23,12 @@ layout: page
   <p><strong>Page not found :(</strong></p>
   <p>The requested page could not be found.</p>
 </div>
+
+<script>
+  // Class-demo links typed with capitals (/Listen, /SCENE/): links are case-sensitive, so go to the lowercase
+  // permanent link, keeping the ?query and the #fragment (demo_links/README.md).
+  (function () {
+    var p = location.pathname.replace(/\/+$/, '').toLowerCase();
+    if ((p === '/listen' || p === '/scene') && location.pathname !== p) location.replace(p + location.search + location.hash);
+  })();
+</script>

@@ -105,6 +105,8 @@ function page(demo, info, kind) {
   const text = offline
     ? `${name} only runs during the class. Keep this page open: it opens the demo by itself as soon as it starts.`
     : `${name} is restarting or busy. This page keeps trying by itself.`;
+  // A stale permanent link (Cloudflare slow to deploy a new host) must not strand a student in a running class.
+  const qr = 'Class already started? Scan the QR code on the projector screen.';
   // Hosts are validated (https://[a-z0-9-]+.trycloudflare.com) and the path is [A-Za-z0-9._~/-]: safe in a script.
   const cfg = JSON.stringify({ demo, kind, hosts: info.hosts, path: info.path });
   const html = `<!doctype html>
@@ -117,7 +119,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.5 system-ui,-appl
 main{max-width:30rem;margin:18vh auto 0;padding:0 16px}h1{font-size:1.45rem;line-height:1.25;margin:0 0 .6em}
 p{margin:0 0 1em;color:var(--mute)}a.b{display:inline-block;margin:.2em .4em .4em 0;padding:.55em 1em;border-radius:8px;
 background:var(--btn);color:#fff;text-decoration:none}#s{font-size:.85rem}
-</style></head><body><main><h1>${esc(heading)}</h1><p>${esc(text)}</p><p id="x"></p><p id="s"></p></main>
+</style></head><body><main><h1>${esc(heading)}</h1><p>${esc(text)}</p><p>${esc(qr)}</p><p id="x"></p><p id="s"></p></main>
 <script>
 (() => {
   const C = ${cfg};
@@ -164,6 +166,33 @@ background:var(--btn);color:#fff;text-decoration:none}#s{font-size:.85rem}
       'x-demo-state': offline ? 'offline' : 'unreachable',
     },
   });
+}
+
+// GET /live/status/<demo> (functions/live/status/[demo].js): what the permanent link does right now, as CORS JSON.
+// The demos' projector checks read it, so their QR falls back to the direct tunnel link whenever the function itself
+// is broken or the link would not lead to their server (the static /live/<demo>.json can be fine while it is).
+// {demo, state: live|offline|unreachable, host: the tunnel the link redirects to now (or null), hosts, updated}
+export async function status(context, demo, options = {}) {
+  const { request } = context;
+  const cors = {
+    ...BASE_HEADERS,
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, HEAD, OPTIONS',
+  };
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+  if (!Object.prototype.hasOwnProperty.call(DEMOS, demo)) {
+    return new Response('{"error":"unknown demo"}\n', { status: 404, headers: { ...cors, 'content-type': 'application/json' } });
+  }
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('Method not allowed\n', { status: 405, headers: { ...cors, allow: 'GET, HEAD, OPTIONS' } });
+  }
+  const doFetch = options.fetch || ((...args) => fetch(...args));
+  const info = await readRendezvous(context, demo);
+  const host = info.state === 'live' ? await pickHost(info.hosts, doFetch) : null;
+  const state = info.state !== 'live' ? 'offline' : host ? 'live' : 'unreachable';
+  const body = JSON.stringify({ demo, state, host, hosts: info.hosts, updated: info.updated }) + '\n';
+  const headers = { ...cors, 'content-type': 'application/json; charset=utf-8', 'x-demo-state': state };
+  return new Response(request.method === 'HEAD' ? null : body, { status: 200, headers });
 }
 
 export async function handle(context, demo, options = {}) {
