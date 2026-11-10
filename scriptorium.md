@@ -11,11 +11,11 @@ A fancy and sophisticated obsidian configuration for the typographically incline
   <label style="display:flex;align-items:center;gap:0.55rem;cursor:pointer;"><input type="checkbox" id="scriptorium-fancy-toggle" style="width:1.15rem;height:1.15rem;accent-color:#8b2323;"> <strong>Fancy mode</strong></label>
 </div>
 <figure style="margin:1rem 0 2rem;">
-  <a id="scriptorium-preview-link" href="{{ '/assets/images/scriptorium-normal-mode.png' | relative_url }}"><img id="scriptorium-preview" src="{{ '/assets/images/scriptorium-normal-mode.png' | relative_url }}" data-fancy="{{ '/assets/images/scriptorium-fancy-mode.png' | relative_url }}" data-normal="{{ '/assets/images/scriptorium-normal-mode.png' | relative_url }}" alt="Scriptorium in Obsidian with Fancy mode off: tighter spacing and bordered quotations." width="1058" height="1199" style="display:block;width:100%;height:auto;"></a>
-  <figcaption id="scriptorium-preview-caption" aria-live="polite" style="font-size:0.85em;text-align:center;margin-top:0.75rem;">Fancy mode off — tighter spacing and bordered quotations. Captured in Obsidian.</figcaption>
+  <a id="scriptorium-preview-link" href="{{ '/assets/images/scriptorium-normal-matched.png' | relative_url }}"><img id="scriptorium-preview" src="{{ '/assets/images/scriptorium-normal-matched.png' | relative_url }}" data-fancy="{{ '/assets/images/scriptorium-fancy-matched.png' | relative_url }}" data-normal="{{ '/assets/images/scriptorium-normal-matched.png' | relative_url }}" alt="Scriptorium in Obsidian with Fancy mode off: centered small-cap headings and bordered quotations." width="1058" height="1199" style="display:block;width:100%;height:auto;"></a>
+  <figcaption id="scriptorium-preview-caption" aria-live="polite" style="font-size:0.85em;text-align:center;margin-top:0.75rem;">Fancy mode off — centered small-cap headings and bordered quotations. Captured in Obsidian.</figcaption>
 </figure>
 <script src="{{ '/assets/scriptorium-preview.js' | relative_url }}" defer></script>
-<noscript><p><a href="{{ '/assets/images/scriptorium-normal-mode.png' | relative_url }}">View the compact style</a></p></noscript>
+<noscript><p><a href="{{ '/assets/images/scriptorium-normal-matched.png' | relative_url }}">View the compact style</a></p></noscript>
 
 Bookish serif typography, warm paper, centered small-cap headings, italic subtitles, drop caps, and ornamental scene breaks. Includes the Typewriter theme, a custom manuscript stylesheet, and writing plugins.
 
@@ -23,7 +23,7 @@ Bookish serif typography, warm paper, centered small-cap headings, italic subtit
 
 ### Fancy mode
 
-Fancy mode starts **off**, with tighter line spacing and bordered quotations. Turn it on for the original airy line spacing and quiet italic quotations.
+Fancy mode starts **off**, with centered small-cap section headings and bordered quotations. Turn it on for quiet italic quotations and justified openings. **Both modes use the same 1.45 line spacing.**
 
 In Obsidian, go to **Settings → Scriptorium → Fancy mode**. You can also click the **feather icon**, click **Fancy mode: on/off** in the status bar, or use **Scriptorium: Toggle fancy mode** in the command palette. Your choice is remembered for that vault.
 

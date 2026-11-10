@@ -1,5 +1,5 @@
 /* Scriptorium — two manuscript styles.
-   Fancy mode: the original manuscript CSS, unchanged in its declarations.
+   Fancy mode: original quotation styling with the shared 1.45 line spacing.
    Normal mode: the current compact CSS from the Writing vault.
    Toggle in Settings > Scriptorium, with the feather icon, or via the command palette.
    :where() scopes modes without adding selector specificity.
@@ -239,6 +239,24 @@ body:where(:not(.scriptorium-fancy)).theme-dark {
   text-align: left;
 }
 
+/* Keep section headings in the screenshot's centered small-cap style,
+   including lower-level headings used by the demonstration note. */
+:where(body:not(.scriptorium-fancy)) .markdown-rendered h3,
+:where(body:not(.scriptorium-fancy)) .markdown-rendered h4,
+:where(body:not(.scriptorium-fancy)) .markdown-rendered h5,
+:where(body:not(.scriptorium-fancy)) .markdown-source-view.mod-cm6 .HyperMD-header-3,
+:where(body:not(.scriptorium-fancy)) .markdown-source-view.mod-cm6 .HyperMD-header-4,
+:where(body:not(.scriptorium-fancy)) .markdown-source-view.mod-cm6 .HyperMD-header-5,
+:where(body:not(.scriptorium-fancy)) .markdown-source-view.mod-cm6 .cm-header-3,
+:where(body:not(.scriptorium-fancy)) .markdown-source-view.mod-cm6 .cm-header-4,
+:where(body:not(.scriptorium-fancy)) .markdown-source-view.mod-cm6 .cm-header-5 {
+  font-family: var(--manuscript-display);
+  font-weight: 500;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
 /* FANCY MODE */
 /* ==========================================================
    Manuscript: book-page typography for Obsidian
@@ -257,7 +275,7 @@ body:where(.scriptorium-fancy) {
   --manuscript-display: "Cormorant Garamond", "EB Garamond", Georgia, serif;
   --manuscript-accent: #8b2323;      /* oxblood, for drop caps */
   --file-line-width: 36rem;          /* ~65 characters per line, like a printed page */
-  --line-height-normal: 1.7;
+  --line-height-normal: 1.45;
 }
 body:where(.scriptorium-fancy).theme-dark {
   --manuscript-accent: #c9805f;      /* warmer accent that reads on dark */

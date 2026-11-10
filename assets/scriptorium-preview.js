@@ -9,10 +9,10 @@
     const source = image.dataset[fancy ? 'fancy' : 'normal'];
     image.src = source;
     link.href = source;
-    image.alt = `Scriptorium in Obsidian with Fancy mode ${fancy ? 'on: airy spacing and italic quotations' : 'off: tighter spacing and bordered quotations'}.`;
+    image.alt = `Scriptorium in Obsidian with Fancy mode ${fancy ? 'on: italic quotations and justified openings' : 'off: centered small-cap headings and bordered quotations'}.`;
     caption.textContent = fancy
-      ? 'Fancy mode on — original airy spacing and quiet italic quotations. Captured in Obsidian.'
-      : 'Fancy mode off — tighter spacing and bordered quotations. Captured in Obsidian.';
+      ? 'Fancy mode on — italic quotations and justified openings. Captured in Obsidian.'
+      : 'Fancy mode off — centered small-cap headings and bordered quotations. Captured in Obsidian.';
   }
   toggle.addEventListener('change', updatePreview);
   updatePreview();

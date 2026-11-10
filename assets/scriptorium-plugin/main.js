@@ -10,7 +10,7 @@ class ScriptoriumSettings extends PluginSettingTab {
     this.containerEl.empty();
     new Setting(this.containerEl)
       .setName('Fancy mode')
-      .setDesc('Use the original airy line spacing and quiet italic quotations. Turn off for tighter spacing and bordered quotations.')
+      .setDesc('Use quiet italic quotations and justified openings. Turn off for bordered quotations and centered section headings. Both modes use the same line spacing.')
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.fancyMode)
         .onChange(value => this.plugin.setFancyMode(value)));
