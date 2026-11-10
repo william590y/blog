@@ -1,6 +1,6 @@
 {
   "demo": "listen",
-  "state": "offline",
-  "hosts": [],
-  "updated": "2026-11-10T02:33:37Z"
+  "state": "live",
+  "hosts": ["https://took-bought-illustrated-driven.trycloudflare.com", "https://rebecca-injection-lamps-deer.trycloudflare.com"],
+  "updated": "2026-11-10T13:37:57Z"
 }
