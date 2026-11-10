@@ -10,7 +10,7 @@ Hi there! I am an undergraduate at Cornell University studying Computer Science.
 
 I am interested in machine learning, scientific computing, and fundamental physics.
 
-I'm fortunate to work with [John Thickstun](https://johnthickstun.com/).
+I'm fortunate to work with [John Thickstun](https://johnthickstun.com/) and [Kevin Ellis](https://www.cs.cornell.edu/~ellisk/).
 
 In the past, I've analyzed particle accelerator data from [CHESS](https://www.chess.cornell.edu/) with [Carl Franck](https://franckgroup.lassp.cornell.edu/).
 
