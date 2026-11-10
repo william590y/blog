@@ -1,6 +1,6 @@
 {
   "demo": "listen",
-  "state": "offline",
-  "hosts": [],
-  "updated": "2026-11-10T01:05:16Z"
+  "state": "live",
+  "hosts": ["https://periods-pattern-chemical-footwear.trycloudflare.com", "https://clicks-goto-metals-haven.trycloudflare.com"],
+  "updated": "2026-11-10T01:55:26Z"
 }
