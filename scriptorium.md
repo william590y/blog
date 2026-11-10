@@ -29,6 +29,8 @@ In Obsidian, go to **Settings → Scriptorium → Fancy mode**. You can also cli
 
 The preview switch above compares real screenshots of the two modes.
 
+[Instructions for agents]({{ '/assets/downloads/Scriptorium-Agents.txt' | relative_url }})
+
 ### Easy setup
 
 Download the installer for your operating system. It checks for Obsidian and installs it if needed, then creates a new Scriptorium vault with the Lorem Ipsum sample. When Obsidian opens, choose **Open folder as vault** and select the folder printed by the installer.

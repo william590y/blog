@@ -1,0 +1,72 @@
+# Scriptorium installation instructions for agents
+
+Project page: https://williamliaw.com/scriptorium
+Configuration ZIP: https://williamliaw.com/assets/downloads/Scriptorium.zip
+
+Use these instructions when the user asks you to install or configure Scriptorium.
+
+## Install
+
+1. Identify the user's operating system and the machine on which they want Obsidian installed.
+2. Download the matching installer as a file and inspect it before running it.
+   Windows: https://williamliaw.com/assets/downloads/Install-Scriptorium-Windows.cmd
+   macOS: https://williamliaw.com/assets/downloads/Install-Scriptorium-macOS.command
+   Linux: https://williamliaw.com/assets/downloads/Install-Scriptorium-Linux.sh
+3. Run the downloaded file in an interactive terminal.
+   Windows: run the .cmd file.
+   macOS: bash /path/to/Install-Scriptorium-macOS.command
+   Linux: bash /path/to/Install-Scriptorium-Linux.sh
+4. Supply an absolute path for a NEW vault folder, or press Enter for Documents/Scriptorium.
+   The installer refuses an existing destination. For an existing vault, back up its .obsidian
+   folder and merge settings deliberately, preserving the user's notes and unrelated settings.
+5. The installer detects Obsidian and installs it when missing. It verifies the configuration
+   archive and official Obsidian download with SHA-256.
+   Windows uses the official per-user installer.
+   macOS installs Obsidian.app in ~/Applications.
+   Linux installs the official x86-64 or ARM64 AppImage in ~/Applications when needed.
+   Linux requires curl and unzip, a graphical desktop, and AppImage runtime support.
+6. When Obsidian opens, choose "Open folder as vault" and select the printed vault path.
+   The installer opens the vault picker. Complete this step in Obsidian to register the new vault.
+7. Install EB Garamond and Cormorant Garamond from Google Fonts, then restart Obsidian.
+   https://fonts.google.com/specimen/EB+Garamond
+   https://fonts.google.com/specimen/Cormorant+Garamond
+8. Open "Lorem Ipsum" in Reading view. Enable the bundled community plugins in Obsidian
+   to use the Scriptorium mode switch.
+
+## Expected configuration
+
+- Theme: Typewriter.
+- Enabled CSS snippet: manuscript.
+- Text size: 22 px. Both modes use 1.45 line spacing.
+- Fancy mode defaults OFF. Keep this default unless the user requests otherwise.
+- Regular section headings use EB Garamond with centered small caps.
+- Fancy section headings use Cormorant Garamond.
+- Fancy mode uses borderless italic quotations and justified opening paragraphs.
+- Regular mode uses bordered quotations and left-aligned opening paragraphs.
+- Toggle using Settings > Scriptorium > Fancy mode, the feather ribbon icon,
+  the status bar, or the command "Scriptorium: Toggle fancy mode".
+- Bundled community plugins: Scriptorium, Longform, Manuscriptum, Typewriter Mode.
+- Main settings live in .obsidian/appearance.json and .obsidian/app.json.
+- Typography lives in .obsidian/snippets/manuscript.css.
+- The toggle plugin lives in .obsidian/plugins/scriptorium/.
+- Its data.json stores the boolean fancyMode.
+
+## Writing conventions
+
+The filename supplies the note title.
+###### Subtitle
+## Chapter heading
+### Section heading
+> *Italic quotation*
+---
+A horizontal rule becomes an ornamental scene break in Reading view.
+
+## Verify
+
+Check the actual Obsidian app with the intended fonts installed. Confirm the subtitle,
+drop cap, quotation, section headings, and ornamental separator render in Reading view.
+Toggle Fancy mode and confirm paragraph line spacing stays the same. Restore the user's
+selected mode after testing. Capture screenshots from Obsidian when demonstrating it.
+
+Report any platform-specific steps you could not test. Windows and macOS installers
+have not yet received native end-to-end testing.
