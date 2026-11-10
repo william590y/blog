@@ -8,8 +8,8 @@ author: William
 A fancy and sophisticated obsidian configuration for the typographically inclined
 
 <figure style="margin: 2rem 0;">
-  <a href="{{ '/assets/images/scriptorium-lorem-ipsum.png' | relative_url }}"><img src="{{ '/assets/images/scriptorium-lorem-ipsum.png' | relative_url }}" alt="Lorem Ipsum typography preview: a small-cap title, italic subtitle, serif body text, quotation, chapter and section headings, drop caps, and a floral scene break." width="1000" height="1420" style="display:block;width:100%;height:auto;"></a>
-  <figcaption style="font-size:0.85em;text-align:center;margin-top:0.75rem;">Typography preview rendered from the included manuscript stylesheet; not an Obsidian app screenshot.</figcaption>
+  <a href="{{ '/assets/images/scriptorium-obsidian.png' | relative_url }}"><img src="{{ '/assets/images/scriptorium-obsidian.png' | relative_url }}" alt="Screenshot of the Lorem Ipsum sample in Obsidian 1.15.0, using Scriptorium’s Typewriter theme and manuscript stylesheet in dark mode." width="1058" height="1199" style="display:block;width:100%;height:auto;"></a>
+  <figcaption style="font-size:0.85em;text-align:center;margin-top:0.75rem;">Captured in Obsidian 1.15.0 with the bundled Typewriter theme and manuscript stylesheet, in Reading view.</figcaption>
 </figure>
 
 Bookish serif typography, warm paper, centered small-cap headings, italic subtitles, drop caps, and ornamental scene breaks. Includes the Typewriter theme, a custom manuscript stylesheet, and writing plugins.

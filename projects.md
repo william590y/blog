@@ -9,8 +9,8 @@ author: William
 
 A fancy and sophisticated obsidian configuration for the typographically inclined
 
-<a href="{{ '/scriptorium' | relative_url }}" aria-label="Explore Scriptorium"><img src="{{ '/assets/images/scriptorium-lorem-ipsum.png' | relative_url }}" alt="Scriptorium typography preview with a Lorem Ipsum title, italic subtitle, quotation, chapter and section headings, and ornamental scene break." width="1000" height="1420" style="display:block;width:100%;max-width:560px;height:auto;margin:1.5rem auto;"></a>
+<a href="{{ '/scriptorium' | relative_url }}" aria-label="Explore Scriptorium"><img src="{{ '/assets/images/scriptorium-obsidian.png' | relative_url }}" alt="Screenshot of Scriptorium in Obsidian showing the Lorem Ipsum sample in dark mode, with subtitle, quotation, headings, drop caps, and floral ornament." width="1058" height="1199" style="display:block;width:100%;max-width:760px;height:auto;margin:1.5rem auto;"></a>
 
-*Typography preview of the manuscript stylesheet.*
+*Scriptorium in Obsidian, in Reading view.*
 
 [See the preview and download Scriptorium →]({{ '/scriptorium' | relative_url }})
