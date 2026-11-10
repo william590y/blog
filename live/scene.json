@@ -1,6 +1,6 @@
 {
   "demo": "scene",
-  "state": "live",
-  "hosts": ["https://medicine-acquisitions-traveller-density.trycloudflare.com", "https://raises-suddenly-healing-before.trycloudflare.com"],
-  "updated": "2026-11-10T02:08:11Z"
+  "state": "offline",
+  "hosts": [],
+  "updated": "2026-11-10T02:10:00Z"
 }
