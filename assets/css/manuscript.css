@@ -1,0 +1,430 @@
+/* =====================================================================
+   Manuscript — williamliaw.com
+   The Scriptorium look (EB Garamond, Cormorant small caps, warm paper,
+   oxblood accents) taken further toward an illuminated manuscript:
+   vellum, iron-gall ink, rubricated headings, gilded initials
+   (drawn by /assets/js/illuminate.js), coloured versals and fleurons.
+   Loaded after the Tale theme's main.css and overrides it.
+   ===================================================================== */
+
+:root {
+  --vellum: #f4ecd9;
+  --vellum-deep: #e9dcbc;
+  --ink: #2b2219;
+  --ink-soft: #5b4d3f;
+  --ink-faint: #8a7a66;
+  --rubric: #a3271d;        /* vermilion: headings, rules, marks */
+  --lapis: #24418f;         /* ultramarine: links, blue versals */
+  --verdigris: #2f7055;
+  --murrey: #6c2440;
+  --gold: #c9a13b;
+  --gold-hi: #f6e5a0;
+  --gold-lo: #8a6a1d;
+  --rule: rgba(110, 70, 30, 0.22);
+  --shade: rgba(110, 70, 30, 0.07);
+  --text-face: "EB Garamond", "Cormorant Garamond", Garamond, Georgia, serif;
+  --display-face: "Cormorant Garamond", "EB Garamond", Garamond, Georgia, serif;
+  --black-face: "UnifrakturMaguntia", "Cormorant Garamond", serif;
+  --uncial-face: "Uncial Antiqua", "Cormorant Garamond", serif;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --vellum: #1b1713;
+    --vellum-deep: #241e18;
+    --ink: #e9dfcb;
+    --ink-soft: #bcae96;
+    --ink-faint: #8f826d;
+    --rubric: #e0715a;
+    --lapis: #8ea6ec;
+    --verdigris: #74c29c;
+    --murrey: #d78aa6;
+    --gold: #d9b24f;
+    --gold-hi: #f8e7a6;
+    --gold-lo: #9c7a2a;
+    --rule: rgba(233, 214, 180, 0.18);
+    --shade: rgba(233, 214, 180, 0.05);
+  }
+}
+
+/* ---------- Page: vellum and ink ---------- */
+html {
+  font-family: var(--text-face);
+  font-size: 19px;
+  background-color: var(--vellum);
+  /* a faint grain and darkened edges, like an old leaf of parchment */
+  background-image:
+    radial-gradient(ellipse at 50% 40%, transparent 55%, var(--shade) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.32 0 0 0 0 0.15 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-attachment: fixed, scroll;
+  min-height: 100%;
+}
+@media (max-width: 640px) { html { font-size: 18px; } }
+
+html, body { color: var(--ink); }
+
+body {
+  background: transparent;
+  font-feature-settings: "liga", "kern", "onum";
+  text-rendering: optimizeLegibility;
+  line-height: 1.62;
+}
+
+::selection { background: rgba(201, 161, 59, 0.35); }
+
+main, footer, .nav-container { max-width: 38rem; width: 88%; }
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ink);
+  font-family: var(--display-face);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+a { color: var(--lapis); text-decoration: none; }
+.post a, footer a {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--rubric) 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+.post a:hover, footer a:hover { color: var(--rubric); text-decoration-color: var(--gold); }
+
+/* ---------- Masthead ---------- */
+.nav { box-shadow: none; overflow: visible; }
+.nav-container { margin: 2.4rem auto 0.5rem; text-align: center; }
+.nav-container > a { display: inline-block; color: var(--ink); text-decoration: none; }
+.nav-title {
+  color: var(--ink);
+  font-family: var(--black-face);
+  font-weight: 400;
+  font-size: 2.7rem;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  padding: 0;
+}
+.nav-title::first-letter { color: var(--rubric); }
+.nav-title:hover, .nav-title:focus { opacity: 1; color: var(--ink-soft); }
+.nav ul {
+  position: static;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  text-align: center;
+}
+.nav li {
+  opacity: 1;
+  padding: 0;
+  font-family: var(--display-face);
+  font-variant: small-caps;
+  font-size: 1.12rem;
+  letter-spacing: 0.08em;
+}
+.nav li + li::before {
+  content: "\2767";          /* rotated floral heart bullet */
+  color: var(--rubric);
+  font-variant: normal;
+  margin: 0 0.6rem 0 0.5rem;
+  font-size: 0.8em;
+  position: relative;
+  top: -0.05em;
+}
+.nav a { color: var(--ink-soft); font-family: var(--display-face); }
+.nav a:hover, .nav a:focus { color: var(--rubric); }
+.nav li:hover, .nav li:focus { opacity: 1; }
+.headpiece { display: block; width: min(20rem, 70%); height: auto; margin: 1rem auto 0; color: var(--rubric); }
+
+/* ---------- Posts ---------- */
+.post { padding: 2.2rem 0 2.5rem; overflow-wrap: break-word; }
+.post .tight, .post a { overflow-wrap: anywhere; }
+.post-info {
+  color: var(--ink-faint);
+  font-family: var(--text-face);
+  font-size: 0.92rem;
+  letter-spacing: 0.03em;
+}
+.post-info span { font-style: italic; }
+.post-title {
+  color: var(--ink);
+  font-family: var(--display-face);
+  font-size: 2.85rem;
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.035em;
+  margin: 0.6rem 0 0.4rem;
+  text-wrap: balance;
+}
+.post-title::first-letter { color: var(--rubric); }
+@media (max-width: 640px) { .post-title { font-size: 2.15rem; } }
+
+.post-line {
+  border: 0;
+  width: auto;
+  height: 1.6rem;
+  margin: 0 auto 2.2rem;
+  background: center / auto 100% no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24'%3E%3Cg fill='none' stroke='%23a3271d' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M8 12 H78'/%3E%3Cpath d='M122 12 H192'/%3E%3Cpath d='M78 12 c6-8 14-8 16 0 c-2 8-10 8-16 0z' fill='%23a3271d' fill-opacity='.12'/%3E%3Cpath d='M122 12 c-6-8-14-8-16 0 c2 8 10 8 16 0z' fill='%23a3271d' fill-opacity='.12'/%3E%3C/g%3E%3Cpath d='M100 3 L108 12 L100 21 L92 12z' fill='%23c9a13b' stroke='%238a6a1d' stroke-width='.8'/%3E%3Ccircle cx='100' cy='12' r='2.2' fill='%2324418f'/%3E%3Ccircle cx='8' cy='12' r='1.6' fill='%23c9a13b'/%3E%3Ccircle cx='192' cy='12' r='1.6' fill='%23c9a13b'/%3E%3C/svg%3E");
+}
+
+.post p {
+  margin: 0 0 0.95rem;
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  hanging-punctuation: first;
+}
+.post strong { font-weight: 600; }
+
+/* headings inside a post: rubrics */
+.post h2 {
+  color: var(--rubric);
+  font-variant: small-caps;
+  font-size: 1.75rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin: 2.6rem 0 1rem;
+}
+.post h2 a, .post h3 a { color: inherit; text-decoration: none; }
+.post h3 {
+  color: var(--ink);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.4rem;
+  margin: 2rem 0 0.6rem;
+}
+.post h3::before { content: "\00B6\2009"; color: var(--rubric); font-style: normal; }   /* pilcrow */
+.post h4 {
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  font-size: 1.15rem;
+}
+
+/* versals: two-line coloured capitals at section openings (class set by illuminate.js) */
+.post p.versal::first-letter {
+  float: left;
+  font-family: var(--uncial-face);
+  font-weight: 400;
+  font-size: 3.1em;
+  line-height: 0.86;
+  margin: 0.08em 0.1em 0 0;
+  color: var(--versal, var(--rubric));
+  text-shadow: 0.02em 0.02em 0 color-mix(in srgb, var(--gold) 70%, transparent);
+}
+.post p.versal.versal-blue { --versal: var(--lapis); }
+.post p.versal.versal-green { --versal: var(--verdigris); }
+
+/* the opening of a post: without JavaScript a red fraktur drop cap; illuminate.js draws a gilded initial instead */
+html:not(.js) .post > p:first-of-type::first-letter {
+  float: left;
+  font-family: var(--uncial-face);
+  font-size: 4.6em;
+  line-height: 0.85;
+  margin: 0.05em 0.12em 0 0;
+  color: var(--rubric);
+}
+.post p.opening::first-line,
+html:not(.js) .post > p:first-of-type::first-line { font-variant: small-caps; letter-spacing: 0.04em; }
+
+/* the gilded initial itself */
+.illum {
+  float: left;
+  width: 4.9em;
+  height: 4.9em;
+  margin: 0.32em 0.55em 0.1em 0;
+  line-height: 0;
+  shape-outside: margin-box;
+}
+.illum svg { width: 100%; height: 100%; display: block; overflow: visible; }
+@media (max-width: 1000px) { .illum .tail { display: none; } }
+@media (max-width: 640px) { .illum { width: 4em; height: 4em; } }
+.sr-letter {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* scene breaks: <hr>, a lone ⁂ / * * * paragraph (classed by illuminate.js) */
+.post hr, .post .fleuron {
+  border: 0;
+  height: 1.8rem;
+  margin: 1.8rem auto;
+  text-align: center;
+}
+.post hr {
+  background: center / auto 100% no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cpath d='M60 2c5 6 11 8 18 10-7 2-13 4-18 10-5-6-11-8-18-10 7-2 13-4 18-10z' fill='%23a3271d'/%3E%3Ccircle cx='60' cy='12' r='2' fill='%23c9a13b'/%3E%3Ccircle cx='28' cy='12' r='2.2' fill='%2324418f'/%3E%3Ccircle cx='92' cy='12' r='2.2' fill='%2324418f'/%3E%3C/svg%3E");
+}
+.post .fleuron {
+  color: var(--rubric);
+  font-size: 1.5rem;
+  line-height: 1.8rem;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  text-align: center !important;
+}
+
+/* quotations */
+blockquote, .post blockquote {
+  border-left: 0;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 1.4rem 0 1.4rem 0.4rem;
+  padding: 0.35rem 1.2rem 0.35rem 1.4rem;
+  position: relative;
+  background: linear-gradient(to right, var(--shade), transparent 85%);
+}
+blockquote::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.2rem; bottom: 0.2rem;
+  width: 3px;
+  background: var(--rubric);
+  box-shadow: 4px 0 0 -1px var(--gold);
+}
+blockquote i, blockquote em { font-style: italic; }
+blockquote p { text-align: left; }
+
+/* lists: rubricated marks */
+.post ul { list-style: none; padding-left: 1.4rem; }
+.post ul > li { position: relative; margin: 0.25rem 0; }
+.post ul > li::before {
+  content: "\2767";
+  position: absolute;
+  left: -1.35rem;
+  top: 0.05em;
+  color: var(--rubric);
+  font-size: 0.85em;
+}
+.post ol > li::marker { color: var(--rubric); font-family: var(--display-face); font-weight: 700; }
+
+/* code */
+code {
+  background-color: var(--shade);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--murrey);
+  font-size: 82%;
+  padding: 0.1em 0.35em;
+}
+pre {
+  background: var(--shade);
+  border-left: 3px solid var(--gold);
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+  border-radius: 2px;
+}
+pre code { border: 0; color: var(--ink); }
+
+/* figures */
+.post img { border: 1px solid var(--rule); box-shadow: 0 1px 0 var(--vellum-deep); }
+.post img.emoji { border: 0; box-shadow: none; }
+figure figcaption, .post img + em { color: var(--ink-faint); font-family: var(--text-face); font-style: italic; font-size: 0.92rem; }
+
+/* tables */
+.post table { border-collapse: collapse; margin: 1rem auto; font-variant-numeric: lining-nums tabular-nums; }
+.post th { font-family: var(--display-face); font-variant: small-caps; letter-spacing: 0.05em; color: var(--rubric); border-bottom: 1.5px solid var(--rubric); padding: 0.3rem 0.7rem; }
+.post td { border-bottom: 1px solid var(--rule); padding: 0.3rem 0.7rem; }
+
+/* ---------- Index of posts ---------- */
+.catalogue { padding-top: 0.5rem; }
+.catalogue-item {
+  border-bottom: 0;
+  color: var(--ink);
+  padding: 1.1rem 0 0.9rem;
+  text-decoration: none;
+  position: relative;
+}
+.catalogue-item + .catalogue-item::before {
+  content: "\2766";           /* floral heart */
+  display: block;
+  text-align: center;
+  color: var(--rubric);
+  font-size: 1.15rem;
+  margin: -0.3rem 0 0.9rem;
+}
+.catalogue-time {
+  color: var(--ink-faint);
+  font-family: var(--text-face);
+  font-style: italic;
+  font-size: 0.95rem;
+}
+.catalogue-title {
+  color: var(--ink);
+  font-family: var(--display-face);
+  font-size: 2.05rem;
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+  margin: 0.25rem 0 0.35rem;
+  line-height: 1.15;
+}
+.catalogue-item:hover .catalogue-title, .catalogue-item:focus .catalogue-title { color: var(--rubric); }
+.catalogue-line { border-top: 0; height: 2px; width: 2.6rem; background: linear-gradient(to right, var(--rubric), var(--gold)); }
+.catalogue-item:hover .catalogue-line, .catalogue-item:focus .catalogue-line { width: 5.5rem; }
+.catalogue-item p { color: var(--ink-soft); font-style: italic; margin: 0.6rem 0 0; }
+.catalogue-title .mini-illum {
+  display: inline-block;
+  width: 1.32em;
+  height: 1.32em;
+  margin: 0 0.12em 0 0;
+  vertical-align: -0.22em;
+  line-height: 0;
+}
+.catalogue-title .mini-illum svg { width: 100%; height: 100%; display: block; }
+
+/* pagination */
+.pagination { border-top: 1px solid var(--rule); font-family: var(--display-face); }
+.pagination .arrow, .pagination .top { color: var(--rubric); }
+.pagination span { color: var(--ink); }
+
+/* ---------- Tags ---------- */
+.tags-header-title { font-family: var(--display-face); font-variant: small-caps; color: var(--ink); font-size: 2.85rem; letter-spacing: 0.035em; }
+.tags-header-line { border: 0; height: 1.6rem; width: auto; background: inherit; }
+.tags-clouds { font-family: var(--display-face); }
+.tags-clouds a {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--rubric) 45%, transparent);
+  border-radius: 2px;
+  color: var(--ink);
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+.tags-clouds a:hover { background: var(--shade); color: var(--rubric); }
+.tags-item-label { font-family: var(--display-face); font-variant: small-caps; color: var(--rubric); font-size: 1.4rem; letter-spacing: 0.05em; }
+.tags-post-title { color: var(--ink); text-decoration: none !important; }
+.tags-post-meta { color: var(--ink-faint); font-style: italic; }
+.tags-post-line { border-top-color: var(--rubric); }
+.tags-post:hover .tags-post-title { color: var(--rubric); }
+@media (prefers-color-scheme: dark) { .tags-item-icon { filter: invert(0.85) sepia(0.3); } }
+
+/* ---------- Colophon ---------- */
+footer { font-family: var(--text-face); padding: 1rem 0 3rem; }
+footer span, footer .colophon { color: var(--ink-faint); font-size: 0.9rem; font-style: italic; }
+footer .tailpiece { display: block; width: min(14rem, 60%); height: auto; margin: 0 auto 0.6rem; }
+footer .explicit { display: block; font-family: var(--black-face); font-style: normal; font-size: 1.25rem; color: var(--rubric); margin-bottom: 0.2rem; }
+
+/* MathJax keeps its own fonts; give display math some air */
+.MathJax_Display { margin: 1.1em 0 !important; overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+/* a long inline equation scrolls inside its paragraph instead of widening the page on phones */
+.post p:has(.MathJax):not(.opening) { overflow-x: auto; overflow-y: hidden; }
+
+@media (prefers-color-scheme: dark) {
+  .post-line, .post hr { filter: brightness(1.6) saturate(0.85); }
+}
+
+/* nothing may slide under a gilded initial */
+.post blockquote, .post figure, .post pre, .post table, .post hr, .post .fleuron, .post h2, .post h3, .post .highlight { clear: left; }
+
+/* phones: no separators in the wrapped nav, ragged-right text */
+@media (max-width: 640px) {
+  .nav li { font-size: 0.98rem; letter-spacing: 0.04em; margin: 0 0.45rem; }
+  .nav li + li::before { content: none; }
+  .nav-title { font-size: 2.3rem; }
+  .post p { text-align: left; }
+}
+
+@media print {
+  body { background: #fff; }
+  .headpiece, footer .tailpiece { display: none; }
+}
