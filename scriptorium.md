@@ -8,7 +8,7 @@ author: William
 A fancy and sophisticated obsidian configuration for the typographically inclined
 
 <figure style="margin: 2rem 0;">
-  <a href="{{ '/assets/images/scriptorium-obsidian.png' | relative_url }}"><img src="{{ '/assets/images/scriptorium-obsidian.png' | relative_url }}" alt="Screenshot of the Lorem Ipsum sample in Obsidian 1.15.0, using Scriptorium’s Typewriter theme and manuscript stylesheet in dark mode." width="1058" height="1199" style="display:block;width:100%;height:auto;"></a>
+  <a href="{{ '/assets/images/scriptorium-obsidian-v2.png' | relative_url }}"><img src="{{ '/assets/images/scriptorium-obsidian-v2.png' | relative_url }}" alt="Screenshot of the Lorem Ipsum sample in Obsidian 1.15.0, using Scriptorium’s Typewriter theme and manuscript stylesheet in dark mode." width="1058" height="1199" style="display:block;width:100%;height:auto;"></a>
   <figcaption style="font-size:0.85em;text-align:center;margin-top:0.75rem;">Captured in Obsidian 1.15.0 with the bundled Typewriter theme and manuscript stylesheet, in Reading view.</figcaption>
 </figure>
 
