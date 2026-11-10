@@ -17,7 +17,7 @@ try {
     $archive = Join-Path $tempPath 'Writing.zip'
     Invoke-WebRequest -Uri 'https://williamliaw.com/assets/downloads/Scriptorium.zip' -OutFile $archive
     $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($actualHash -ne 'ff3f378f08c522978e6d870ca88da81dcff9a1f86ab123cdaf175f1df7fa9ff3') { throw 'Package verification failed. Please download the current installer from the Projects page.' }
+    if ($actualHash -ne '0e518d3022fe61329669a54d77bb3f5a0eaf032368ea8729100cff6ca86b3af7') { throw 'Package verification failed. Please download the current installer from the Projects page.' }
     $staging = Join-Path $tempPath 'vault'
     Expand-Archive -LiteralPath $archive -DestinationPath $staging
     if (!(Test-Path -LiteralPath (Join-Path $staging '.obsidian/appearance.json'))) { throw 'Invalid configuration archive.' }

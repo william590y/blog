@@ -1,0 +1,10 @@
+{
+  "id": "scriptorium",
+  "name": "Scriptorium",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Switch between Scriptorium's original fancy typography and its compact writing style.",
+  "author": "William Liaw",
+  "authorUrl": "https://williamliaw.com/scriptorium",
+  "isDesktopOnly": false
+}
