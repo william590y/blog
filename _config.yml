@@ -65,6 +65,12 @@ exclude:
   # Cloudflare Pages Function source for the Cornell MCP server at /mcp, not site pages.
   - functions/
   - cornell_mcp/
+  # Pages Function source for the class-demo links at /listen and /scene.
+  - demo_links/
+
+# Cloudflare Pages response headers (CORS and no-store for /live/*.json); Jekyll skips "_" files otherwise.
+include:
+  - _headers
 
 markdown: kramdown
 kramdown:
