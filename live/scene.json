@@ -1,6 +1,6 @@
 {
   "demo": "scene",
-  "state": "live",
-  "hosts": ["https://raising-chemistry-painting-scenario.trycloudflare.com", "https://supported-printer-expressed-retro.trycloudflare.com"],
-  "updated": "2026-11-10T13:46:54Z"
+  "state": "offline",
+  "hosts": [],
+  "updated": "2026-11-10T13:48:46Z"
 }
