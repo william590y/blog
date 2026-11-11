@@ -17,7 +17,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ "/assets/apple-touch-icon.png" | relative_url }}">
     -->
 
-    <link rel="shortcut icon" type="image/png" href="{{ '/favicon.png' | relative_url }}">
+    <link rel="icon" type="image/svg+xml" href="{{ '/favicon.svg' | relative_url }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ '/favicon.png' | relative_url }}">
+    <link rel="apple-touch-icon" href="{{ '/apple-touch-icon.png' | relative_url }}">
   
     <!-- RSS -->
     {% feed_meta %}
@@ -26,4 +28,25 @@
     {% if site.google_analytics and jekyll.environment == 'production' %}
     {% include analytics.html %}
     {% endif %}
+    <!-- Maths: MathJax 3 with SVG output (MathJax 2 misplaced vector arrows on phones). Kramdown writes \( \) and \[ \]. -->
+    <script>
+      // A display equation wider than the text column shrinks to fit (down to 60%); past that it scrolls inside itself.
+      window.fitDisplayMath = function () {
+        document.querySelectorAll('mjx-container[display="true"]').forEach(function (box) {
+          box.style.fontSize = '';
+          var svg = box.querySelector('svg');
+          if (!svg) return;
+          var need = svg.getBoundingClientRect().width, room = box.clientWidth;
+          if (need > room) box.style.fontSize = (100 * Math.max(0.6, 0.98 * room / need)).toFixed(1) + '%';
+        });
+      };
+      window.MathJax = {
+        tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]'], ['$$', '$$']] },
+        svg: { fontCache: 'global' },
+        startup: { pageReady: function () { return MathJax.startup.defaultPageReady().then(window.fitDisplayMath); } }
+      };
+      var fitTimer;
+      window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(window.fitDisplayMath, 150); });
+    </script>
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
   </head>

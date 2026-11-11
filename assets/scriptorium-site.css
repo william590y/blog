@@ -29,6 +29,12 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Yinit";   /* Yannis Haralambous' decorative initials, public domain (fonts/Yinit-README.txt) */
+  src: url("fonts/Yinit-Scriptorium.woff2") format("woff2");
+  font-display: swap;
+}
+
 :root {
   --paper: #f7f2e7;        /* manuscript: warm paper */
   --ink: #2a2420;          /* manuscript: soft ink */
@@ -154,6 +160,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
   hyphens: auto;
 }
 .post p + p { text-indent: 1.5em; }
+.post { overflow-wrap: break-word; }   /* long URLs (e.g. in reference lists) wrap instead of widening the page */
 .post p[style*="center"],
 .post p:has(> img),
 .post p:has(> a > img),
@@ -162,16 +169,18 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post ul, .post ol, .post figure, .post pre, .post .highlight, .post img { margin-block: 1em; }
 .post li + li { margin-top: 0.2em; }
 
-/* ---------- Chapter openings: oxblood drop cap, small-capped first line, not justified ---------- */
+/* ---------- Chapter openings: Yinit initial in oxblood, small-capped first line, not justified ---------- */
 .post .post-line + p::first-letter,
 .post .post-line + blockquote + p::first-letter,
 .post :is(h1, h2):not(.post-title) + p::first-letter,
 .post :is(h1, h2):not(.post-title) + blockquote + p::first-letter {
   float: left;
-  font-family: var(--display);
-  font-size: 3.4em;
-  line-height: 0.85;
-  padding: 0.06em 0.08em 0 0;
+  font-family: "Yinit", var(--display);
+  font-size: 3.36em;          /* a 72 px square at 22 px text, spanning three lines */
+  line-height: 1;
+  text-transform: uppercase;  /* Yinit has capitals only */
+  margin: 0 0.135em 0 0;
+  padding: 0;
   color: var(--accent);
 }
 .post .post-line + p::first-line,
@@ -215,6 +224,28 @@ code { background-color: var(--code-bg); color: var(--code-ink); font-size: 0.85
 .post table { width: 100%; border-collapse: collapse; margin-block: 1em; }
 .post th { padding: calc(1em / 3) calc(2em / 3); border-bottom: 1px solid var(--border); }
 .post td { padding: calc(1em / 6) calc(2em / 3); border-bottom: 1px solid var(--border); }
+
+/* ---------- Maths (MathJax 3, SVG): ink colour; wide display equations scroll inside themselves on phones ---------- */
+mjx-container { color: var(--ink); text-indent: 0; }
+mjx-container[display="true"] { display: block; max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-block: 0.1em; }
+/* MathJax's hidden screen-reader copy is absolutely positioned and as wide as the equation; keep it inside the box */
+mjx-container { position: relative; }
+mjx-container mjx-assistive-mml { max-width: 100% !important; }
+
+/* ---------- Scriptorium page: the Fancy-mode switch as a hand-inked box with an oxblood pen tick ---------- */
+.ink-check {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin: 0;
+  cursor: pointer;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3.3 4.2C7.6 3.7 13.1 4 20.5 3.5C20.8 9.1 20.4 14.6 20.8 20.6C14.7 21 9.2 20.5 3.5 20.9C3.2 15.1 3.7 9.6 3 3.9' fill='none' stroke='%232a2420' stroke-width='1.45' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.88'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.ink-check:checked { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5.6 12.2C7.3 13.4 8.6 14.9 9.9 16.6C13 11.6 16.6 6.6 21.8 1.9C22.3 1.6 22.6 2.1 22.2 2.5C17.6 7.4 13.9 12.6 10.8 18.6C10.5 19.2 9.8 19.2 9.5 18.7C8.4 16.6 7 14.6 5.3 12.9C4.9 12.5 5.2 11.9 5.6 12.2Z' fill='%238b2323'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3.3 4.2C7.6 3.7 13.1 4 20.5 3.5C20.8 9.1 20.4 14.6 20.8 20.6C14.7 21 9.2 20.5 3.5 20.9C3.2 15.1 3.7 9.6 3 3.9' fill='none' stroke='%232a2420' stroke-width='1.45' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.88'/%3E%3C/svg%3E"); }
+.ink-check:hover { filter: drop-shadow(0 0 0.04rem rgba(42, 36, 32, 0.45)); }
+.ink-check:focus-visible { outline: 1px dashed var(--accent); outline-offset: 3px; }
 
 /* ---------- Post list (home page): each entry as a note title ---------- */
 .catalogue-item { color: var(--ink); border-bottom-color: var(--border); }

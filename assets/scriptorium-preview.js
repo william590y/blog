@@ -9,10 +9,10 @@
     const source = image.dataset[fancy ? 'fancy' : 'normal'];
     image.src = source;
     link.href = source;
-    image.alt = `Scriptorium in Obsidian with Fancy mode ${fancy ? 'on: italic quotations and justified openings' : 'off: centered small-cap headings and bordered quotations'}.`;
+    image.alt = `Scriptorium in Obsidian with Fancy mode ${fancy ? 'on: italic quotations, justified openings and a Yinit drop cap' : 'off: centered small-cap headings, bordered quotations and a Yinit drop cap'}, in light mode.`;
     caption.textContent = fancy
-      ? 'Fancy mode on — italic quotations and justified openings. Captured in Obsidian.'
-      : 'Fancy mode off — centered small-cap headings and bordered quotations. Captured in Obsidian.';
+      ? 'Fancy mode on — italic quotations, justified openings and a Yinit drop cap. Captured in Obsidian, light mode.'
+      : 'Fancy mode off — centered small-cap headings, bordered quotations and a Yinit drop cap. Captured in Obsidian, light mode.';
   }
   toggle.addEventListener('change', updatePreview);
   updatePreview();
