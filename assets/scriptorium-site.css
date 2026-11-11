@@ -177,7 +177,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post ul, .post ol, .post figure, .post pre, .post .highlight, .post img { margin-block: 1em; }
 .post li + li { margin-top: 0.2em; }
 
-/* ---------- Chapter openings: Yinit initial in oxblood, small-capped first line, not justified or hyphenated ---------- */
+/* ---------- Chapter openings: Yinit initial in oxblood, small-capped first line, not justified ---------- */
 .post .post-line + p::first-letter,
 .post .post-line + blockquote + p::first-letter,
 .post :is(h1, h2):not(.post-title) + p::first-letter,
@@ -198,16 +198,14 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
   font-variant-caps: small-caps;
   letter-spacing: 0.03em;
 }
-/* The opening paragraph is not justified (small caps would open huge word gaps) and not hyphenated: a word split at
-   the end of the small-capped line ("QUES- / tions") changes case halfway, so it moves to the next line whole. */
+/* The opening paragraph is not justified: small caps would open huge word gaps. It hyphenates like any other
+   paragraph, except at the end of the small-capped line: a word split there ("QUES- / tions") would change case
+   halfway, so assets/scriptorium-keep-words.js wraps it in .sc-keep and it moves to the next line whole. */
 .post .post-line + p,
 .post .post-line + blockquote + p,
 .post :is(h1, h2):not(.post-title) + p,
-.post :is(h1, h2):not(.post-title) + blockquote + p {
-  text-align: left;
-  -webkit-hyphens: manual;
-  hyphens: manual;
-}
+.post :is(h1, h2):not(.post-title) + blockquote + p { text-align: left; }
+.post .sc-keep { white-space: nowrap; -webkit-hyphens: manual; hyphens: manual; }
 /* After a scene break or a centred line the paragraph starts flush, but stays justified, in lowercase */
 .post .post-line + p,
 .post .post-line + blockquote + p,
@@ -236,9 +234,9 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
   padding: 0;
 }
 .post.no-initial.no-initial p::first-line { font-variant-caps: normal; letter-spacing: normal; }
-/* ...and with no small caps, their opening paragraphs are set like any other: justified and hyphenated */
+/* ...and with no small caps, their opening paragraphs are set like any other: justified */
 .post.no-initial.no-initial :is(.post-line + p, .post-line + blockquote + p,
-  :is(h1, h2):not(.post-title) + p, :is(h1, h2):not(.post-title) + blockquote + p) { text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
+  :is(h1, h2):not(.post-title) + p, :is(h1, h2):not(.post-title) + blockquote + p) { text-align: justify; }
 
 /* If an opening paragraph is shorter than its initial, the next block starts below the initial instead of
    wrapping around its foot (and stacking its own indent on top). */
