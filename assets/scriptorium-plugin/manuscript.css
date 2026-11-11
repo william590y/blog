@@ -235,10 +235,10 @@ body:where(:not(.scriptorium-fancy)).theme-dark {
 .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p::first-letter {
   float: left;
   font-family: "Scriptorium Yinit", var(--manuscript-display);
-  font-size: 3.36em;          /* a square initial about three lines tall */
+  font-size: 3em;             /* a square initial two lines deep; the third line runs under it */
   line-height: 1;
   text-transform: uppercase;  /* Yinit has capitals only */
-  margin: 0 0.135em 0 0;
+  margin: 0 0.15em -0.15em 0; /* the negative bottom margin ends the wrap after the second line */
   padding: 0;
   color: var(--manuscript-accent);
 }
@@ -489,10 +489,10 @@ body:where(.scriptorium-fancy).theme-dark {
 .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p::first-letter {
   float: left;
   font-family: "Scriptorium Yinit", var(--manuscript-display);
-  font-size: 3.36em;          /* a square initial about three lines tall */
+  font-size: 3em;             /* a square initial two lines deep; the third line runs under it */
   line-height: 1;
   text-transform: uppercase;  /* Yinit has capitals only */
-  margin: 0 0.135em 0 0;
+  margin: 0 0.15em -0.15em 0; /* the negative bottom margin ends the wrap after the second line */
   padding: 0;
   color: var(--manuscript-accent);
 }
