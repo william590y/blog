@@ -21,6 +21,8 @@ How fast AI is advancing, and why making it safe is urgent. [Slides]({{ site.bas
 
 ---
 
-## Noise2Music
+## [Noise2Music]({{ site.baseurl }}/noise2music/)
 
-A music-tech reading-group talk on [Noise2Music](https://arxiv.org/abs/2302.03917) (Huang et al., 2023): text-to-music generation with diffusion. [Slides]({{ site.baseurl }}/assets/slides/Noise2Music.pptm) (PowerPoint)
+<figure class="talk-shot"><a href="{{ site.baseurl }}/noise2music/"><picture><source type="image/webp" srcset="{{ '/assets/images/talks/noise2music-deconv.webp' | relative_url }}?v={{ site.time | date: '%s' }}"><img src="{{ '/assets/images/talks/noise2music-deconv.gif' | relative_url }}?v={{ site.time | date: '%s' }}" alt="The deconvolution slide: animations of a convolution and a transposed convolution sweeping across their grids." width="720" height="405" loading="lazy"></picture></a></figure>
+
+A music-tech reading-group talk on [Noise2Music](https://arxiv.org/abs/2302.03917) (Huang et al., 2023): text-to-music generation with diffusion. [Slides]({{ site.baseurl }}/noise2music/) · [PowerPoint]({{ site.baseurl }}/assets/slides/Noise2Music.pptm) (15 MB)
