@@ -155,6 +155,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
   font-size: 1.2rem;
   line-height: 1.3;
   letter-spacing: 0.01em;
+  text-wrap: balance;      /* when it can't fit on one line at body size, wrap into even lines */
 }
 .post-info span { font-style: italic; }
 .post-info br { display: none; }

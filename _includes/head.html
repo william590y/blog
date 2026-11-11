@@ -67,9 +67,11 @@
         el.style.fontSize = '';
         el.style.whiteSpace = 'nowrap';
         var fit = parseFloat(getComputedStyle(el).fontSize);
+        // Never shrink below the body text: if one line would need that, wrap at the normal size instead
+        var body = parseFloat(getComputedStyle(document.querySelector('.post p') || document.documentElement).fontSize);
         for (var i = 0; i < 8 && el.scrollWidth > el.clientWidth; i++) {   // text width is not exactly linear in size
           fit *= 0.99 * el.clientWidth / el.scrollWidth;
-          if (fit < 12) { el.style.fontSize = ''; el.style.whiteSpace = ''; return; }
+          if (fit < body) { el.style.fontSize = ''; el.style.whiteSpace = ''; return; }
           el.style.fontSize = fit.toFixed(2) + 'px';
         }
       };
