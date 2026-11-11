@@ -91,10 +91,10 @@ strong, b { font-weight: 620; }
 .nav { box-shadow: none; border-bottom: 1px solid var(--border); }
 /* The title is the user's own italic calligraphy (assets/images/william-liaw-title.png: ink lifted off the paper,
    so it sits on the page with its brush texture), centred above the menu at every width. */
-.nav-container { text-align: center; padding-block: 0.4rem 0.2rem; }
+.nav-container { text-align: center; padding-block: 0.5rem 0.6rem; }
 .nav-title { display: block; margin: 0 auto; padding: 0; line-height: 0; }
-.nav-title img { display: block; height: 3.3rem; width: auto; max-width: 100%; margin: 0 auto; }
-.nav ul { position: static; margin: 0.7rem 0 0; text-align: center; }
+.nav-title img { display: block; height: 3.5rem; width: auto; max-width: 100%; margin: 0 auto; }
+.nav ul { position: static; margin: 1.1rem 0 0; text-align: center; }
 @media (max-width: 599px) { .nav-title img { height: auto; width: min(100%, 17.5rem); } }
 .nav li { color: var(--ink); }
 .nav a { color: var(--ink); font-family: var(--text); }
