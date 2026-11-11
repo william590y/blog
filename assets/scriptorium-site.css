@@ -36,8 +36,8 @@
   --faint: #9e9e9e;        /* Typewriter --text-faint: rule under the title */
   --border: #e6e6e6;       /* Typewriter --background-modifier-border */
   --accent: #8b2323;       /* manuscript: oxblood drop caps */
-  --link: #519d5c;         /* Typewriter accent: links */
-  --link-hover: #407b49;   /* Typewriter --text-accent-hover */
+  --link: #7d2219;         /* links: rubric ink, a shade off the drop caps */
+  --link-hover: #5e1610;
   --quote-bar: #e5e5e5;    /* manuscript: quotation bar */
   --quote-ink: #979797;    /* manuscript: quotation text */
   --code-bg: #fcf5e4;      /* Typewriter --background-primary-alt */
@@ -63,8 +63,21 @@ main, footer, .nav-container { max-width: 36rem; }
 ::selection { background: rgba(204, 230, 255, 0.99); }
 strong, b { font-weight: 620; }
 
-.post a { color: var(--link); text-decoration: underline; text-underline-offset: 0.12em; }
-.post a:hover { color: var(--link-hover); text-decoration: underline; }
+/* Links: rubric ink with a hand-drawn pen underline (an uneven stroke), darker on hover, as if inked twice */
+.post a {
+  color: var(--link);
+  text-decoration: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6'%3E%3Cpath d='M0 3.3 C9 2.6 17 3.9 28 3.4 S44 2.5 55 3.1 S72 4.0 84 3.3 S101 2.6 111 3.5 S117 3.4 120 3.3' fill='none' stroke='%238b2323' stroke-opacity='0.5' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 120px 6px;
+  background-position: 0 100%;
+  padding-bottom: 0.06em;
+}
+.post a:hover, .post a:focus-visible {
+  color: var(--link-hover);
+  text-decoration: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6'%3E%3Cpath d='M0 3.3 C9 2.6 17 3.9 28 3.4 S44 2.5 55 3.1 S72 4.0 84 3.3 S101 2.6 111 3.5 S117 3.4 120 3.3' fill='none' stroke='%238b2323' stroke-opacity='1' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E");
+}
 
 /* ---------- Navigation ---------- */
 .nav { box-shadow: none; border-bottom: 1px solid var(--border); }
