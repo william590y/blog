@@ -23,7 +23,7 @@ Bookish serif typography, warm paper, centered small-cap headings, italic subtit
 
 ### Fancy mode
 
-Fancy mode starts **off**, with centered small-cap section headings and bordered quotations. Turn it on for quiet italic quotations and justified openings. Both modes open chapters with an ornamental Yinit initial. **Both modes use the same 1.45 line spacing.**
+Fancy mode starts **off**, with centered small-cap section headings and bordered quotations. Turn it on for quiet italic quotations and justified openings. Both modes open chapters with an ornamental Yinit initial. Images are centred; to place one, add `left`, `right` or `center` before the size, as in `![[image.png|left|300]]`. Links are inked like the ones on this site. **Both modes use the same 1.45 line spacing.**
 
 In Obsidian, go to **Settings → Scriptorium → Fancy mode**. You can also click the **feather icon**, click **Fancy mode: on/off** in the status bar, or use **Scriptorium: Toggle fancy mode** in the command palette. Your choice is remembered for that vault.
 

@@ -13,6 +13,96 @@
   font-display: block;
 }
 
+/* ==========================================================
+   SHARED BY BOTH MODES
+   ========================================================== */
+
+/* ---------- Links: rubric ink with a hand-drawn pen underline (as on williamliaw.com) ---------- */
+body {
+  --scriptorium-link: #7d2219;
+  --scriptorium-link-hover: #5e1610;
+  --scriptorium-pen: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6'%3E%3Cpath d='M0 3.3 C9 2.6 17 3.9 28 3.4 S44 2.5 55 3.1 S72 4.0 84 3.3 S101 2.6 111 3.5 S117 3.4 120 3.3' fill='none' stroke='%238b2323' stroke-opacity='0.5' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E");
+  --scriptorium-pen-hover: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6'%3E%3Cpath d='M0 3.3 C9 2.6 17 3.9 28 3.4 S44 2.5 55 3.1 S72 4.0 84 3.3 S101 2.6 111 3.5 S117 3.4 120 3.3' fill='none' stroke='%238b2323' stroke-opacity='1' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E");
+  --link-color: var(--scriptorium-link);
+  --link-color-hover: var(--scriptorium-link-hover);
+  --link-external-color: var(--scriptorium-link);
+  --link-external-color-hover: var(--scriptorium-link-hover);
+  --link-unresolved-color: var(--scriptorium-link);
+  --link-unresolved-opacity: 0.6;
+  --link-decoration: none;
+  --link-decoration-hover: none;
+  --link-external-decoration: none;
+  --link-external-decoration-hover: none;
+  --link-unresolved-decoration-style: none;
+}
+body.theme-dark {
+  --scriptorium-link: #d39073;
+  --scriptorium-link-hover: #e8b39a;
+  --scriptorium-pen: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6'%3E%3Cpath d='M0 3.3 C9 2.6 17 3.9 28 3.4 S44 2.5 55 3.1 S72 4.0 84 3.3 S101 2.6 111 3.5 S117 3.4 120 3.3' fill='none' stroke='%23c9805f' stroke-opacity='0.6' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E");
+  --scriptorium-pen-hover: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6'%3E%3Cpath d='M0 3.3 C9 2.6 17 3.9 28 3.4 S44 2.5 55 3.1 S72 4.0 84 3.3 S101 2.6 111 3.5 S117 3.4 120 3.3' fill='none' stroke='%23e8b39a' stroke-opacity='1' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.markdown-rendered a.internal-link,
+.markdown-rendered a.external-link,
+.markdown-source-view.mod-cm6 :is(.cm-hmd-internal-link, .cm-link) .cm-underline {
+  color: var(--scriptorium-link);
+  text-decoration: none;
+  background-image: var(--scriptorium-pen);
+  background-repeat: repeat-x;
+  background-size: 120px 6px;
+  background-position: 0 100%;
+  padding: 0 0 0.06em;
+}
+.markdown-rendered a.internal-link:hover,
+.markdown-rendered a.external-link:hover,
+.markdown-source-view.mod-cm6 :is(.cm-hmd-internal-link, .cm-link) .cm-underline:hover {
+  color: var(--scriptorium-link-hover);
+  text-decoration: none;
+  background-image: var(--scriptorium-pen-hover);
+}
+
+/* ---------- Images: centred by default ----------
+   To place one, put left, right or center before the size:
+     ![[image.png|left|300]]   ![[image.png|right|240]]   ![[image.png|center]]   ![left|300](image.png)
+   Obsidian stores that word as the image's alt text, which these rules read. In Reading view and PDF export, left
+   and right images float and the text wraps around them; while editing they are only aligned, so typing stays smooth. */
+.markdown-rendered .image-embed,
+.markdown-source-view.mod-cm6 .image-embed {
+  display: block;
+  text-align: center;
+}
+.markdown-rendered .image-embed img,
+.markdown-rendered p > img:not(.emoji),
+.markdown-source-view.mod-cm6 .image-embed img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.markdown-rendered .image-embed[alt="left" i],
+.markdown-rendered p > img[alt="left" i] {
+  float: left;
+  margin: 0.25em 1.25em 0.5em 0;
+}
+.markdown-rendered .image-embed[alt="right" i],
+.markdown-rendered p > img[alt="right" i] {
+  float: right;
+  margin: 0.25em 0 0.5em 1.25em;
+}
+.markdown-rendered :is(.image-embed, p > img)[alt="left" i] img,
+.markdown-rendered :is(.image-embed, p > img)[alt="right" i] img {
+  margin: 0;
+}
+.markdown-rendered :is(h1, h2, h3, h4, h5, h6, hr) {
+  clear: both;   /* a heading or scene break starts below any floated image */
+}
+.markdown-rendered .image-embed:not([alt="left" i], [alt="right" i]),
+.markdown-rendered p > img:not(.emoji, [alt="left" i], [alt="right" i]) {
+  clear: both;   /* a centred image starts below any floated one */
+}
+/* While editing, Obsidian sizes the embed box itself, so the box is what gets placed. */
+.markdown-source-view.mod-cm6 .image-embed { margin-left: auto; margin-right: auto; }
+.markdown-source-view.mod-cm6 .image-embed[alt="left" i] { margin-left: 0; margin-right: auto; }
+.markdown-source-view.mod-cm6 .image-embed[alt="right" i] { margin-left: auto; margin-right: 0; }
+
 /* NORMAL MODE */
 /* ==========================================================
    Manuscript: book-page typography for Obsidian

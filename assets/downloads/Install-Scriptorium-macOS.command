@@ -28,7 +28,7 @@ verify_hash() {
   actual_hash="${actual_hash%% *}"
   [ "$actual_hash" = "$2" ] || { echo "Download verification failed for $1."; exit 1; }
 }
-verify_hash "$work_dir/Writing.zip" '7a3f831c378a83b853d92106bd9f3a163392d0633f25c6c3d39eed12ae25fa64'
+verify_hash "$work_dir/Writing.zip" '5ea59821d8f4dc9dab75468b5e7fdbfdc5d00b930df66057a91475f01d4413a7'
 unzip -q "$work_dir/Writing.zip" -d "$work_dir/vault"
 [ -f "$work_dir/vault/.obsidian/appearance.json" ] || { printf 'Invalid configuration archive.\n'; exit 1; }
 app_path="$(osascript -l JavaScript -e 'ObjC.import("AppKit"); const url = $.NSWorkspace.sharedWorkspace.URLForApplicationWithBundleIdentifier("md.obsidian"); if (url && !url.isNil()) ObjC.unwrap(url.path)' 2>/dev/null || true)"

@@ -43,6 +43,8 @@ Use these instructions when the user asks you to install or configure Scriptoriu
 - Fancy mode defaults OFF. Keep this default unless the user requests otherwise.
 - Regular section headings use EB Garamond with centered small caps.
 - Drop caps use the Yinit decorative initials (public domain), embedded in manuscript.css; no install needed.
+- Images are centred by default; ![[image.png|left|300]], |right or |center places one (left/right float in Reading view).
+- Links use rubric ink with a hand-drawn pen underline, matching williamliaw.com.
 - Fancy section headings use Cormorant Garamond.
 - Fancy mode uses borderless italic quotations and justified opening paragraphs.
 - Regular mode uses bordered quotations and left-aligned opening paragraphs.
