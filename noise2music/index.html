@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Noise2Music — William Liaw</title>
+<meta name="description" content="Slides for William Liaw's music-tech reading-group talk on Noise2Music (Huang et al., 2023): text-conditioned music generation with cascaded diffusion models, from U-Nets and attention to pseudo-labelled training data and evaluation (35 slides).">
+<meta property="og:title" content="Noise2Music: Text-Conditioned Music Generation with Diffusion Models">
+<meta property="og:description" content="A reading-group talk by William Liaw on Noise2Music (Huang et al., 2023): text-to-music generation with cascaded diffusion models.">
+<meta property="og:image" content="thumbs/thumb-01.jpg">
+<style>
+  :root { --bg:#07080b; --panel:#11141b; --line:#262b36; --txt:#f2f3f5; --muted:#9aa3b2; --red:#e5383b; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--txt); font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow:hidden; }
+  a { color:#ff8a8c; }
+  #app { position:fixed; inset:0; display:flex; flex-direction:column; }
+  header { display:flex; align-items:center; gap:14px; padding:10px 16px; border-bottom:1px solid var(--line); background:rgba(7,8,11,.92); z-index:5; }
+  header .title { font-weight:700; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  header .title span { color:var(--red); }
+  header .spacer { flex:1; }
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border:1px solid var(--line); border-radius:7px; background:var(--panel); color:var(--txt);
+         font:inherit; font-size:13px; cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .btn:hover { border-color:#3a4150; }
+  .btn.primary { background:var(--red); border-color:var(--red); color:#fff; font-weight:600; }
+  .btn.primary:hover { background:#c62c2f; }
+  .btn[aria-pressed="true"] { border-color:var(--red); color:#ff8a8c; }
+  main { position:relative; flex:1; display:flex; min-height:0; }
+  #stagewrap { position:relative; flex:1; display:flex; align-items:center; justify-content:center; min-width:0; padding:14px; }
+  #stage { position:relative; aspect-ratio:16/9; width:min(100%, calc((100vh - 130px) * 16 / 9)); background:#000; box-shadow:0 10px 40px rgba(0,0,0,.6); overflow:hidden; }
+  /* only the visible slide takes clicks: preloaded neighbours (opacity 0) sit later in the DOM and would swallow them */
+  /* inactive slides are hidden outright once they fade: some browsers (iOS Safari especially) still draw <video> players
+     inside an opacity:0 parent, so a neighbouring slide's clip could show on top of the current slide */
+  #stage .slide { position:absolute; inset:0; opacity:0; visibility:hidden; pointer-events:none; z-index:0;
+                  transition:opacity .28s ease, visibility 0s linear .28s; }
+  #stage .slide.on { opacity:1; visibility:visible; pointer-events:auto; z-index:1; transition:opacity .28s ease, visibility 0s; }
+  #stage .slide > img.bg { position:absolute; inset:0; width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
+  #stage .slide > img.top { position:absolute; display:block; pointer-events:none; user-select:none; -webkit-user-drag:none; }
+  .ov { position:absolute; overflow:hidden; transform-origin:center center; }
+  .ov video, .ov iframe { position:absolute; border:0; display:block; }
+  .ov.ctl { z-index:3; }   /* players the viewer clicks on stay above the prev/next click zones */
+  .yt { cursor:pointer; background:transparent; border:0; padding:0; container-type:size; }
+  /* a corner pill rather than a centred button: many covers already have a play badge (or title art) drawn in the middle,
+     and the whole cover is clickable anyway; sized in container units so it scales with the slide */
+  .yt .play, .web .play { position:absolute; left:3%; bottom:5%; display:flex; align-items:center; gap:.45em; padding:.4em .85em .4em .7em;
+              border-radius:999px; background:rgba(229,56,59,.94); color:#fff; font:600 max(9px, 3.6cqh)/1 system-ui, -apple-system, Segoe UI, sans-serif;
+              box-shadow:0 4px 18px rgba(0,0,0,.45); transition:transform .15s; transform-origin:left bottom; }
+  .yt .play::before { content:""; width:.75em; height:.85em; background:#fff; clip-path:polygon(0 0, 100% 50%, 0 100%); }
+  .yt .play::after { content:"Play"; }
+  .yt:hover .play, .web:hover .play { transform:scale(1.06); }
+  .web .play { font-size:max(13px, 1.9cqw); }
+  #stage { container-type:inline-size; }
+  /* audio buttons and live-page controls live on a per-slide layer above the prev/next click zones */
+  .ctl-layer { position:absolute; inset:0; z-index:3; pointer-events:none; visibility:hidden; }
+  .ctl-layer.on { visibility:visible; }
+  .ctl-layer > * { pointer-events:auto; }
+  /* audio clips: a round hit target over the deck's speaker icon, with a progress ring while it plays */
+  .aud { position:absolute; z-index:3; display:flex; align-items:center; justify-content:center; }
+  .aud button { position:relative; flex:none; width:max(100%, 34px); aspect-ratio:1; border:0; padding:0; border-radius:50%; background:transparent; cursor:pointer; --p:0; }
+  .aud button::before { content:""; position:absolute; inset:-14%; border-radius:50%; opacity:0; transition:opacity .2s;
+                        background:conic-gradient(var(--red) calc(var(--p) * 1turn), rgba(229,56,59,.22) 0);
+                        -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+                        mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px)); }
+  .aud button:hover::before, .aud button.playing::before { opacity:1; }
+  .aud button::after { content:""; position:absolute; right:-18%; bottom:-18%; width:46%; height:46%; min-width:14px; min-height:14px; border-radius:50%;
+                       background:var(--red) no-repeat center/55% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2.5 1.5v7l6-3.5z' fill='%23fff'/%3E%3C/svg%3E");
+                       box-shadow:0 2px 8px rgba(0,0,0,.35); }
+  .aud.edge-r button::after { right:auto; left:-18%; }
+  .aud button.playing::after { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2.5 2h1.8v6H2.5zM5.7 2h1.8v6H5.7z' fill='%23fff'/%3E%3C/svg%3E"); }
+  /* live web pages the deck embeds (PowerPoint Web Viewer): a snapshot until the viewer asks for the page */
+  .web { position:absolute; left:3%; bottom:5%; z-index:3; container-type:normal; border:0; padding:0; background:transparent; cursor:pointer; }
+  .web .play { position:static; }
+  .web .play::before { content:""; width:.8em; height:.8em; background:none; clip-path:none; border:2px solid #fff; border-radius:50%; box-sizing:border-box; }
+  .web .play::after { content:"Open the live page"; }
+  .webframe { position:absolute; inset:0; z-index:3; background:#fff; }
+  .webframe iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+  .webframe .close { position:absolute; right:10px; top:10px; z-index:1; width:34px; height:34px; border-radius:50%; border:0; cursor:pointer;
+                     background:rgba(17,20,27,.85); color:#fff; font:20px/34px system-ui, sans-serif; box-shadow:0 2px 10px rgba(0,0,0,.35); }
+  .nav { position:absolute; top:0; bottom:0; width:12%; cursor:pointer; z-index:2; }
+  .nav.prev { left:0; } .nav.next { right:0; }
+  footer { display:flex; align-items:center; gap:10px; padding:8px 16px 12px; justify-content:center; }
+  #counter { min-width:80px; text-align:center; color:var(--muted); font-variant-numeric:tabular-nums; }
+  #progress { position:absolute; left:0; right:0; bottom:0; height:3px; background:transparent; }
+  #progress div { height:100%; background:var(--red); width:0; transition:width .25s; }
+  #notes { width:0; overflow:hidden; border-left:1px solid var(--line); background:var(--panel); transition:width .25s; }
+  #notes.open { width:min(420px, 42vw); }
+  #notes .inner { width:min(420px, 42vw); height:100%; overflow:auto; padding:16px 18px 40px; }
+  #notes h3 { margin:0 0 10px; font-size:12px; letter-spacing:2px; color:var(--red); text-transform:uppercase; }
+  #notes p { margin:0 0 .8em; white-space:pre-wrap; word-wrap:break-word; color:#d7dbe2; font-size:14px; }
+  #grid { position:absolute; inset:0; background:rgba(7,8,11,.97); z-index:10; overflow:auto; padding:20px; display:none; }
+  #grid.open { display:block; }
+  #grid .tiles { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px; max-width:1500px; margin:0 auto; }
+  #grid .tile { position:relative; cursor:pointer; border:2px solid transparent; border-radius:6px; overflow:hidden; background:#000; }
+  #grid .tile.cur { border-color:var(--red); }
+  #grid .tile img { width:100%; display:block; aspect-ratio:16/9; object-fit:cover; }
+  #grid .tile span { position:absolute; left:6px; bottom:6px; background:rgba(0,0,0,.7); padding:1px 7px; border-radius:4px; font-size:12px; color:var(--muted); }
+  #help { color:var(--muted); font-size:12px; }
+  @media (max-width: 760px) {
+    header .hide-sm, #help { display:none; }
+    #notes.open { position:absolute; inset:auto 0 0 0; width:100%; height:45%; border-left:0; border-top:1px solid var(--line); z-index:6; }
+    #notes .inner { width:100%; }
+    #stagewrap { padding:6px; }
+    #stage { width:100%; }
+  }
+  :fullscreen header, :fullscreen footer { display:none; }
+  :fullscreen #stagewrap { padding:0; }
+  :fullscreen #stage { width:min(100vw, 100vh * 16 / 9); box-shadow:none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a class="btn" href="/" title="Back to williamliaw.com">←&nbsp;Blog</a>
+    <div class="title"><span>Noise2Music</span> Text-Conditioned Music Generation <span style="color:var(--muted);font-weight:400">· William Liaw</span></div>
+    <div class="spacer"></div>
+    <button class="btn hide-sm" id="bGrid" aria-pressed="false" title="All slides (G)">▦&nbsp;All slides</button>
+    <button class="btn" id="bNotes" aria-pressed="false" title="Speaker notes & sources (N)">✎&nbsp;Notes</button>
+    <button class="btn hide-sm" id="bFull" title="Fullscreen (F)">⤢</button>
+    <a class="btn primary" id="bDown" href="#" download>⬇&nbsp;<span class="hide-sm">Download&nbsp;</span>.pptm</a>
+  </header>
+  <main>
+    <div id="stagewrap">
+      <div id="stage" aria-live="polite"><div class="nav prev" title="Previous"></div><div class="nav next" title="Next"></div><div id="progress"><div></div></div></div>
+      <div id="grid"><div class="tiles"></div></div>
+    </div>
+    <aside id="notes"><div class="inner"><h3>Speaker notes &amp; sources</h3><div id="notesBody"></div></div></aside>
+  </main>
+  <footer>
+    <button class="btn" id="bPrev" title="Previous (←)">‹</button>
+    <div id="counter">1 / 35</div>
+    <button class="btn" id="bNext" title="Next (→)">›</button>
+    <span id="help">← → to navigate · N notes · G all slides · F fullscreen · audio, animations and live pages play in place</span>
+  </footer>
+</div>
+<script>
+const DATA = {"slides": [{"n": 1, "img": "slides/slide-01.jpg", "thumb": "thumbs/thumb-01.jpg", "notes": "Huang et al., google brain\n\nPaper: https://arxiv.org/abs/2302.03917 · Examples: https://google-research.github.io/noise2music/", "media": [{"kind": "audio", "src": "media/audio-funk.mp3", "label": "“A funk song with rhythmical guitars using wah pedals, a horn section, a strong bass line and husky vocals”", "x": 0.94635, "y": 0.2268, "w": 0.03333, "h": 0.05926}, {"kind": "audio", "src": "media/audio-pop-rock.mp3", "label": "“Powerful tune with pop, rock influence with strong synthesizers for an introduction to a sporting event”", "x": 0.36954, "y": 0.76726, "w": 0.03333, "h": 0.05926}]}, {"n": 2, "img": "slides/slide-02.jpg", "thumb": "thumbs/thumb-02.jpg", "notes": "", "media": []}, {"n": 3, "img": "slides/slide-03.jpg", "thumb": "thumbs/thumb-03.jpg", "notes": "", "media": []}, {"n": 4, "img": "slides/slide-04.jpg", "thumb": "thumbs/thumb-04.jpg", "notes": "", "media": []}, {"n": 5, "img": "slides/slide-05.jpg", "thumb": "thumbs/thumb-05.jpg", "notes": "", "media": []}, {"n": 6, "img": "slides/slide-06.jpg", "thumb": "thumbs/thumb-06.jpg", "notes": "", "media": []}, {"n": 7, "img": "slides/slide-07.jpg", "thumb": "thumbs/thumb-07.jpg", "notes": "", "media": []}, {"n": 8, "img": "slides/slide-08.jpg", "thumb": "thumbs/thumb-08.jpg", "notes": "", "media": []}, {"n": 9, "img": "slides/slide-09.jpg", "thumb": "thumbs/thumb-09.jpg", "notes": "", "media": [{"kind": "loop", "src": "media/clip-09a.mp4", "webm": "media/clip-09a.webm", "x": 0.06302, "y": 0.47389, "w": 0.3428, "h": 0.44222}, {"kind": "loop", "src": "media/clip-09b.mp4", "webm": "media/clip-09b.webm", "x": 0.64691, "y": 0.48512, "w": 0.22168, "h": 0.44222}]}, {"n": 10, "img": "slides/slide-10.jpg", "thumb": "thumbs/thumb-10.jpg", "notes": "Live page: https://distill.pub/2016/deconv-checkerboard/ (Odena, Dumoulin and Olah, “Deconvolution and Checkerboard Artifacts”, Distill 2016)", "media": [{"kind": "web", "url": "https://distill.pub/2016/deconv-checkerboard/", "x": 0, "y": 0, "w": 1, "h": 1}]}, {"n": 11, "img": "slides/slide-11.jpg", "thumb": "thumbs/thumb-11.jpg", "notes": "", "media": []}, {"n": 12, "img": "slides/slide-12.jpg", "thumb": "thumbs/thumb-12.jpg", "notes": "", "media": []}, {"n": 13, "img": "slides/slide-13.jpg", "thumb": "thumbs/thumb-13.jpg", "notes": "", "media": []}, {"n": 14, "img": "slides/slide-14.jpg", "thumb": "thumbs/thumb-14.jpg", "notes": "", "media": []}, {"n": 15, "img": "slides/slide-15.jpg", "thumb": "thumbs/thumb-15.jpg", "notes": "", "media": []}, {"n": 16, "img": "slides/slide-16.jpg", "thumb": "thumbs/thumb-16.jpg", "notes": "", "media": []}, {"n": 17, "img": "slides/slide-17.jpg", "thumb": "thumbs/thumb-17.jpg", "notes": "", "media": []}, {"n": 18, "img": "slides/slide-18.jpg", "thumb": "thumbs/thumb-18.jpg", "notes": "", "media": []}, {"n": 19, "img": "slides/slide-19.jpg", "thumb": "thumbs/thumb-19.jpg", "notes": "Input ingested by cross attention\nGenerate an intermediate representation that is converted into 16 kHz: 3.2 KHz waveform (Cascader) or log-mel spectogram (Vocoder)\nOutput is transformed into 24 kHz audio via “super-resolution cascader” (decoder part of U-net)\nUp-sampling done via FFT, zero-padding, and then inverse FFT", "media": []}, {"n": 20, "img": "slides/slide-20.jpg", "thumb": "thumbs/thumb-20.jpg", "notes": "", "media": []}, {"n": 21, "img": "slides/slide-21.jpg", "thumb": "thumbs/thumb-21.jpg", "notes": "", "media": []}, {"n": 22, "img": "slides/slide-22.jpg", "thumb": "thumbs/thumb-22.jpg", "notes": "", "media": []}, {"n": 23, "img": "slides/slide-23.jpg", "thumb": "thumbs/thumb-23.jpg", "notes": "", "media": []}, {"n": 24, "img": "slides/slide-24.jpg", "thumb": "thumbs/thumb-24.jpg", "notes": "", "media": []}, {"n": 25, "img": "slides/slide-25.jpg", "thumb": "thumbs/thumb-25.jpg", "notes": "", "media": []}, {"n": 26, "img": "slides/slide-26.jpg", "thumb": "thumbs/thumb-26.jpg", "notes": "", "media": []}, {"n": 27, "img": "slides/slide-27.jpg", "thumb": "thumbs/thumb-27.jpg", "notes": "", "media": []}, {"n": 28, "img": "slides/slide-28.jpg", "thumb": "thumbs/thumb-28.jpg", "notes": "", "media": []}, {"n": 29, "img": "slides/slide-29.jpg", "thumb": "thumbs/thumb-29.jpg", "notes": "", "media": []}, {"n": 30, "img": "slides/slide-30.jpg", "thumb": "thumbs/thumb-30.jpg", "notes": "", "media": []}, {"n": 31, "img": "slides/slide-31.jpg", "thumb": "thumbs/thumb-31.jpg", "notes": "", "media": []}, {"n": 32, "img": "slides/slide-32.jpg", "thumb": "thumbs/thumb-32.jpg", "notes": "", "media": []}, {"n": 33, "img": "slides/slide-33.jpg", "thumb": "thumbs/thumb-33.jpg", "notes": "Live page: https://google-research.github.io/noise2music/ (the paper’s example clips)", "media": [{"kind": "web", "url": "https://google-research.github.io/noise2music/", "x": 0, "y": 0, "w": 1, "h": 1}]}, {"n": 34, "img": "slides/slide-34.jpg", "thumb": "thumbs/thumb-34.jpg", "notes": "", "media": []}, {"n": 35, "img": "slides/slide-35.jpg", "thumb": "thumbs/thumb-35.jpg", "notes": "", "media": []}], "download": "/assets/slides/Noise2Music.pptm", "sizeMB": 15.1};
+const S = DATA.slides, N = S.length;
+const stage = document.getElementById('stage');
+const built = new Map();
+let cur = 0;
+
+if (DATA.download) {
+  document.getElementById('bDown').href = DATA.download;
+  document.getElementById('bDown').title = `Download the PowerPoint (${DATA.sizeMB} MB) — animations, audio and the live web pages play in PowerPoint 365 / 2019+`;
+} else {
+  document.getElementById('bDown').remove();  // exported with --download-url '' (no public copy of the .pptx)
+}
+
+function place(el, m) {
+  el.style.left = (m.x * 100) + '%'; el.style.top = (m.y * 100) + '%';
+  el.style.width = (m.w * 100) + '%'; el.style.height = (m.h * 100) + '%';
+  if (m.rot) el.style.transform = `rotate(${m.rot}deg)`;
+}
+function fillCrop(child, m) {
+  // a:srcRect crop -> scale/offset the media inside the clipping box
+  const [l, t, r, b] = m.crop || [0, 0, 0, 0];
+  const sw = 1 - l - r, sh = 1 - t - b;
+  child.style.width = (100 / sw) + '%'; child.style.height = (100 / sh) + '%';
+  child.style.left = (-l / sw * 100) + '%'; child.style.top = (-t / sh * 100) + '%';
+  child.style.objectFit = 'fill';
+}
+function ctlLayer(el) {
+  if (!el._layer) { el._layer = document.createElement('div'); el._layer.className = 'ctl-layer'; stage.appendChild(el._layer); }
+  return el._layer;
+}
+function build(i) {
+  if (built.has(i)) return built.get(i);
+  const s = S[i];
+  const el = document.createElement('div'); el.className = 'slide';
+  const img = document.createElement('img'); img.className = 'bg'; img.src = s.img; img.alt = 'Slide ' + s.n; img.decoding = 'async';
+  el.appendChild(img);
+  for (const m of s.media) {
+    const box = document.createElement('div'); box.className = 'ov'; place(box, m);
+    if (m.kind === 'loop') {
+      const v = document.createElement('video');
+      Object.assign(v, { muted: true, loop: true, playsInline: true, preload: 'auto' }); v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+      v.dataset.src = m.src; v.dataset.webm = m.webm || ''; fillCrop(v, m); box.appendChild(v);
+      // stay transparent until frames arrive, so the slide image (which shows the clip's first frame) is never blacked out
+      v.style.opacity = 0; v.style.transition = 'opacity .2s'; v.addEventListener('playing', () => { v.style.opacity = 1; });
+      // Safari starts gesture-less (muted) playback only for a VISIBLE video: reveal it once its first frame is decoded (the same
+      // picture as the slide image under it, so nothing flashes), then (re)start it while its slide is showing
+      v.addEventListener('loadeddata', () => { if (!v.firstChild) return; v.style.opacity = 1; if (v.closest('.slide.on') && v.paused) v.play().catch(() => {}); });
+    } else if (m.kind === 'video') {
+      box.classList.add('ctl');
+      const v = document.createElement('video');
+      Object.assign(v, { controls: true, playsInline: true, preload: 'none' }); v.poster = m.poster || ''; v.src = m.src;
+      fillCrop(v, m); box.appendChild(v);
+    } else if (m.kind === 'youtube') {
+      const b = document.createElement('button'); b.className = 'ov yt ctl'; place(b, m); b.title = 'Play video';
+      const pl = document.createElement('div'); pl.className = 'play'; b.appendChild(pl);
+      b.onclick = (e) => {
+        e.stopPropagation();
+        const f = document.createElement('iframe');
+        f.src = `https://www.youtube-nocookie.com/embed/${m.id}?autoplay=1&rel=0&playsinline=1`;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; f.allowFullscreen = true;
+        Object.assign(f.style, { left: 0, top: 0, width: '100%', height: '100%', background: '#000' });
+        const holder = document.createElement('div'); holder.className = 'ov ctl'; place(holder, m); holder.appendChild(f);
+        b.replaceWith(holder);
+      };
+      el.appendChild(b); continue;
+    } else if (m.kind === 'audio') {
+      const layer = ctlLayer(el);
+      const box = document.createElement('div'); box.className = 'aud'; place(box, m);
+      if (m.x + m.w > 0.95) box.classList.add('edge-r');   // keep the play badge inside the slide
+      const b = document.createElement('button'); b.title = 'Play: ' + m.label; b.setAttribute('aria-label', 'Play audio: ' + m.label);
+      const a = new Audio(); a.preload = 'none'; a.src = m.src;
+      a.addEventListener('timeupdate', () => b.style.setProperty('--p', a.duration ? a.currentTime / a.duration : 0));
+      a.addEventListener('play', () => { b.classList.add('playing'); b.title = 'Pause'; });
+      a.addEventListener('pause', () => { b.classList.remove('playing'); b.title = 'Play: ' + m.label; });
+      a.addEventListener('ended', () => { b.style.setProperty('--p', 0); });
+      b.onclick = (e) => {
+        e.stopPropagation();
+        layer.querySelectorAll('audio').forEach(o => { if (o !== a) o.pause(); });   // one clip at a time
+        if (a.paused) a.play().catch(() => {}); else a.pause();
+      };
+      box.appendChild(b); box.appendChild(a); layer.appendChild(box); continue;
+    } else if (m.kind === 'web') {
+      const layer = ctlLayer(el);
+      const b = document.createElement('button'); b.className = 'web'; b.title = 'Open ' + m.url + ' here';
+      const pl = document.createElement('div'); pl.className = 'play'; b.appendChild(pl);
+      b.onclick = (e) => {
+        e.stopPropagation();
+        const holder = document.createElement('div'); holder.className = 'webframe';
+        const f = document.createElement('iframe'); f.src = m.url; f.title = m.url; f.loading = 'eager';
+        const x = document.createElement('button'); x.className = 'close'; x.textContent = '×'; x.title = 'Back to the slide';
+        x.onclick = (ev) => { ev.stopPropagation(); holder.replaceWith(b); };
+        holder.appendChild(f); holder.appendChild(x); b.replaceWith(holder);
+        holder._restore = () => holder.replaceWith(b);
+      };
+      layer.appendChild(b); continue;
+    }
+    el.appendChild(box);
+  }
+  if (s.overlay) {  // shapes the deck draws on top of its clips (labels, badges), rendered as a transparent layer
+    const o = document.createElement('img'); o.className = 'top'; o.src = s.overlay.src; o.alt = ''; o.decoding = 'async';
+    place(o, s.overlay); el.appendChild(o);
+  }
+  stage.insertBefore(el, stage.querySelector('.nav'));
+  built.set(i, el);
+  return el;
+}
+function activate(el, on) {
+  el.classList.toggle('on', on);
+  el.querySelectorAll('video[data-src]').forEach(v => {
+    if (on) {
+      if (!v.firstChild) {   // lazy: attach WebM (VP9) + MP4 (H.264) sources the first time the slide is shown
+        for (const [src, type] of [[v.dataset.webm, 'video/webm'], [v.dataset.src, 'video/mp4']]) {
+          if (!src) continue; const so = document.createElement('source'); so.src = src; so.type = type; v.appendChild(so);
+        }
+        v.load();
+      }
+      v.autoplay = true;   // WebKit starts a muted autoplay video by itself as soon as it becomes visible
+      try { v.currentTime = 0; } catch (e) {}
+      v.play().catch(() => {});
+    }
+    else {  // release the decoder: phones only allow a handful of live video players
+      v.autoplay = false; v.pause(); v.style.opacity = 0;
+      while (v.firstChild) v.removeChild(v.firstChild);
+      v.removeAttribute('src'); v.load();
+    }
+  });
+  if (!on) el.querySelectorAll('video:not([data-src])').forEach(v => v.pause());
+  if (el._layer) {
+    el._layer.classList.toggle('on', on);
+    if (!on) { el._layer.querySelectorAll('audio').forEach(a => a.pause()); el._layer.querySelectorAll('.webframe').forEach(h => h._restore && h._restore()); }
+  }
+  if (!on) el.querySelectorAll('iframe').forEach(f => { const src = f.src; f.src = 'about:blank'; f.src = src.replace('autoplay=1', 'autoplay=0'); });
+}
+function linkify(text, parent) {
+  const re = /(https?:\/\/[^\s)\]]+)/g; let last = 0, m;
+  while ((m = re.exec(text))) {
+    parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+    const a = document.createElement('a'); a.href = m[1]; a.textContent = m[1]; a.target = '_blank'; a.rel = 'noopener'; parent.appendChild(a);
+    last = m.index + m[1].length;
+  }
+  parent.appendChild(document.createTextNode(text.slice(last)));
+}
+function renderNotes() {
+  const body = document.getElementById('notesBody'); body.textContent = '';
+  const t = S[cur].notes || '(No notes for this slide.)';
+  for (const para of t.split(/\n\s*\n|\n/)) { if (!para.trim()) continue; const p = document.createElement('p'); linkify(para, p); body.appendChild(p); }
+}
+function go(i, push = true) {
+  i = Math.max(0, Math.min(N - 1, i));
+  const prev = built.get(cur);
+  const next = build(i);
+  if (prev && prev !== next) activate(prev, false);
+  activate(next, true);
+  cur = i;
+  document.getElementById('counter').textContent = `${i + 1} / ${N}`;
+  document.querySelector('#progress div').style.width = ((i + 1) / N * 100) + '%';
+  renderNotes();
+  if (push) history.replaceState(null, '', '#' + (i + 1));
+  [i + 1, i + 2, i - 1].forEach(j => { if (j >= 0 && j < N) build(j); });   // preload neighbours
+  document.querySelectorAll('#grid .tile').forEach((t, k) => t.classList.toggle('cur', k === i));
+}
+// grid
+const tiles = document.querySelector('#grid .tiles');
+S.forEach((s, k) => {
+  const d = document.createElement('div'); d.className = 'tile';
+  d.innerHTML = `<img loading="lazy" src="${s.thumb}" alt="Slide ${s.n}"><span>${s.n}</span>`;
+  d.onclick = () => { toggleGrid(false); go(k); }; tiles.appendChild(d);
+});
+function toggleGrid(on) {
+  const g = document.getElementById('grid'); on = on ?? !g.classList.contains('open');
+  g.classList.toggle('open', on); document.getElementById('bGrid').setAttribute('aria-pressed', on);
+  if (on) tiles.children[cur].scrollIntoView({ block: 'center' });
+}
+function toggleNotes(on) {
+  const n = document.getElementById('notes'); on = on ?? !n.classList.contains('open');
+  n.classList.toggle('open', on); document.getElementById('bNotes').setAttribute('aria-pressed', on);
+}
+function toggleFull() { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+document.getElementById('bPrev').onclick = () => go(cur - 1);
+document.getElementById('bNext').onclick = () => go(cur + 1);
+document.querySelector('.nav.prev').onclick = () => go(cur - 1);
+document.querySelector('.nav.next').onclick = () => go(cur + 1);
+document.getElementById('bGrid').onclick = () => toggleGrid();
+document.getElementById('bNotes').onclick = () => toggleNotes();
+document.getElementById('bFull').onclick = toggleFull;
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(k)) { e.preventDefault(); go(cur + 1); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(k)) { e.preventDefault(); go(cur - 1); }
+  else if (k === 'Home') go(0); else if (k === 'End') go(N - 1);
+  else if (k === 'n' || k === 'N') toggleNotes(); else if (k === 'g' || k === 'G') toggleGrid();
+  else if (k === 'f' || k === 'F') toggleFull(); else if (k === 'Escape') { toggleGrid(false); }
+});
+let tx = null, ty = null;
+stage.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+stage.addEventListener('touchend', e => {
+  if (tx === null) return; const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) go(cur + (dx < 0 ? 1 : -1)); tx = null;
+});
+// a browser that still refuses gesture-less playback (Low Power Mode, autoplay settings) starts the current slide's loops on the
+// first tap, click or key press, or when the tab comes back into view
+function kickLoops() { const el = built.get(cur); if (el) el.querySelectorAll('video[data-src]').forEach(v => { if (v.firstChild && v.paused) v.play().catch(() => {}); }); }
+['pointerdown', 'touchstart', 'keydown'].forEach(t => addEventListener(t, kickLoops, { passive: true }));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) kickLoops(); });
+addEventListener('hashchange', () => { const h = parseInt(location.hash.slice(1)); if (h && h - 1 !== cur) go(h - 1, false); });
+go((parseInt(location.hash.slice(1)) || 1) - 1, false);
+</script>
+</body>
+</html>
