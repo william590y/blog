@@ -20,7 +20,7 @@ A fancy and sophisticated obsidian configuration for the typographically incline
 
 Bookish serif typography, warm paper, centered small-cap headings, italic subtitles, ornamental Yinit drop caps, and floral scene breaks. Includes the Typewriter theme, a custom manuscript stylesheet, and writing plugins.
 
-<a href="{{ '/assets/downloads/Scriptorium.zip' | relative_url }}" download>Download the Obsidian configuration</a>
+<a href="{{ '/assets/downloads/Scriptorium.zip' | relative_url }}?v=b85cefb1" download>Download the Obsidian configuration</a>
 
 ### Fancy mode
 
