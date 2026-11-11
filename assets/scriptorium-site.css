@@ -238,8 +238,16 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post.no-initial.no-initial :is(.post-line + p, .post-line + blockquote + p,
   :is(h1, h2):not(.post-title) + p, :is(h1, h2):not(.post-title) + blockquote + p) { text-align: justify; }
 
-/* If an opening paragraph is shorter than its initial, the next block starts below the initial instead of
-   wrapping around its foot (and stacking its own indent on top). */
+/* The initial is three lines tall, so its paragraph is too: after a one- or two-line opening, the next block starts
+   where it would after a three-line one, and its own margin (a quotation's, a list's) leaves the usual gap below the
+   initial's foot. Clearing the float alone would put it flush against the foot: clearance swallows margin-top.
+   Openings of three lines or more are unaffected. */
+.post:not(.no-initial) :is(.post-line + p, .post-line + blockquote + p,
+  :is(h1, h2):not(.post-title) + p, :is(h1, h2):not(.post-title) + blockquote + p) {
+  min-height: 4.35em;   /* 3 x the 1.45 leading, where the lh unit is unsupported */
+  min-height: 3lh;
+}
+/* ...and the next block never wraps around the initial's foot (or stacks its own indent on top of it). */
 .post :is(.post-line + p, .post-line + blockquote + p) + *,
 .post :is(h1, h2):not(.post-title) + p + *,
 .post :is(h1, h2):not(.post-title) + blockquote + p + * {
