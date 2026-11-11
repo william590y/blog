@@ -160,6 +160,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
   hyphens: auto;
 }
 .post p + p { text-indent: 1.5em; }
+.post { overflow-wrap: break-word; }   /* long URLs (e.g. in reference lists) wrap instead of widening the page */
 .post p[style*="center"],
 .post p:has(> img),
 .post p:has(> a > img),
@@ -227,6 +228,9 @@ code { background-color: var(--code-bg); color: var(--code-ink); font-size: 0.85
 /* ---------- Maths (MathJax 3, SVG): ink colour; wide display equations scroll inside themselves on phones ---------- */
 mjx-container { color: var(--ink); text-indent: 0; }
 mjx-container[display="true"] { display: block; max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-block: 0.1em; }
+/* MathJax's hidden screen-reader copy is absolutely positioned and as wide as the equation; keep it inside the box */
+mjx-container { position: relative; }
+mjx-container mjx-assistive-mml { max-width: 100% !important; }
 
 /* ---------- Scriptorium page: the Fancy-mode switch as a hand-inked box with an oxblood pen tick ---------- */
 .ink-check {
