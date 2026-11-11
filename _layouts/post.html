@@ -19,11 +19,12 @@ layout: default
   </div>
   <div class="post-line"></div>
 
+  {%- comment -%} `content` is already HTML; running it through markdownify again broke display maths. {%- endcomment -%}
   {%- assign parts = content | split: '<!--more-->' -%}
   {% if parts.size > 1 %}
-    {{ parts[1] | markdownify }}
+    {{ parts[1] }}
   {% else %}
-    {{ content | markdownify }}
+    {{ content }}
   {% endif %}
 </div>
 
