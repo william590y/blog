@@ -17,6 +17,25 @@
    SHARED BY BOTH MODES
    ========================================================== */
 
+/* ---------- No word split across the small-capped opening line ----------
+   Opening paragraphs hyphenate like any other, but a word split at the end of
+   the small-capped first line ("QUES- / tions") would change case halfway.
+   The Scriptorium plugin wraps that one word in .sc-keep so it moves to the
+   next line whole. PDF export is laid out without the plugin, so in print the
+   opening paragraph simply isn't hyphenated. */
+.markdown-rendered .sc-keep {
+  white-space: nowrap;
+  -webkit-hyphens: manual;
+  hyphens: manual;
+}
+@media print {
+  .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-p > p,
+  .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p {
+    -webkit-hyphens: manual;
+    hyphens: manual;
+  }
+}
+
 /* ---------- Links: rubric ink with a hand-drawn pen underline (as on williamliaw.com) ---------- */
 body {
   --scriptorium-link: #7d2219;
@@ -325,11 +344,9 @@ body:where(:not(.scriptorium-fancy)).theme-dark {
 }
 
 
-/* ---------- 8. Opening paragraphs: don't justify or hyphenate ----------
+/* ---------- 8. Opening paragraphs: don't justify ----------
    Small caps are wider than lowercase, and justifying spreads the leftover
    room across the gaps, so the opening line gets huge word spaces.
-   No hyphenation either: a word split at the end of the small-capped line
-   ("QUES- / tions") changes case halfway, so it moves to the next line whole.
    Same cases as the small-caps rule in section 5. */
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .mod-header + .el-p > p,
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .el-h1 + .el-p > p,
@@ -337,8 +354,6 @@ body:where(:not(.scriptorium-fancy)).theme-dark {
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .el-h6 + .el-p > p,
 :where(body:not(.scriptorium-fancy)) .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p {
   text-align: left;
-  -webkit-hyphens: manual;
-  hyphens: manual;
 }
 
 /* Keep section headings in the screenshot's centered small-cap style,
@@ -506,16 +521,6 @@ body:where(.scriptorium-fancy).theme-dark {
 :where(body.scriptorium-fancy) .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p::first-line {
   font-variant-caps: small-caps;
   letter-spacing: 0.03em;
-}
-/* No hyphenation in the opening paragraph: a word split at the end of the small-capped line ("QUES- / tions")
-   changes case halfway, so it moves to the next line whole. */
-:where(body.scriptorium-fancy) .markdown-rendered .mod-header + .el-p > p,
-:where(body.scriptorium-fancy) .markdown-rendered .el-h1 + .el-p > p,
-:where(body.scriptorium-fancy) .markdown-rendered .el-h2 + .el-p > p,
-:where(body.scriptorium-fancy) .markdown-rendered .el-h6 + .el-p > p,
-:where(body.scriptorium-fancy) .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p {
-  -webkit-hyphens: manual;
-  hyphens: manual;
 }
 
 
