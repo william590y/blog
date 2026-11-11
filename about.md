@@ -14,9 +14,7 @@ I work on machine learning and artificial intelligence. In particular, I am inte
 
 I'm fortunate to work with [John Thickstun](https://johnthickstun.com/) and [Kevin Ellis](https://www.cs.cornell.edu/~ellisk/).
 
-In the past, I've analyzed particle accelerator data from [CHESS](https://www.chess.cornell.edu/) with [Carl Franck](https://franckgroup.lassp.cornell.edu/).
-
-Last summer, I worked with numerical methods for signal processing at [MathWorks](https://www.mathworks.com/).
+In the past, I've analyzed particle accelerator data from [CHESS](https://www.chess.cornell.edu/) with [Carl Franck](https://franckgroup.lassp.cornell.edu/) and worked with numerical methods for signal processing at [MathWorks](https://www.mathworks.com/).
 
 A picture of me can be found [here.]({{ site.baseurl }}/assets/images/face.jpg)
 
