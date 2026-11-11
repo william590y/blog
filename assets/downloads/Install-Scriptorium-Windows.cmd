@@ -8,6 +8,25 @@ exit /b %RESULT%
 # POWERSHELL_START
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'Continue'
+# Console selection can suspend the installer until a key is pressed.
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class ScriptoriumConsole {
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr GetStdHandle(int handle);
+    [DllImport("kernel32.dll")]
+    public static extern bool GetConsoleMode(IntPtr handle, out uint mode);
+    [DllImport("kernel32.dll")]
+    public static extern bool SetConsoleMode(IntPtr handle, uint mode);
+}
+'@
+$consoleInput = [ScriptoriumConsole]::GetStdHandle(-10)
+$consoleMode = [uint32]0
+if ([ScriptoriumConsole]::GetConsoleMode($consoleInput, [ref]$consoleMode)) {
+    [void][ScriptoriumConsole]::SetConsoleMode($consoleInput, (($consoleMode -band 0xffffffbf) -bor 0x80))
+}
+
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
 function Get-ScriptoriumDownload($Uri, $OutFile) {
@@ -86,11 +105,20 @@ try {
     $protocol = 'Registry::HKEY_CLASSES_ROOT\obsidian\shell\open\command'
     $exe = Find-Obsidian
     if (!$exe -and !(Test-Path -LiteralPath $protocol)) {
-        Write-Host 'Installing Obsidian for the current user ...'
+        Write-Host 'Downloading Obsidian ...'
         $setup = Join-Path $tempPath 'Obsidian-Setup.exe'
         Get-ScriptoriumDownload -Uri 'https://github.com/obsidianmd/obsidian-releases/releases/download/v1.15.0/Obsidian-1.15.0.exe' -OutFile $setup
         if ((Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash -ne 'b0f60c75a12f96d54cb16b9fc32919966f2ebf029d9af75d67a19ba6555e1da0') { throw 'Obsidian download verification failed.' }
-        $process = Start-Process -FilePath $setup -ArgumentList '/S', '/currentuser' -Wait -PassThru
+        Write-Host 'Installing Obsidian for the current user ...'
+        $process = Start-Process -FilePath $setup -ArgumentList '/S', '/currentuser' -PassThru
+        try {
+            while (!$process.WaitForExit(250)) {
+                Write-Progress -Activity 'Installing Obsidian' -Status 'Setup is running. No keyboard input is needed.' -PercentComplete -1
+            }
+            $process.WaitForExit()
+        } finally {
+            Write-Progress -Activity 'Installing Obsidian' -Completed
+        }
         if ($process.ExitCode -ne 0) { throw "Obsidian setup exited with code $($process.ExitCode)." }
         $exe = Find-Obsidian
         if (!$exe -and !(Test-Path -LiteralPath $protocol)) { throw 'Obsidian setup did not complete.' }
