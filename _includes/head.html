@@ -6,7 +6,9 @@
   
     <!-- CSS -->
     <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
+    <link rel="preload" href="{{ "/assets/fonts/EBGaramond-Scriptorium.woff2" | relative_url }}" as="font" type="font/woff2" crossorigin>
+    <!-- Scriptorium look (normal mode, light): overrides Tale's main.css -->
+    <link rel="stylesheet" href="{{ "/assets/scriptorium-site.css" | relative_url }}">
   
     <!-- Favicon -->
      <!--
