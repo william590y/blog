@@ -178,10 +178,10 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post :is(h1, h2):not(.post-title) + blockquote + p::first-letter {
   float: left;
   font-family: var(--initials, var(--display));
-  font-size: 3em;             /* a 64 px square at 22 px text: two lines deep, the third line runs under it */
+  font-size: 3.667em;         /* a three-line drop: top at the first line's cap height, foot on the third baseline */
   line-height: 1;
   text-transform: uppercase;  /* Yinit has capitals only */
-  margin: 0 0.15em -0.15em 0; /* the negative bottom margin ends the wrap after the second line */
+  margin: 0.18em 0.15em -0.1em 0;  /* lowers the initial to the cap line; the fourth line returns to the margin */
   padding: 0;
   color: var(--accent);
 }
