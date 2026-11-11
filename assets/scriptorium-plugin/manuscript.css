@@ -544,12 +544,29 @@ body:where(.scriptorium-fancy).theme-dark {
 
 
 /* ---------- 7. Quotations: quiet italic, no sidebar ---------- */
+/* Live Preview draws quotes from Obsidian's blockquote variables. Without these, fancy mode left the theme's own
+   (accent-coloured) quote bar in the editor while Reading view showed the quiet italic quote. */
+body:where(.scriptorium-fancy).theme-light,
+body:where(.scriptorium-fancy).theme-dark {
+  --blockquote-border-thickness: 0px;
+  --blockquote-border-color: transparent;
+  --blockquote-color: var(--text-muted);
+  --blockquote-font-style: italic;
+  --blockquote-background-color: transparent;
+}
 :where(body.scriptorium-fancy) .markdown-rendered blockquote {
   border-left: none;
   margin: 1.4em 2.5em;
   padding: 0;
   font-style: italic;
   color: var(--text-muted);
+}
+:where(body.scriptorium-fancy) .markdown-source-view.mod-cm6 .HyperMD-quote {
+  color: var(--text-muted) !important;
+  font-style: italic;
+}
+:where(body.scriptorium-fancy) .markdown-source-view.mod-cm6 .HyperMD-quote .cm-blockquote-border {
+  border: none !important;
 }
 /* Section typefaces in Reading view and Live Preview. */
 :where(body:not(.scriptorium-fancy)) .markdown-rendered :is(h1, h2, h3, h4, h5),
