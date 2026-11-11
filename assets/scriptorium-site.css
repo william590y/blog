@@ -35,6 +35,8 @@
   font-display: swap;
 }
 
+:root.yinit { --initials: "Yinit", "Cormorant Garamond", "EB Garamond", Georgia, serif; }   /* set by head.html once Yinit loads */
+
 :root {
   --paper: #f7f2e7;        /* manuscript: warm paper */
   --ink: #2a2420;          /* manuscript: soft ink */
@@ -175,7 +177,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post :is(h1, h2):not(.post-title) + p::first-letter,
 .post :is(h1, h2):not(.post-title) + blockquote + p::first-letter {
   float: left;
-  font-family: "Yinit", var(--display);
+  font-family: var(--initials, var(--display));
   font-size: 3.36em;          /* a 72 px square at 22 px text, spanning three lines */
   line-height: 1;
   text-transform: uppercase;  /* Yinit has capitals only */

@@ -11,11 +11,11 @@ A fancy and sophisticated obsidian configuration for the typographically incline
   <label style="display:flex;align-items:center;gap:0.55rem;cursor:pointer;"><input type="checkbox" id="scriptorium-fancy-toggle" class="ink-check"> <strong>Fancy mode</strong></label>
 </div>
 <figure style="margin:1rem 0 2rem;">
-  <a id="scriptorium-preview-link" href="{{ '/assets/images/scriptorium-normal-type.png' | relative_url }}"><img id="scriptorium-preview" src="{{ '/assets/images/scriptorium-normal-type.png' | relative_url }}" data-fancy="{{ '/assets/images/scriptorium-fancy-type.png' | relative_url }}" data-normal="{{ '/assets/images/scriptorium-normal-type.png' | relative_url }}" alt="Scriptorium in Obsidian with Fancy mode off: centered small-cap headings, bordered quotations and a Yinit drop cap, in light mode." width="1058" height="1199" style="display:block;width:100%;height:auto;"></a>
+  <a id="scriptorium-preview-link" href="{{ '/assets/images/scriptorium-normal-type.png' | relative_url }}?v={{ site.time | date: '%s' }}"><img id="scriptorium-preview" src="{{ '/assets/images/scriptorium-normal-type.png' | relative_url }}?v={{ site.time | date: '%s' }}" data-fancy="{{ '/assets/images/scriptorium-fancy-type.png' | relative_url }}?v={{ site.time | date: '%s' }}" data-normal="{{ '/assets/images/scriptorium-normal-type.png' | relative_url }}?v={{ site.time | date: '%s' }}" alt="Scriptorium in Obsidian with Fancy mode off: centered small-cap headings, bordered quotations and a Yinit drop cap, in light mode." width="1058" height="1199" style="display:block;width:100%;height:auto;"></a>
   <figcaption id="scriptorium-preview-caption" aria-live="polite" style="font-size:0.85em;text-align:center;margin-top:0.75rem;">Fancy mode off — centered small-cap headings, bordered quotations and a Yinit drop cap. Captured in Obsidian, light mode.</figcaption>
 </figure>
-<script src="{{ '/assets/scriptorium-preview.js' | relative_url }}" defer></script>
-<noscript><p><a href="{{ '/assets/images/scriptorium-normal-type.png' | relative_url }}">View the compact style</a></p></noscript>
+<script src="{{ '/assets/scriptorium-preview.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
+<noscript><p><a href="{{ '/assets/images/scriptorium-normal-type.png' | relative_url }}?v={{ site.time | date: '%s' }}">View the compact style</a></p></noscript>
 
 Bookish serif typography, warm paper, centered small-cap headings, italic subtitles, ornamental Yinit drop caps, and floral scene breaks. Includes the Typewriter theme, a custom manuscript stylesheet, and writing plugins.
 
