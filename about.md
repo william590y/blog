@@ -3,12 +3,14 @@ layout: post
 title: "About"
 author: "William"
 permalink: /about/
+updated: 2026-11-11   # shown as "Updated by William on November 11, 2026"
+initial: goudy   # drop cap from Goudy Initialen instead of Yinit
 date:   2025-02-15 08:30:27 -0500
 ---
 
 Hi there! I am an undergraduate at Cornell University studying Computer Science.
 
-I am interested in machine learning, scientific computing, and fundamental physics.
+I work on machine learning and artificial intelligence. In particular, I am interested in latent reasoning, synthetic data generation, and continual learning.
 
 I'm fortunate to work with [John Thickstun](https://johnthickstun.com/) and [Kevin Ellis](https://www.cs.cornell.edu/~ellisk/).
 

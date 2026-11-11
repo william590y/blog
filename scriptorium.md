@@ -2,6 +2,7 @@
 layout: post
 title: "Scriptorium"
 permalink: /scriptorium
+project: true   # project pages get the Yinit drop cap, like blog posts
 author: William
 ---
 

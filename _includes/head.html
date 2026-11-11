@@ -17,6 +17,11 @@
         var root = document.documentElement;
         if (!document.fonts || !document.fonts.load) { root.classList.add('yinit'); return; }
         document.fonts.load('1em "Yinit"').then(function (faces) { if (faces.length) root.classList.add('yinit'); });
+        // Pages whose front matter asks for Goudy initials (About) load that face too.
+        document.addEventListener('DOMContentLoaded', function () {
+          if (!document.querySelector('.initial-goudy')) return;
+          document.fonts.load('1em "Goudy Initialen"').then(function (faces) { if (faces.length) root.classList.add('goudy'); });
+        });
       })();
     </script>
   
