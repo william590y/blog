@@ -85,9 +85,9 @@ $tempPath = Join-Path ([IO.Path]::GetTempPath()) ('obsidian-writing-' + [guid]::
 New-Item -ItemType Directory -Path $tempPath | Out-Null
 try {
     $archive = Join-Path $tempPath 'Writing.zip'
-    Get-ScriptoriumDownload -Uri 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=b85cefb1' -OutFile $archive
+    Get-ScriptoriumDownload -Uri 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=35b29955' -OutFile $archive
     $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($actualHash -ne 'b85cefb1a16c27d21c1750a6db437671065e442045978f2b3973d6b17d43c29f') { throw 'Package verification failed. Please download the current installer from the Projects page.' }
+    if ($actualHash -ne '35b2995596730368de614b500a1271c3b344d65c5321fa017e98270f65351774') { throw 'Package verification failed. Please download the current installer from the Projects page.' }
     $staging = Join-Path $tempPath 'vault'
     Expand-Archive -LiteralPath $archive -DestinationPath $staging
     if (!(Test-Path -LiteralPath (Join-Path $staging '.obsidian/appearance.json'))) { throw 'Invalid configuration archive.' }
