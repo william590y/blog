@@ -394,7 +394,9 @@ body:where(.scriptorium-fancy).theme-dark {
 :where(body.scriptorium-fancy) .markdown-rendered .mod-header + .el-p > p::first-letter,
 :where(body.scriptorium-fancy) .markdown-rendered .el-h1 + .el-p > p::first-letter,
 :where(body.scriptorium-fancy) .markdown-rendered .el-h2 + .el-p > p::first-letter,
-:where(body.scriptorium-fancy) .markdown-rendered .el-h6 + .el-p > p::first-letter {
+:where(body.scriptorium-fancy) .markdown-rendered .el-h6 + .el-p > p::first-letter,
+:where(body.scriptorium-fancy) /* ...also when an epigraph (a quote right under a heading) sits between */
+.markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p::first-letter {
   float: left;
   font-family: "Scriptorium Yinit", var(--manuscript-display);
   font-size: 3.36em;          /* a square initial about three lines tall */
@@ -409,7 +411,8 @@ body:where(.scriptorium-fancy).theme-dark {
 :where(body.scriptorium-fancy) .markdown-rendered .el-h1 + .el-p > p::first-line,
 :where(body.scriptorium-fancy) .markdown-rendered .el-h2 + .el-p > p::first-line,
 :where(body.scriptorium-fancy) .markdown-rendered .el-h6 + .el-p > p::first-line,
-:where(body.scriptorium-fancy) .markdown-rendered .el-hr + .el-p > p::first-line {
+:where(body.scriptorium-fancy) .markdown-rendered .el-hr + .el-p > p::first-line,
+:where(body.scriptorium-fancy) .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p::first-line {
   font-variant-caps: small-caps;
   letter-spacing: 0.03em;
 }
