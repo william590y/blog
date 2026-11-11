@@ -15,7 +15,7 @@ for utility in curl unzip; do
 done
 work_dir="$(mktemp -d)"
 trap 'rm -rf "$work_dir"' EXIT
-curl --progress-bar --fail --location --proto '=https' --tlsv1.2 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=35b29955' -o "$work_dir/Writing.zip"
+curl --progress-bar --fail --location --proto '=https' --tlsv1.2 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=c690a204' -o "$work_dir/Writing.zip"
 verify_hash() {
   local actual_hash
   if command -v shasum >/dev/null; then
@@ -28,7 +28,7 @@ verify_hash() {
   actual_hash="${actual_hash%% *}"
   [ "$actual_hash" = "$2" ] || { echo "Download verification failed for $1."; exit 1; }
 }
-verify_hash "$work_dir/Writing.zip" '35b2995596730368de614b500a1271c3b344d65c5321fa017e98270f65351774'
+verify_hash "$work_dir/Writing.zip" 'c690a2047f3c94b169ce6d228f5184cecf077750f150bfae3439a4294aee330d'
 unzip -q "$work_dir/Writing.zip" -d "$work_dir/vault"
 [ -f "$work_dir/vault/.obsidian/appearance.json" ] || { printf 'Invalid configuration archive.\n'; exit 1; }
 app_path="$(osascript -l JavaScript -e 'ObjC.import("AppKit"); const url = $.NSWorkspace.sharedWorkspace.URLForApplicationWithBundleIdentifier("md.obsidian"); if (url && !url.isNil()) ObjC.unwrap(url.path)' 2>/dev/null || true)"
