@@ -225,6 +225,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
   margin: 0;
   padding: 0;
 }
+.post.no-initial.no-initial p::first-line { font-variant-caps: normal; letter-spacing: normal; }
 
 /* If an opening paragraph is shorter than its initial, the next block starts below the initial instead of
    wrapping around its foot (and stacking its own indent on top). */
