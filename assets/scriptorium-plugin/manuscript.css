@@ -242,13 +242,12 @@ body:where(:not(.scriptorium-fancy)).theme-dark {
   padding: 0;
   color: var(--manuscript-accent);
 }
-/* ...and small caps across the opening line (also after scene breaks). */
+/* ...and small caps across the opening line, only where there is a drop cap. */
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .mod-header + .el-p > p::first-line,
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .el-h1 + .el-p > p::first-line,
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .el-h2 + .el-p > p::first-line,
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .el-h6 + .el-p > p::first-line,
-:where(body:not(.scriptorium-fancy)) .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p::first-line,
-:where(body:not(.scriptorium-fancy)) .markdown-rendered .el-hr + .el-p > p::first-line {
+:where(body:not(.scriptorium-fancy)) .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p::first-line {
   font-variant-caps: small-caps;
   letter-spacing: 0.03em;
 }
@@ -326,17 +325,20 @@ body:where(:not(.scriptorium-fancy)).theme-dark {
 }
 
 
-/* ---------- 8. Opening paragraphs: don't justify ----------
+/* ---------- 8. Opening paragraphs: don't justify or hyphenate ----------
    Small caps are wider than lowercase, and justifying spreads the leftover
    room across the gaps, so the opening line gets huge word spaces.
+   No hyphenation either: a word split at the end of the small-capped line
+   ("QUES- / tions") changes case halfway, so it moves to the next line whole.
    Same cases as the small-caps rule in section 5. */
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .mod-header + .el-p > p,
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .el-h1 + .el-p > p,
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .el-h2 + .el-p > p,
 :where(body:not(.scriptorium-fancy)) .markdown-rendered .el-h6 + .el-p > p,
-:where(body:not(.scriptorium-fancy)) .markdown-rendered .el-hr + .el-p > p,
 :where(body:not(.scriptorium-fancy)) .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p {
   text-align: left;
+  -webkit-hyphens: manual;
+  hyphens: manual;
 }
 
 /* Keep section headings in the screenshot's centered small-cap style,
@@ -496,15 +498,24 @@ body:where(.scriptorium-fancy).theme-dark {
   padding: 0;
   color: var(--manuscript-accent);
 }
-/* ...and small caps across the opening line (also after scene breaks). */
+/* ...and small caps across the opening line, only where there is a drop cap. */
 :where(body.scriptorium-fancy) .markdown-rendered .mod-header + .el-p > p::first-line,
 :where(body.scriptorium-fancy) .markdown-rendered .el-h1 + .el-p > p::first-line,
 :where(body.scriptorium-fancy) .markdown-rendered .el-h2 + .el-p > p::first-line,
 :where(body.scriptorium-fancy) .markdown-rendered .el-h6 + .el-p > p::first-line,
-:where(body.scriptorium-fancy) .markdown-rendered .el-hr + .el-p > p::first-line,
 :where(body.scriptorium-fancy) .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p::first-line {
   font-variant-caps: small-caps;
   letter-spacing: 0.03em;
+}
+/* No hyphenation in the opening paragraph: a word split at the end of the small-capped line ("QUES- / tions")
+   changes case halfway, so it moves to the next line whole. */
+:where(body.scriptorium-fancy) .markdown-rendered .mod-header + .el-p > p,
+:where(body.scriptorium-fancy) .markdown-rendered .el-h1 + .el-p > p,
+:where(body.scriptorium-fancy) .markdown-rendered .el-h2 + .el-p > p,
+:where(body.scriptorium-fancy) .markdown-rendered .el-h6 + .el-p > p,
+:where(body.scriptorium-fancy) .markdown-rendered :is(.mod-header, .el-h1, .el-h2, .el-h6) + .el-blockquote + .el-p > p {
+  -webkit-hyphens: manual;
+  hyphens: manual;
 }
 
 

@@ -28,7 +28,7 @@ verify_hash() {
   actual_hash="${actual_hash%% *}"
   [ "$actual_hash" = "$2" ] || { echo "Download verification failed for $1."; exit 1; }
 }
-verify_hash "$work_dir/Writing.zip" '1cfcf7046ab22a4d23ec8808c72e6e31b68c083748a9efb79c0c5f5a3ed35e4c'
+verify_hash "$work_dir/Writing.zip" 'fbd96a03648f77df19b15b5bfed4ba7e0602dbe40de173706c607bd32c07b49d'
 unzip -q "$work_dir/Writing.zip" -d "$work_dir/vault"
 [ -f "$work_dir/vault/.obsidian/appearance.json" ] || { printf 'Invalid configuration archive.\n'; exit 1; }
 app_image="$HOME/Applications/Obsidian.AppImage"
