@@ -5,17 +5,19 @@ layout: default
 <div class="post{% unless page.collection == 'posts' or page.project or page.initial %} no-initial{% endunless %}{% if page.initial %} initial-{{ page.initial }}{% endif %}">
 
   <h1 class="post-title">{{ page.title }}</h1>
+  {%- assign intro = content | split: '<!--more-->' -%}
   <div class="post-info">
-    <span>Written by</span>
-    {% if page.author %}
-      {{ page.author }}
-    {% else %}
-      {{ site.author.name }}
-    {% endif %}
-    {% if page.date %}
+    {%- if page.collection == 'posts' and intro.size > 1 %}
+    <span>{{ intro[0] | strip_html | strip }}</span>
+    {%- else %}
+    <span>{% if page.updated %}Updated{% else %}Written{% endif %} by</span>
+    {% if page.author %}{{ page.author }}{% else %}{{ site.author.name }}{% endif %}
+    {%- assign shown_date = page.updated | default: page.date -%}
+    {% if shown_date %}
       <br>
-      <span>on&nbsp;</span><time datetime="{{ page.date }}">{{ page.date | date: "%B %d, %Y" }}</time>
-    {% endif %}
+      <span>on&nbsp;</span><time datetime="{{ shown_date }}">{{ shown_date | date: "%B %-d, %Y" }}</time>
+    {%- endif %}
+    {%- endif %}
   </div>
   <div class="post-line"></div>
 

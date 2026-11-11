@@ -3,6 +3,7 @@ layout: post
 title: "About"
 author: "William"
 permalink: /about/
+updated: 2026-11-11   # shown as "Updated by William on November 11, 2026"
 initial: goudy   # drop cap from Goudy Initialen instead of Yinit
 date:   2025-02-15 08:30:27 -0500
 ---
