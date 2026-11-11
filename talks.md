@@ -5,8 +5,22 @@ permalink: /talks/
 author: William
 ---
 
-**[Self-Play Pretraining with Zero Data]({{ site.baseurl }}/selfplay/)**: a talk on pretraining with no natural data in any gradient step. A generator writes programs, a universal machine runs them, a learner predicts their output bytes, and the generator is rewarded for programs the learner can learn from. Tested zero-shot on real text, code, speech, music, images and DNA, the self-play learner improves with compute much faster than one pretrained on programs sampled from a fixed prior. It was a lab-meeting presentation of the paper [Self-Play Pretraining with Zero Data](https://arxiv.org/abs/2609.30063) by Cowsik et al. (2026). [View the slides in your browser]({{ site.baseurl }}/selfplay/) (animations play in place, speaker notes and sources included), or [download the PowerPoint](https://drive.google.com/file/d/1sEPXXapNemL3UGhJvgEI1rOQy0RkGJ1L/view?usp=sharing) (.pptx, 42 MB).
+## [Self-Play Pretraining with Zero Data]({{ site.baseurl }}/selfplay/)
 
-**[AI Safety and Existential Risk]({{ site.baseurl }}/aisafety/)**: a talk on how fast AI is advancing and why making it safe is urgent. It covers the trillion-dollar compute build-out, AI agents doing real engineering and research, rogue agents in the wild, the theory behind existential risk, and what we can do about it. [View the slides in your browser]({{ site.baseurl }}/aisafety/) (clips play in place, speaker notes and sources included), or [download the PowerPoint](https://github.com/william590y/poster/releases/download/ai-safety-deck/AI_Safety_and_Existential_Risk.pptx) (.pptx, about 1 GB, with every clip at full quality).
+<figure class="talk-shot"><a href="{{ site.baseurl }}/selfplay/"><picture><source type="image/webp" srcset="{{ '/assets/images/talks/selfplay-title.webp' | relative_url }}?v={{ site.time | date: '%s' }}"><img src="{{ '/assets/images/talks/selfplay-title.gif' | relative_url }}?v={{ site.time | date: '%s' }}" alt="The animated title slide: a generator writes programs, a universal machine runs them, and a learner predicts their output." width="720" height="405" loading="lazy"></picture></a></figure>
 
-[Here]({{ site.baseurl }}/assets/slides/Noise2Music.pptm) are slides for a presentation I gave at the Music tech reading group on the paper [Noise2Music: Text-conditioned Music Generation with Diffusion Models](https://arxiv.org/abs/2302.03917) by Huang et al.
+A lab-meeting talk on [Cowsik et al. (2026)](https://arxiv.org/abs/2609.30063): pretraining on the output of programs a generator learns to write, with no natural data. [Slides]({{ site.baseurl }}/selfplay/) · [PowerPoint](https://drive.google.com/file/d/1sEPXXapNemL3UGhJvgEI1rOQy0RkGJ1L/view?usp=sharing) (42 MB)
+
+---
+
+## [AI Safety and Existential Risk]({{ site.baseurl }}/aisafety/)
+
+<figure class="talk-shot"><a href="{{ site.baseurl }}/aisafety/"><img src="{{ '/aisafety/slides/slide-20.jpg' | relative_url }}" alt="Slide: This is not a photograph. San Francisco's Palace of Fine Arts, recreated as a photoreal 3-D scene by an AI." width="1920" height="1080" loading="lazy"></a></figure>
+
+How fast AI is advancing, and why making it safe is urgent. [Slides]({{ site.baseurl }}/aisafety/) · [PowerPoint](https://github.com/william590y/poster/releases/download/ai-safety-deck/AI_Safety_and_Existential_Risk.pptx) (1 GB)
+
+---
+
+## Noise2Music
+
+A music-tech reading-group talk on [Noise2Music](https://arxiv.org/abs/2302.03917) (Huang et al., 2023): text-to-music generation with diffusion. [Slides]({{ site.baseurl }}/assets/slides/Noise2Music.pptm) (PowerPoint)

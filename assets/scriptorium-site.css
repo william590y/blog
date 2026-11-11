@@ -282,6 +282,18 @@ mjx-container mjx-assistive-mml { max-width: 100% !important; }
 .ink-check:hover { filter: drop-shadow(0 0 0.04rem rgba(42, 36, 32, 0.45)); }
 .ink-check:focus-visible { outline: 1px dashed var(--accent); outline-offset: 3px; }
 
+/* ---------- Talks: a picture of each deck's best slide, mounted on the page ---------- */
+.post figure.talk-shot { margin: 0.2em 0 1em; }
+.post figure.talk-shot a { display: block; background: none; padding: 0; }
+.post figure.talk-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(42, 36, 32, 0.2), 0 8px 22px rgba(42, 36, 32, 0.14);
+}
+
 /* ---------- Post list (home page): each entry as a note title ---------- */
 .catalogue-item { color: var(--ink); border-bottom-color: var(--border); }
 .catalogue-time, .catalogue-pinned { color: var(--muted); font-family: var(--text); font-style: italic; letter-spacing: 0.01em; }
