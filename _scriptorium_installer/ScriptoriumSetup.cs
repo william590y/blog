@@ -248,7 +248,7 @@ namespace ScriptoriumSetup
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(560, 500);
+            ClientSize = new Size(560, 540);
             BackColor = Paper; ForeColor = Ink;
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
