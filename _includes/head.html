@@ -26,4 +26,9 @@
     {% if site.google_analytics and jekyll.environment == 'production' %}
     {% include analytics.html %}
     {% endif %}
+    <!-- Maths: MathJax 3 with SVG output (MathJax 2 misplaced vector arrows on phones). Kramdown writes \( \) and \[ \]. -->
+    <script>
+      window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]'], ['$$', '$$']] }, svg: { fontCache: 'global' } };
+    </script>
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
   </head>

@@ -37,7 +37,7 @@ The first time I picked up a [good physics textbook](https://davidmorin.physics.
 I am going to give what I will call an elementary demonstration. But elementary does not mean easy to understand. Elementary means that very little is required to know ahead of time in order to understand it, except to have an infinite amount of intelligence. There may be a large number of steps to follow, but to each does not require already knowing the calculus or Fourier transforms.
 </blockquote>
 
-<p style="text-align: center;">⁂</p>
+---
 
 Another fascinating case study into overfitting in humans is given in the amazingly titled article [Fuck Nuance](https://kieranhealy.org/files/papers/fuck-nuance.pdf) by Kieran Healy (yes, this is a real peer-reviewed paper). In the paper, Healy argues that contemporary literature in sociology is obsessed with criticizing concepts for their simplicity and failure to capture the complexities of a phenomenon:
 
@@ -55,7 +55,7 @@ In the social sciences, phenomena tend to be far more stochastic and multifactor
 
 However, trying to have a framework simultaneously account for sexuality, race, gender, etc. as well as the original phenomenon often stultifies our theory with vagueness and undermines its ability to generalize beyond particular situations. This temptation to try to incorporate more and more parameters at the expense of its explanatory power seems like a textbook example of overfitting: the complexity of our hypothesis has exceeded what can be inferred from our dataset, leading to a loss in predictive power.
 
-<p style="text-align: center;">⁂</p>
+---
 
 I have found this idea of overfitting very useful when thinking about situations where people place too much attention on specifics at the expense of the big picture, missing the forest for the trees. A friend pointed out to me that when ambitious people attempt to mimic the habits of billionaires by suddenly journaling, reading self-help, and [putting butter in their coffee](https://en.wikipedia.org/wiki/Dave_Asprey), that this can be interpreted as a kind of overfitting. A lot of conspiratorial thinking, where people connect the dots to see a pattern that isn't there, is also a case of overfitting.
 

@@ -6,11 +6,11 @@ categories: jekyll update
 author: William
 tags: Philosophy
 permalink: poststructuralism
-description: an obituary for the Turing test and what it means for us
+description: An obituary for the Turing test and what it means for us
 excerpt_separator: <!--more-->
 ---
 
-an obituary for the Turing test and what it means for us
+An obituary for the Turing test and what it means for us
 
 <!--more-->
 
@@ -26,7 +26,7 @@ an obituary for the Turing test and what it means for us
 
  This hypothesis, while regarded as deeply radical and controversial during Derrida's lifetime, has essentially been confirmed by the advent of language modeling. Without any knowledge of the outside world, LLMs reproduce the entire structure of human language purely from the statistical correlations and associations between words: the entire corpus of human knowledge compressed into a GPU using nothing outside the text.
 
-<p style="text-align: center;">⁂</p>
+---
 
 It is quite rare that philosophical questions are resolved by empirical answers. Most philosophical questions are sufficiently ethereal and intangible that science never manages to latch its fingers onto them: think the existence of God or the objectivity of morality. But every once in a while, the scientific method manages to render an objective answer to a philosophical quandary. One famous example of such a resolution is **Molyneux's problem**, which asks whether:
 
@@ -44,7 +44,7 @@ Another example of this phenomenon is Einstein's theory of General Relativity. F
 
 In special relativity, the notion of simultaneity depends on your frame of reference, meaning that there is no universal notion of the present. In general relativity, simultaneity is even weaker, and is not only **relative** but **local**, meaning there is no notion of what is happening "now" for objects far away. This essentially kills off the A theory of time. Gravity emerging from the curvature of a unified block of spacetime hammers down the last nail in the coffin for presentism.
 
-<p style="text-align: center;">⁂</p>
+---
 
 One direction I feel has not been explored nearly enough is how the nature of language models can provide new insight into long-standing issues in the philosophy of language. One such perennial issue is the relationship between language and thought. The **Sapir-Whorf hypothesis** asserts that language influences the scope of human thought. The now debunked **strong hypothesis** asserts that language *determines* thought and that human reasoning can not extend beyond what language describes. The [Hopi language](https://en.wikipedia.org/wiki/Hopi_time_controversy), once a poster child for this notion, contains no explicit words for past and future and is very close to a tenseless language. Whorf believed that this showed that the Hopi have no notion of the flow of time, an idea that has been [empirically invalidated](https://books.google.com/books?hl=en&lr=&id=Orpzv3su5twC&oi=fnd&pg=PA1&dq=hopi+time&ots=jhTjctVdaj&sig=PWjdijLY9EM_C7Rvhb_BJQ8xSGc#v=onepage&q=hopi%20time&f=false), with the modern consensus being that the Hopi simply discuss time via spatial analogies, albeit in a slightly more event-based fashion.
 
@@ -60,7 +60,7 @@ or more humorously put in an apocryphal quote from Charles V:
 
 > I speak Spanish to God, Italian to women, French to men, and German to my horse.
 
-<p style="text-align: center;">⁂</p>
+---
 
 In Simulacra and Simulation, the philosopher Jean Baudrillard coined the term **hyperreality** to refer to the social condition where signs have overcome their referents, with social fiction bleeding into reality. The classic example Baudrillard uses is Disneyland, which presents the visitor with an unreal past characterized not by any historical event but rather the collective cultural imagination of man. The amusement park is full of fantastical simulations of a fictitious and imagined history. Being discontent with reality, man constructed its own. He feared that humans would increasingly become attached to these representations over actual objects, leading to an alienated social order dictated by symbolic forces, which he termed ["the code"](https://ceasefiremagazine.co.uk/in-theory-baudrillard-5/).
 
@@ -76,7 +76,7 @@ I often think of language models as hyperreal entities, who have no direct acces
 
 Baudrillard's vision of a world increasingly dominated by the sign has come to fruition. We spend hours optimizing social media profiles and resumes to construct an ideal version of ourselves. "Pics or it didn't happen," the internet declares. Image precedes object, form overcomes content, and optometry overthrows ontology. We have grown so obsessed with [documentation](https://en.wikipedia.org/wiki/Documentality) that we spend more time [taking photos and videos](https://writing.upenn.edu/library/Sontag-Susan-Photography.pdf) of ourselves enjoying things than actually enjoying them. Our social fixation with "capture" kills the moment we are attempting to contain. Language models are the ultimate hyperreal objects, a representation of other representations, rendering the original source material obsolete: echoes of the collective unconscious compressed into a few gigabytes. Baudrillard's worst nightmare reified.
 
-<p style="text-align: center;">⁂</p>
+---
 
 One text I feel is worth revisiting in light of language modeling is *The Death of the Author* by Roland Barthes. Barthes argues against giving any weight to the intentions or interpretation of the author when trying to discern the ultimate meaning of a text. To him, the meaning of the text is constructed from the experience of the reader, who creates meaning out of their interaction with the words on the page.
 
@@ -86,7 +86,7 @@ In today's day and age, the death of the author is far more literal. We now have
 
 The "authorlessness" of AI generated text poses profound questions about the [nature of intellectual property](https://news.artnet.com/art-world/midjourney-fires-back-disney-and-universal-copyright-suit-2675798) and art itself. [Art without the artist](https://www.nytimes.com/2022/09/02/technology/ai-artificial-intelligence-artists.html) forces us to reconsider what it means for something to be original. Barthes has been redeemed.
 
-<p style="text-align: center;">⁂</p>
+---
 
 When I have conversations about whether existing language models are ["actually intelligent"](https://x.com/ch402/status/1516427464049836045), a common point that is brought up is that these systems are merely ["stochastic parrots"](https://dl.acm.org/doi/10.1145/3442188.3445922) that simply regurgitate their training data and that ["real intelligence"](https://en.wikipedia.org/wiki/AI_effect) requires some form of creativity that current benchmarks can't capture. One common explanation for this "creativity gap" is that while human beings are [embodied in an infinitely-rich world](https://plato.stanford.edu/entries/embodied-cognition/), our silicon-based counterparts only receive series of ones and zeros procured by human beings, and therefore do not "really understand" what they are talking about.
 

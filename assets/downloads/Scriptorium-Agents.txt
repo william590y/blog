@@ -42,6 +42,7 @@ Use these instructions when the user asks you to install or configure Scriptoriu
 - Text size: 22 px. Both modes use 1.45 line spacing.
 - Fancy mode defaults OFF. Keep this default unless the user requests otherwise.
 - Regular section headings use EB Garamond with centered small caps.
+- Drop caps use the Yinit decorative initials (public domain), embedded in manuscript.css; no install needed.
 - Fancy section headings use Cormorant Garamond.
 - Fancy mode uses borderless italic quotations and justified opening paragraphs.
 - Regular mode uses bordered quotations and left-aligned opening paragraphs.
