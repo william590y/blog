@@ -66,10 +66,12 @@
         if (!el) return;
         el.style.fontSize = '';
         el.style.whiteSpace = 'nowrap';
-        var size = parseFloat(getComputedStyle(el).fontSize), need = el.scrollWidth, room = el.clientWidth;
-        if (need <= room) return;
-        var fit = 0.98 * size * room / need;
-        if (fit >= 12) el.style.fontSize = fit.toFixed(2) + 'px'; else el.style.whiteSpace = '';
+        var fit = parseFloat(getComputedStyle(el).fontSize);
+        for (var i = 0; i < 8 && el.scrollWidth > el.clientWidth; i++) {   // text width is not exactly linear in size
+          fit *= 0.99 * el.clientWidth / el.scrollWidth;
+          if (fit < 12) { el.style.fontSize = ''; el.style.whiteSpace = ''; return; }
+          el.style.fontSize = fit.toFixed(2) + 'px';
+        }
       };
       document.addEventListener('DOMContentLoaded', function () {
         (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(window.fitSubtitle);
