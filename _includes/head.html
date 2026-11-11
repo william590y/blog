@@ -60,8 +60,25 @@
         svg: { fontCache: 'global' },
         startup: { pageReady: function () { return MathJax.startup.defaultPageReady().then(window.fitDisplayMath); } }
       };
+      // The subtitle under a page title shrinks to fit one line (never below 12 px; past that it wraps).
+      window.fitSubtitle = function () {
+        var el = document.querySelector('.post-info');
+        if (!el) return;
+        el.style.fontSize = '';
+        el.style.whiteSpace = 'nowrap';
+        var size = parseFloat(getComputedStyle(el).fontSize), need = el.scrollWidth, room = el.clientWidth;
+        if (need <= room) return;
+        var fit = 0.98 * size * room / need;
+        if (fit >= 12) el.style.fontSize = fit.toFixed(2) + 'px'; else el.style.whiteSpace = '';
+      };
+      document.addEventListener('DOMContentLoaded', function () {
+        (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(window.fitSubtitle);
+      });
       var fitTimer;
-      window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(window.fitDisplayMath, 150); });
+      window.addEventListener('resize', function () {
+        clearTimeout(fitTimer);
+        fitTimer = setTimeout(function () { window.fitDisplayMath(); window.fitSubtitle(); }, 150);
+      });
     </script>
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
   </head>
