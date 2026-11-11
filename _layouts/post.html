@@ -2,7 +2,7 @@
 layout: default
 ---
 
-<div class="post{% unless page.collection == 'posts' or page.project %} no-initial{% endunless %}">
+<div class="post{% unless page.collection == 'posts' or page.project or page.initial %} no-initial{% endunless %}{% if page.initial %} initial-{{ page.initial }}{% endif %}">
 
   <h1 class="post-title">{{ page.title }}</h1>
   <div class="post-info">

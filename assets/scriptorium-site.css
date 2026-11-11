@@ -35,6 +35,12 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Goudy Initialen";   /* after F. W. Goudy, digitised by Dieter Steffmann; LPPL (fonts/GoudyInitialen-README.txt) */
+  src: url("fonts/GoudyInitialen-Scriptorium.woff2") format("woff2");
+  font-display: swap;
+}
+:root.goudy { --initials-goudy: "Goudy Initialen", "Cormorant Garamond", "EB Garamond", Georgia, serif; }   /* set by head.html */
 :root.yinit { --initials: "Yinit", "Cormorant Garamond", "EB Garamond", Georgia, serif; }   /* set by head.html once Yinit loads */
 
 :root {
@@ -200,6 +206,15 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post hr + p,
 .post p[style*="center"] + p { text-align: left; text-indent: 0; }
 
+/* About uses a Goudy Initialen letter: the same three-line drop (top on the first line's cap height, foot on the
+   third baseline). Goudy's letters are 0.8 em squares standing on the baseline. */
+.post.initial-goudy :is(.post-line + p, .post-line + blockquote + p)::first-letter {
+  font-family: var(--initials-goudy, var(--display));
+  font-size: 4.43em;
+  line-height: 1;
+  margin: 0.088em 0.1em -0.15em 0;
+}
+
 /* Drop caps belong to blog posts and project pages (front matter `project: true`). Other pages that use the post
    layout (About, Projects, Talks) carry .no-initial from _layouts/post.html and open with a plain first letter. */
 .post.no-initial.no-initial p::first-letter {
@@ -209,6 +224,14 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
   text-transform: none;
   margin: 0;
   padding: 0;
+}
+
+/* If an opening paragraph is shorter than its initial, the next block starts below the initial instead of
+   wrapping around its foot (and stacking its own indent on top). */
+.post :is(.post-line + p, .post-line + blockquote + p) + *,
+.post :is(h1, h2):not(.post-title) + p + *,
+.post :is(h1, h2):not(.post-title) + blockquote + p + * {
+  clear: left;
 }
 
 /* ---------- Scene breaks: --- becomes a fleuron; the posts' centred ⁂ lines match it ---------- */
