@@ -164,18 +164,26 @@
       this.z = 1; this.tx = 0; this.ty = 0;
       const view = this.image, token = ++this.token, url = img.dataset.focusSrc || img.currentSrc || img.src;
       view.alt = label;
-      view.classList.add('is-loading');
-      const ready = () => { if (token === this.token) { view.classList.remove('is-loading'); this.fit(); } };
+      // A picture the page has already loaded is fitted and shown at once (its size is known); any other waits, hidden
+      this.natural = !img.dataset.focusSrc && img.complete && img.naturalWidth ? [img.naturalWidth, img.naturalHeight] : null;
+      view.classList.toggle('is-loading', !this.natural);
+      const ready = () => {
+        if (token !== this.token) return;
+        if (view.naturalWidth) this.natural = [view.naturalWidth, view.naturalHeight];
+        view.classList.remove('is-loading');
+        this.fit();
+      };
       view.onload = ready;
       view.onerror = ready;
       if (view.getAttribute('src') !== url) view.src = url;
       else if (view.complete) ready();
+      if (this.natural) this.fit();
     }
 
     /* Fits the picture to the window, between the counter and the caption, but never more than twice its own size */
     fit() {
       const view = this.image, el = this.el;
-      const nw = view.naturalWidth || 800, nh = view.naturalHeight || 600;
+      const [nw, nh] = this.natural || [800, 600];
       const vw = el.clientWidth, vh = el.clientHeight;
       const em = parseFloat(getComputedStyle(el).fontSize) || 18;
       const multi = this.items.length > 1, narrow = vw < 600;   // phones: the arrows sit at the foot, by the slip
