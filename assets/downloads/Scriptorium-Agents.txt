@@ -25,7 +25,9 @@ Use these instructions when the user asks you to install or configure Scriptoriu
    macOS installs Obsidian.app in ~/Applications.
    Linux installs the official x86-64 or ARM64 AppImage in ~/Applications when needed.
    Linux requires curl and unzip, a graphical desktop, and AppImage runtime support.
-6. When Obsidian opens, choose "Open folder as vault" and select the printed vault path.
+6. The installers open the new vault in Obsidian with its community plugins on (Obsidian 1.12+, closed during install;
+   they briefly turn on Obsidian's command-line interface to do it and restore that setting). Otherwise choose
+   "Open folder as vault", select the printed vault path, and choose "Trust author and enable plugins".
    The installer opens the vault picker. Complete this step in Obsidian to register the new vault.
 7. The installers detect and install missing EB Garamond and Cormorant Garamond font families
    for the current user, including roman and italic faces. Restart any running Obsidian windows.
