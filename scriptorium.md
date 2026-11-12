@@ -47,7 +47,7 @@ Chapters open with an ornamental Yinit initial. **Settings → Scriptorium → D
 
 ### A vault you already have
 
-Scriptorium can be added to any vault, or to a folder of notes, in one step. In a Scriptorium vault run **Scriptorium: Set up another vault**; on Windows open the installer, choose the vault's folder and click **Set up**; on any system run <a href="{{ '/assets/downloads/Setup-Scriptorium-Vault.py' | relative_url }}?v=855ceb85" download>Setup-Scriptorium-Vault.py</a> with Python (`python3 Setup-Scriptorium-Vault.py /path/to/vault`). Each shows what it will change before it changes anything. Your notes are not touched, your own plugins and settings are kept, and the vault's `.obsidian` folder is copied to a backup first.
+Scriptorium can be added to any vault, or to a folder of notes, in one step. In a Scriptorium vault run **Scriptorium: Set up another vault**; on Windows open the installer, choose the vault's folder and click **Set up**; on any system run <a href="{{ '/assets/downloads/Setup-Scriptorium-Vault.py' | relative_url }}?v=020626b5" download>Setup-Scriptorium-Vault.py</a> with Python (`python3 Setup-Scriptorium-Vault.py /path/to/vault`). Each shows what it will change before it changes anything. Your notes are not touched, your own plugins and settings are kept, and the vault's `.obsidian` folder is copied to a backup first.
 
 ### Backing up to Google Drive (experimental)
 
