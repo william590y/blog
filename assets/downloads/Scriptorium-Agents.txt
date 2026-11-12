@@ -42,7 +42,12 @@ Use these instructions when the user asks you to install or configure Scriptoriu
 - Text size: 22 px. Both modes use 1.45 line spacing.
 - Fancy mode defaults OFF. Keep this default unless the user requests otherwise.
 - Regular section headings use EB Garamond with centered small caps.
-- Drop caps use the Yinit decorative initials (public domain), embedded in manuscript.css; no install needed.
+- Drop caps default to the Yinit decorative initials (public domain), embedded in manuscript.css; no install needed.
+  Settings > Scriptorium > Drop cap also offers Goudy Initialen, a plain capital, or none.
+- Footnotes appear as numbered sidenotes in the right margin in Reading view when the pane is wide enough
+  (Settings > Scriptorium > Marginalia); > [!margin] callouts become unnumbered margin notes.
+- Callouts render as paper-and-ink admonitions. Clicking an image opens it in focus with its caption
+  (Settings > Scriptorium > Image focus).
 - Images are centred by default; ![[image.png|left|300]], |right or |center places one (left/right float in Reading view).
 - Links use rubric ink with a hand-drawn pen underline, matching williamliaw.com.
 - Fancy section headings use Cormorant Garamond.
@@ -50,11 +55,14 @@ Use these instructions when the user asks you to install or configure Scriptoriu
 - Regular mode uses bordered quotations and left-aligned opening paragraphs.
 - Toggle using Settings > Scriptorium > Fancy mode, the feather ribbon icon,
   the status bar, or the command "Scriptorium: Toggle fancy mode".
-- Bundled community plugins: Scriptorium, Longform, Manuscriptum, Typewriter Mode.
+- Bundled community plugins: Scriptorium, Lagrange, Longform, Manuscriptum, Typewriter Mode.
+- Lagrange is an optional writing companion (chat, revise selection, proofread note). It needs a provider chosen in
+  Settings > Lagrange: a Claude or ChatGPT subscription through Claude Code or Codex (desktop), an API key, a local
+  OpenAI-compatible server, or the offline demo. Never enter keys or sign in on the user's behalf.
 - Main settings live in .obsidian/appearance.json and .obsidian/app.json.
 - Typography lives in .obsidian/snippets/manuscript.css.
 - The toggle plugin lives in .obsidian/plugins/scriptorium/.
-- Its data.json stores the boolean fancyMode.
+- Its data.json stores fancyMode and the drop-cap, marginalia and image-focus settings.
 
 ## Writing conventions
 
