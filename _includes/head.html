@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="{{ "/assets/scriptorium-site.css" | relative_url }}?v={{ site.time | date: '%s' }}">
     <link rel="preload" href="{{ "/assets/fonts/Yinit-Scriptorium.woff2" | relative_url }}" as="font" type="font/woff2" crossorigin>
     <script src="{{ "/assets/scriptorium-keep-words.js" | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
+    <!-- Image focus (after gwern.net): click a picture in the text to see it on its own -->
+    <script src="{{ "/assets/image-focus.js" | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
     <script>
       // Use the Yinit initials once the font has loaded. Switching on a class makes every browser redraw the
       // ::first-letter (WebKit can otherwise keep the fallback letter it drew before the font arrived).

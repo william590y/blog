@@ -77,8 +77,9 @@ main, footer, .nav-container { max-width: 36rem; }
 ::selection { background: rgba(204, 230, 255, 0.99); }
 strong, b { font-weight: 620; }
 
-/* Links: rubric ink with a hand-drawn pen underline (an uneven stroke), darker on hover, as if inked twice */
-.post a {
+/* Links: rubric ink with a hand-drawn pen underline (an uneven stroke), darker on hover, as if inked twice
+   (also in the image-focus caption slip) */
+.post a, .image-focus-caption a {
   color: var(--link);
   text-decoration: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6'%3E%3Cpath d='M0 3.3 C9 2.6 17 3.9 28 3.4 S44 2.5 55 3.1 S72 4.0 84 3.3 S101 2.6 111 3.5 S117 3.4 120 3.3' fill='none' stroke='%238b2323' stroke-opacity='0.5' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -87,7 +88,7 @@ strong, b { font-weight: 620; }
   background-position: 0 100%;
   padding-bottom: 0.06em;
 }
-.post a:hover, .post a:focus-visible {
+.post a:hover, .post a:focus-visible, .image-focus-caption a:hover, .image-focus-caption a:focus-visible {
   color: var(--link-hover);
   text-decoration: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6'%3E%3Cpath d='M0 3.3 C9 2.6 17 3.9 28 3.4 S44 2.5 55 3.1 S72 4.0 84 3.3 S101 2.6 111 3.5 S117 3.4 120 3.3' fill='none' stroke='%238b2323' stroke-opacity='1' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -342,3 +343,137 @@ mjx-container mjx-assistive-mml { max-width: 100% !important; }
 footer { font-family: var(--text); }
 footer span { color: var(--muted); font-size: 0.8rem; font-style: italic; }
 footer a { color: var(--muted); text-decoration: underline; }
+
+/* ---------- Image focus, after gwern.net (assets/image-focus.js): the Scriptorium plugin's overlay on the web ----------
+   A picture in the text opens on its own over the inked-out page; its caption is set on a slip of paper. */
+.image-focus-target { cursor: zoom-in; }
+@media (hover: hover) { .image-focus-target:hover { box-shadow: 0 0 10px 0 rgba(42, 36, 32, 0.28); } }
+.image-focus-target:focus { outline: none; }
+.image-focus-target:focus-visible { outline: 1px dashed var(--accent); outline-offset: 3px; }
+
+.image-focus {
+  --focus-backdrop: rgba(36, 30, 26, 0.94);   /* ink */
+  --focus-ink: #f1ebde;
+  --focus-muted: #bfb39f;
+  --focus-slip: var(--paper);                  /* the caption is set on a slip of paper */
+  --focus-slip-ink: var(--ink);
+  --focus-slip-rule: #b4a68e;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  background: var(--focus-backdrop);
+  color: var(--focus-ink);
+  font-family: var(--text);
+  font-size: 18px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: zoom-out;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  overscroll-behavior: contain;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.image-focus * { line-height: inherit; }
+.image-focus-stage { position: absolute; inset: 0; }
+.image-focus .image-focus-image {
+  position: absolute;
+  display: block;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  background: var(--paper);                    /* paper behind transparent pictures */
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.45);
+  transform-origin: center center;
+  cursor: default;
+  -webkit-user-drag: none;
+}
+.image-focus.is-zoomed .image-focus-image { cursor: grab; }
+.image-focus.is-dragging .image-focus-image { cursor: grabbing; }
+.image-focus .image-focus-image.is-loading { opacity: 0; }
+.image-focus-counter {
+  position: absolute;
+  top: 0.75em;
+  left: 4em;
+  right: 4em;
+  text-align: center;
+  color: var(--focus-muted);
+  font-variant-caps: all-small-caps;
+  font-variant-numeric: oldstyle-nums;
+  letter-spacing: 0.12em;
+  font-size: 1.05em;
+  pointer-events: none;
+}
+.image-focus-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.image-focus .image-focus-button {
+  position: absolute;
+  margin: 0;
+  padding: 0 0.3em 0.08em;
+  min-width: 1.6em;
+  border: 1px dotted transparent;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--focus-muted);
+  font-family: var(--text);
+  font-size: 2.2em;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.image-focus .image-focus-button:hover:not(:disabled),
+.image-focus .image-focus-button:focus-visible {
+  color: var(--focus-ink);
+  border-color: var(--focus-muted);
+  outline: none;
+}
+.image-focus .image-focus-button:focus:not(:focus-visible) { outline: none; }
+.image-focus .image-focus-button:disabled { opacity: 0.25; pointer-events: none; cursor: default; }   /* a click there is a click outside */
+.image-focus .image-focus-close { top: 0.25em; right: 0.4em; }
+.image-focus :is(.image-focus-prev, .image-focus-next) { top: 50%; transform: translateY(-50%); font-size: 2.8em; }
+.image-focus .image-focus-prev { left: 0.25em; }
+.image-focus .image-focus-next { right: 0.25em; }
+.image-focus.is-single :is(.image-focus-prev, .image-focus-next, .image-focus-counter) { display: none; }
+.image-focus-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 0.9em;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(42em, calc(100% - 7em));
+  max-height: 38vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 0.45em 1.25em 0.55em;
+  background: var(--focus-slip);
+  color: var(--focus-slip-ink);
+  border: 1px solid var(--focus-slip-rule);
+  box-shadow: inset 0 0 0 3px var(--focus-slip), inset 0 0 0 4px var(--focus-slip-rule);
+  font-size: 1em;
+  font-style: normal;
+  text-align: center;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+  cursor: auto;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.image-focus.is-single .image-focus-caption { max-width: min(42em, calc(100% - 3.2em)); }
+.image-focus-caption.is-empty { display: none; }
+/* Phones: the picture takes the width; the arrows move to the foot, either side of the slip */
+@media (max-width: 599px) {
+  .image-focus :is(.image-focus-prev, .image-focus-next) { top: auto; bottom: 0.3em; transform: none; font-size: 2.4em; min-width: 1.1em; }
+  .image-focus-caption { font-size: 0.92em; max-width: calc(100% - 8em); }
+  .image-focus.is-single .image-focus-caption { max-width: calc(100% - 1.6em); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .image-focus { animation: image-focus-in 0.18s ease-out; }
+  .image-focus:not(.is-dragging) .image-focus-image { transition: transform 0.12s ease-out, opacity 0.15s ease-out; }
+  .image-focus-target:active { transform: scale(0.985); }
+}
+@keyframes image-focus-in { from { opacity: 0; } }
