@@ -80,14 +80,14 @@ Write-Host 'Scriptorium - Obsidian configuration installer'
 $defaultPath = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Scriptorium'
 $answer = Read-Host "New vault folder (Enter for $defaultPath)"
 $destination = if ([string]::IsNullOrWhiteSpace($answer)) { $defaultPath } else { [IO.Path]::GetFullPath($answer) }
-if (Test-Path -LiteralPath $destination) { throw "Folder already exists: $destination. Choose a new folder; nothing was changed." }
+if (Test-Path -LiteralPath $destination) { throw "Folder already exists: $destination. Choose a new folder; nothing was changed. To set up Scriptorium in a vault you already have, use Scriptorium-Setup.exe (Set up)." }
 $tempPath = Join-Path ([IO.Path]::GetTempPath()) ('obsidian-writing-' + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $tempPath | Out-Null
 try {
     $archive = Join-Path $tempPath 'Writing.zip'
-    Get-ScriptoriumDownload -Uri 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=dbfa94f7' -OutFile $archive
+    Get-ScriptoriumDownload -Uri 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=855ceb85' -OutFile $archive
     $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($actualHash -ne 'dbfa94f7ebb5a836c990bd23079ab1d6a724fd8ae0040806329f1631973ea194') { throw 'Package verification failed. Please download the current installer from the Projects page.' }
+    if ($actualHash -ne '855ceb85e9c3760fbaa956d9845f0b370bab5010dc3fb548a6687b26ada66dd3') { throw 'Package verification failed. Please download the current installer from the Projects page.' }
     $staging = Join-Path $tempPath 'vault'
     Expand-Archive -LiteralPath $archive -DestinationPath $staging
     if (!(Test-Path -LiteralPath (Join-Path $staging '.obsidian/appearance.json'))) { throw 'Invalid configuration archive.' }

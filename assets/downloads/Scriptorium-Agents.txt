@@ -17,8 +17,14 @@ Use these instructions when the user asks you to install or configure Scriptoriu
    macOS: bash /path/to/Install-Scriptorium-macOS.command
    Linux: bash /path/to/Install-Scriptorium-Linux.sh
 4. Supply an absolute path for a NEW vault folder, or press Enter for Documents/Scriptorium.
-   The installer refuses an existing destination. For an existing vault, back up its .obsidian
-   folder and merge settings deliberately, preserving the user's notes and unrelated settings.
+   The installer refuses an existing destination. For an existing vault (or a folder of notes), use
+   https://williamliaw.com/assets/downloads/Setup-Scriptorium-Vault.py instead:
+   python3 Setup-Scriptorium-Vault.py /path/to/vault --dry-run   (lists what it would change)
+   python3 Setup-Scriptorium-Vault.py /path/to/vault --yes       (does it)
+   It writes only inside the vault's .obsidian folder, merges the user's settings, never touches a note,
+   and first copies .obsidian to .obsidian/scriptorium-backup-<date>-<time>. On Windows, Scriptorium-Setup.exe
+   does the same ("Set up", or --setup-plan / --setup-only <folder>). In Obsidian, a Scriptorium vault has the
+   command "Scriptorium: Set up another vault".
 5. The installer detects Obsidian and installs it when missing. It verifies the configuration
    archive and official Obsidian download with SHA-256.
    Windows uses the official per-user installer.
@@ -46,6 +52,10 @@ Use these instructions when the user asks you to install or configure Scriptoriu
 - Regular section headings use EB Garamond with centered small caps.
 - Drop caps default to the Yinit decorative initials (public domain), embedded in manuscript.css; no install needed.
   Settings > Scriptorium > Drop cap also offers Goudy Initialen, a plain capital, or none.
+  It also lists sets of drop caps (Kanzlei, Deutsche Zierschrift, and picture initials from gwern.net) and the
+  user's own (command "Scriptorium: Add a set of drop caps"). One note can have its own drop cap: the property
+  dropcap: <name>, or the command "Scriptorium: Choose the drop cap for this note". Export to PDF keeps the
+  title and the drop caps.
 - Footnotes appear as numbered sidenotes in the right margin in Reading view when the pane is wide enough
   (Settings > Scriptorium > Marginalia); > [!margin] callouts become unnumbered margin notes.
 - Callouts render as paper-and-ink admonitions. Clicking an image opens it in focus with its caption
@@ -58,9 +68,14 @@ Use these instructions when the user asks you to install or configure Scriptoriu
 - Toggle using Settings > Scriptorium > Fancy mode, the feather ribbon icon,
   the status bar, or the command "Scriptorium: Toggle fancy mode".
 - Bundled community plugins: Scriptorium, Lagrange, Longform, Manuscriptum, Typewriter Mode.
-- Lagrange is an optional writing companion (chat, revise selection, proofread note). It needs a provider chosen in
+- Lagrange is an optional writing companion. A message in its chat can edit the open note (each edit is written in
+  by a pen and one undo takes a request's edits back; its panel has Undo, Redo and a rewind on each message); it
+  also has the commands revise selection, proofread note and draw a drop cap. It needs a provider chosen in
   Settings > Lagrange: a Claude or ChatGPT subscription through Claude Code or Codex (desktop), an API key, a local
   OpenAI-compatible server, or the offline demo. Never enter keys or sign in on the user's behalf.
+- Experimental: "Scriptorium: Back up this vault to Google Drive", "Sync now" and "Retrieve a vault from Google
+  Drive" work through Claude Code and the Google Drive connector of the user's Claude account. Run them only when
+  the user asks, and never sign in on the user's behalf.
 - Main settings live in .obsidian/appearance.json and .obsidian/app.json.
 - Typography lives in .obsidian/snippets/manuscript.css.
 - The toggle plugin lives in .obsidian/plugins/scriptorium/.
