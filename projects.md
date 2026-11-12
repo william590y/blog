@@ -15,4 +15,6 @@ A fancy and sophisticated obsidian configuration for the typographically incline
 
 Scriptorium comes with **Lagrange**, a writing companion that lives beside the note. Ask it a question and it answers; ask for a change and it makes it in the note with a fountain pen: the old words are struck through, the new ones written in by hand, equations drawn symbol by symbol and code typed on a small typewriter. Every run of edits can be undone and redone, and the conversation can be rewound to any earlier message, the note with it. It works with a Claude or ChatGPT subscription, an API key, a local model, or offline in a demo mode.
 
+New in 1.2: a drop cap of its own for any note, from several sets or your own images; one-step setup in a vault you already have; and an experimental backup of a vault to Google Drive.
+
 [See the preview and download Scriptorium →]({{ '/scriptorium' | relative_url }})

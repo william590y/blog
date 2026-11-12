@@ -8,6 +8,7 @@ destination="${destination:-$default_path}"
 case "$destination" in /*) ;; *) printf 'Please enter an absolute path.\n'; exit 1 ;; esac
 if [ -e "$destination" ] || [ -L "$destination" ]; then
   printf 'Folder already exists: %s. Choose a new folder; nothing was changed.\n' "$destination"
+  printf 'To set up Scriptorium in a vault you already have, use Setup-Scriptorium-Vault.py (see the README).\n'
   exit 1
 fi
 for utility in curl unzip; do
@@ -15,7 +16,7 @@ for utility in curl unzip; do
 done
 work_dir="$(mktemp -d)"
 trap 'rm -rf "$work_dir"' EXIT
-curl --progress-bar --fail --location --proto '=https' --tlsv1.2 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=dbfa94f7' -o "$work_dir/Writing.zip"
+curl --progress-bar --fail --location --proto '=https' --tlsv1.2 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=855ceb85' -o "$work_dir/Writing.zip"
 verify_hash() {
   local actual_hash
   if command -v shasum >/dev/null; then
@@ -28,7 +29,7 @@ verify_hash() {
   actual_hash="${actual_hash%% *}"
   [ "$actual_hash" = "$2" ] || { echo "Download verification failed for $1."; exit 1; }
 }
-verify_hash "$work_dir/Writing.zip" 'dbfa94f7ebb5a836c990bd23079ab1d6a724fd8ae0040806329f1631973ea194'
+verify_hash "$work_dir/Writing.zip" '855ceb85e9c3760fbaa956d9845f0b370bab5010dc3fb548a6687b26ada66dd3'
 unzip -q "$work_dir/Writing.zip" -d "$work_dir/vault"
 [ -f "$work_dir/vault/.obsidian/appearance.json" ] || { printf 'Invalid configuration archive.\n'; exit 1; }
 app_image="$HOME/Applications/Obsidian.AppImage"
