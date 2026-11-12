@@ -22,6 +22,25 @@ Bookish serif typography, warm paper, centered small-cap headings, italic subtit
 
 <a href="{{ '/assets/downloads/Scriptorium.zip' | relative_url }}?v=dbfa94f7" download>Download the Obsidian configuration</a>
 
+### Lagrange
+
+<figure style="margin:1rem 0 1.5rem;">
+  <video controls muted loop playsinline preload="none" poster="{{ '/assets/images/lagrange-poster.png' | relative_url }}?v=lg030" width="1180" height="760" style="display:block;width:100%;height:auto;border:1px solid var(--border);" aria-label="Lagrange at work in Obsidian: a typed request, the pen striking out and writing in handwriting, an equation drawn, code typed by a typewriter, then undo, redo and a rewind">
+    <source src="{{ '/assets/images/lagrange.mp4' | relative_url }}?v=lg030" type="video/mp4">
+    <a href="{{ '/assets/images/lagrange.gif' | relative_url }}?v=lg030">Watch Lagrange at work (GIF)</a>
+  </video>
+  <figcaption style="font-size:0.85em;text-align:center;margin-top:0.75rem;">Lagrange editing a note. Recorded in Obsidian with its offline demo, so you can try the same without an account. <a href="{{ '/assets/images/lagrange.gif' | relative_url }}?v=lg030">As a GIF</a>.</figcaption>
+</figure>
+
+Lagrange is Scriptorium's writing companion. Click the **pen-nib icon** to open it beside your note and type.
+
+- **It answers and it edits.** A question gets an answer. A request for a change ("fix the grammar", "tighten the second paragraph", "add the equation for kinetic energy") is carried out in the note.
+- **Edits are made by pen.** The old words are struck through and the new ones written in by hand, with a thin trail of ink behind the nib. An equation is typeset and drawn symbol by symbol. Code is typed on a small typewriter.
+- **Nothing is lost.** One Undo takes back all the edits of a request, and the arrows at the head of the panel undo and redo Lagrange's edits run by run, keeping anything you typed since. The small clock beside each of your messages rewinds the conversation, and the note, to that point.
+- **Your model.** It uses your Claude subscription by default (through Claude Code), or a ChatGPT subscription (through Codex), an Anthropic or OpenAI API key, or a local model. Choose the model and how hard it thinks at the foot of the panel. **Demo (offline)** needs no account.
+
+Lagrange sends the open note and your message to the provider you chose, only when you ask it something.
+
 ### Fancy mode
 
 Fancy mode starts **off**, with centered small-cap section headings and bordered quotations. Turn it on for quiet italic quotations and justified openings. Both modes open chapters with an ornamental Yinit initial. Images are centred; to place one, add `left`, `right` or `center` before the size, as in `![[image.png|left|300]]`. Links are inked like the ones on this site. **Both modes use the same 1.45 line spacing.**
