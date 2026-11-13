@@ -77,8 +77,12 @@ Use these instructions when the user asks you to install or configure Scriptoriu
   Settings > Lagrange: a Claude or ChatGPT subscription through Claude Code or Codex (desktop), an API key, a local
   OpenAI-compatible server, or the offline demo. Never enter keys or sign in on the user's behalf.
 - Experimental: "Scriptorium: Back up this vault to Google Drive", "Sync now" and "Retrieve a vault from Google
-  Drive" work through Claude Code and the Google Drive connector of the user's Claude account. Run them only when
-  the user asks, and never sign in on the user's behalf.
+  Drive" work through Claude Code and the Google Drive connector of the user's Claude account (the default), or,
+  as a preview, through a Google sign-in of the user's own (Settings -> Scriptorium -> Connection; it needs a
+  Google OAuth client ID of type "Desktop app", which the user makes; the README says how). A vault is retrieved
+  the way it was backed up. Run them only when the user asks, never sign in on the user's behalf, and never create
+  or enter a client ID or secret for them. "Scriptorium: Copy the Google Drive diagnostic report" gives a report
+  without secrets or file names when something fails.
 - Main settings live in .obsidian/appearance.json and .obsidian/app.json.
 - Typography lives in .obsidian/snippets/manuscript.css.
 - The toggle plugin lives in .obsidian/plugins/scriptorium/.
