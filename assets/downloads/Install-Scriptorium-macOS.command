@@ -16,7 +16,7 @@ for utility in curl unzip; do
 done
 work_dir="$(mktemp -d)"
 trap 'rm -rf "$work_dir"' EXIT
-curl --progress-bar --fail --location --proto '=https' --tlsv1.2 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=d6410e6c' -o "$work_dir/Writing.zip"
+curl --progress-bar --fail --location --proto '=https' --tlsv1.2 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=f2d91be3' -o "$work_dir/Writing.zip"
 verify_hash() {
   local actual_hash
   if command -v shasum >/dev/null; then
@@ -29,7 +29,7 @@ verify_hash() {
   actual_hash="${actual_hash%% *}"
   [ "$actual_hash" = "$2" ] || { echo "Download verification failed for $1."; exit 1; }
 }
-verify_hash "$work_dir/Writing.zip" 'd6410e6ce88d497aca0b69d6cb7c1d9d8aa8ba78bbf173c90dc2e42fb9287091'
+verify_hash "$work_dir/Writing.zip" 'f2d91be389e29b0004cdb59776cb37605f5fc43adcedef2e627d36e0aec92209'
 unzip -q "$work_dir/Writing.zip" -d "$work_dir/vault"
 [ -f "$work_dir/vault/.obsidian/appearance.json" ] || { printf 'Invalid configuration archive.\n'; exit 1; }
 # ---- The diagram plugins ----
