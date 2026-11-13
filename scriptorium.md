@@ -22,6 +22,8 @@ Bookish serif typography, warm paper, centered small-cap headings, italic subtit
 
 <a href="{{ '/assets/downloads/Scriptorium.zip' | relative_url }}?v=bdee444b" download>Download the Obsidian configuration</a>
 
+[Instructions for agents]({{ '/assets/downloads/Scriptorium-Agents.txt' | relative_url }})
+
 ### Lagrange
 
 <figure style="margin:1rem 0 1.5rem;">
@@ -75,8 +77,6 @@ Fancy mode starts **off**, with centered small-cap section headings and bordered
 In Obsidian, go to **Settings → Scriptorium → Fancy mode**. You can also click the **feather icon**, click **Fancy mode: on/off** in the status bar, or use **Scriptorium: Toggle fancy mode** in the command palette. Your choice is remembered for that vault.
 
 The preview switch above compares real screenshots of the two modes.
-
-[Instructions for agents]({{ '/assets/downloads/Scriptorium-Agents.txt' | relative_url }})
 
 ### Easy setup
 
