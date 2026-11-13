@@ -9,7 +9,7 @@ author: William
 
 A fancy and sophisticated obsidian configuration for the typographically inclined
 
-<a href="{{ '/scriptorium' | relative_url }}" aria-label="Explore Scriptorium and Lagrange"><picture><source srcset="{{ '/assets/images/lagrange-poster.png' | relative_url }}?v=lg051" media="(prefers-reduced-motion: reduce)"><img src="{{ '/assets/images/lagrange.gif' | relative_url }}?v=lg051" alt="Lagrange at work in Obsidian: a request is typed in its panel, a pen flies to the note, strikes out the old words and writes the new ones in handwriting, draws an equation symbol by symbol, a small typewriter types a block of code, and the edits are undone, redone and rewound." width="840" height="541" loading="lazy" style="display:block;width:100%;height:auto;border:1px solid var(--border);"></picture></a>
+<a href="{{ '/scriptorium' | relative_url }}" aria-label="Explore Scriptorium and Lagrange"><picture><source srcset="{{ '/assets/images/lagrange-poster.png' | relative_url }}?v=lg060" media="(prefers-reduced-motion: reduce)"><img src="{{ '/assets/images/lagrange.gif' | relative_url }}?v=lg060" alt="Lagrange at work in Obsidian: a page with its subtitle and drop cap; a request is typed in its panel, a pen flies to the note, strikes out the old words and writes the new ones in handwriting; a reply is set with mathematics, code and a figure; and the pen draws a diagram into the note." width="840" height="541" loading="lazy" style="display:block;width:100%;height:auto;border:1px solid var(--border);"></picture></a>
 
 *Lagrange, Scriptorium's writing companion, editing a note with its pen. Recorded in Obsidian.*
 
