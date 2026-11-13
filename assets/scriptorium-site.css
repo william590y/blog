@@ -182,7 +182,9 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post .post-line + p::first-letter,
 .post .post-line + blockquote + p::first-letter,
 .post :is(h1, h2):not(.post-title) + p::first-letter,
-.post :is(h1, h2):not(.post-title) + blockquote + p::first-letter {
+.post :is(h1, h2):not(.post-title) + blockquote + p::first-letter,
+.post .sc-opens + p::first-letter,
+.post .sc-opens + blockquote + p::first-letter {
   float: left;
   font-family: var(--initials, var(--display));
   font-size: 3.667em;         /* a three-line drop: top at the first line's cap height, foot on the third baseline */
@@ -195,7 +197,9 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post .post-line + p::first-line,
 .post .post-line + blockquote + p::first-line,
 .post :is(h1, h2):not(.post-title) + p::first-line,
-.post :is(h1, h2):not(.post-title) + blockquote + p::first-line {   /* small caps only where there is a drop cap */
+.post :is(h1, h2):not(.post-title) + blockquote + p::first-line,
+.post .sc-opens + p::first-line,
+.post .sc-opens + blockquote + p::first-line {   /* small caps only where there is a drop cap */
   font-variant-caps: small-caps;
   letter-spacing: 0.03em;
 }
@@ -205,7 +209,9 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post .post-line + p,
 .post .post-line + blockquote + p,
 .post :is(h1, h2):not(.post-title) + p,
-.post :is(h1, h2):not(.post-title) + blockquote + p { text-align: left; }
+.post :is(h1, h2):not(.post-title) + blockquote + p,
+.post .sc-opens + p,
+.post .sc-opens + blockquote + p { text-align: left; }
 .post .sc-keep { white-space: nowrap; -webkit-hyphens: manual; hyphens: manual; }
 /* After a scene break or a centred line the paragraph starts flush, but stays justified, in lowercase */
 .post .post-line + p,
@@ -213,7 +219,28 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
 .post :is(h1, h2):not(.post-title) + p,
 .post :is(h1, h2):not(.post-title) + blockquote + p,
 .post hr + p,
+.post .sc-opens + p,
+.post .sc-opens + blockquote + p,
 .post p[style*="center"] + p { text-indent: 0; }
+
+/* ---------- Centred and right-aligned text, as in the Scriptorium plugin ----------
+   A paragraph written between "::: center" (or "::: right") and ":::" is marked by assets/scriptorium-align.js
+   (.sc-align, .sc-align-center or .sc-align-right; a kramdown {: .sc-align .sc-align-center} does the same). Every
+   line of it is a line. It takes no drop cap and no small-capped first line; where it stands right under a heading
+   it is marked .sc-opens as well, and the first ordinary paragraph after it opens the chapter (the rules above).
+   "::: center dropcap" asks for the initial on the aligned text itself: a standing initial, on the first line. */
+.post p.sc-align.sc-align { text-indent: 0; margin-block: 1em; hyphens: manual; -webkit-hyphens: manual; }
+.post p.sc-align.sc-align-center { text-align: center; }
+.post p.sc-align.sc-align-right { text-align: right; }
+.post p.sc-align.sc-align:not(.sc-align-dropcap)::first-letter {
+  float: none;
+  font: inherit;
+  text-transform: none;
+  margin: 0;
+  color: inherit;
+}
+.post p.sc-align.sc-align:not(.sc-align-dropcap)::first-line { font-variant-caps: normal; letter-spacing: normal; }
+.post p.sc-align.sc-align-dropcap::first-letter { float: none; margin: 0 0.04em 0 0; line-height: 0.8; }
 
 /* About uses a Goudy Initialen letter: the same three-line drop (top on the first line's cap height, foot on the
    third baseline). Goudy's letters are 0.8 em squares standing on the baseline. */
