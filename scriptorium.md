@@ -20,27 +20,33 @@ A fancy and sophisticated obsidian configuration for the typographically incline
 
 Bookish serif typography, warm paper, centered small-cap headings, italic subtitles, ornamental Yinit drop caps, and floral scene breaks. Includes the Typewriter theme, a custom manuscript stylesheet, and writing plugins.
 
-<a href="{{ '/assets/downloads/Scriptorium.zip' | relative_url }}?v=2b8016d0" download>Download the Obsidian configuration</a>
+<a href="{{ '/assets/downloads/Scriptorium.zip' | relative_url }}?v=3cef57aa" download>Download the Obsidian configuration</a>
 
 ### Lagrange
 
 <figure style="margin:1rem 0 1.5rem;">
-  <video controls muted loop playsinline preload="none" poster="{{ '/assets/images/lagrange-poster.png' | relative_url }}?v=lg042" width="1180" height="760" style="display:block;width:100%;height:auto;border:1px solid var(--border);" aria-label="Lagrange at work in Obsidian: a typed request, the pen striking out and writing in handwriting, an equation drawn, code typed by a typewriter, then undo, redo and a rewind">
-    <source src="{{ '/assets/images/lagrange.mp4' | relative_url }}?v=lg042" type="video/mp4">
-    <a href="{{ '/assets/images/lagrange.gif' | relative_url }}?v=lg042">Watch Lagrange at work (GIF)</a>
+  <video controls muted loop playsinline preload="none" poster="{{ '/assets/images/lagrange-poster.png' | relative_url }}?v=lg050" width="1180" height="760" style="display:block;width:100%;height:auto;border:1px solid var(--border);" aria-label="Lagrange at work in Obsidian: a typed request, the pen striking out and writing in handwriting, an equation drawn, code typed by a typewriter, then undo, redo and a rewind">
+    <source src="{{ '/assets/images/lagrange.mp4' | relative_url }}?v=lg050" type="video/mp4">
+    <a href="{{ '/assets/images/lagrange.gif' | relative_url }}?v=lg050">Watch Lagrange at work (GIF)</a>
   </video>
-  <figcaption style="font-size:0.85em;text-align:center;margin-top:0.75rem;">Lagrange editing a note. Recorded in Obsidian with its offline demo, so you can try the same without an account. <a href="{{ '/assets/images/lagrange.gif' | relative_url }}?v=lg042">As a GIF</a>.</figcaption>
+  <figcaption style="font-size:0.85em;text-align:center;margin-top:0.75rem;">Lagrange editing a note. Recorded in Obsidian with its offline demo, so you can try the same without an account. <a href="{{ '/assets/images/lagrange.gif' | relative_url }}?v=lg050">As a GIF</a>.</figcaption>
 </figure>
 
 Lagrange is Scriptorium's writing companion. Click the **pen-nib icon** to open it beside your note and type.
 
 - **It answers and it edits.** A question gets an answer. A request for a change ("fix the grammar", "tighten the second paragraph", "add the equation for kinetic energy") is carried out in the note.
 - **Edits are made by pen.** The old words are struck through and the new ones written in by hand where they will stand in the note, with a thin trail of ink behind the nib; a long edit is written for three lines and the rest set down at once. An equation is drawn symbol by symbol in its place. Code is typed on a small typewriter.
-- **It keeps out of your way.** The handwriting is on the page itself, so it scrolls with the note, and the note stays where you were looking when the pen has finished. Click in the note or start typing and the pen stops at once, with the rest of its edits set down (or turn on **Let me edit while the pen writes** to write alongside it). *New in 1.2.4.*
+- **It keeps out of your way.** The handwriting is on the page itself, so it scrolls with the note, and the note stays where you were looking when the pen has finished. Click in the note or start typing and the pen stops at once, with the rest of its edits set down (or turn on **Let me edit while the pen writes** to write alongside it).
+- **Several pens at once.** When the edits of a request stand far enough apart on the page, up to three pens write them together; edits close together still take turns, and it is still one undo. *New in 1.3.0.*
+- **It can look at the page.** Lagrange can ask to see the note as it is set (drop caps, alignment, margins, mathematics): a picture where your provider takes pictures, measurements in words everywhere. Only the part it asks for is sent, only to the provider you chose, and you can turn it off. *New in 1.3.0.*
 - **Nothing is lost.** One Undo takes back all the edits of a request, and the arrows at the head of the panel undo and redo Lagrange's edits run by run, keeping anything you typed since. The small clock beside each of your messages rewinds the conversation, and the note, to that point.
 - **Your model.** It uses your Claude subscription by default (through Claude Code), or a ChatGPT subscription (through Codex), an Anthropic or OpenAI API key, or a local model. Choose the model and how hard it thinks at the foot of the panel. **Demo (offline)** needs no account.
 
 Lagrange sends the open note and your message to the provider you chose, only when you ask it something.
+
+### Centred and right-aligned text
+
+Centre a poem or set a signature to the right by putting it between two plain marker lines, `::: center` … `:::` (there are commands for it): every line stays a line, in Reading view, Live Preview and PDF. Aligned text takes no drop cap unless you ask for one, so a chapter can open with an epigraph in verse and still begin with its initial; and Lagrange centres verse by itself, its pen writing each line where it will stand. *New in 1.3.0.*
 
 ### Drop caps
 
@@ -48,7 +54,7 @@ Chapters open with an ornamental Yinit initial. **Settings → Scriptorium → D
 
 ### A vault you already have
 
-Scriptorium can be added to any vault, or to a folder of notes, in one step. In a Scriptorium vault run **Scriptorium: Set up another vault**; on Windows open the installer, choose the vault's folder and click **Set up**; on any system run <a href="{{ '/assets/downloads/Setup-Scriptorium-Vault.py' | relative_url }}?v=ccc133be" download>Setup-Scriptorium-Vault.py</a> with Python (`python3 Setup-Scriptorium-Vault.py /path/to/vault`). Each shows what it will change before it changes anything. Your notes are not touched, your own plugins and settings are kept, and the vault's `.obsidian` folder is copied to a backup first.
+Scriptorium can be added to any vault, or to a folder of notes, in one step. In a Scriptorium vault run **Scriptorium: Set up another vault**; on Windows open the installer, choose the vault's folder and click **Set up**; on any system run <a href="{{ '/assets/downloads/Setup-Scriptorium-Vault.py' | relative_url }}?v=44a991d0" download>Setup-Scriptorium-Vault.py</a> with Python (`python3 Setup-Scriptorium-Vault.py /path/to/vault`). Each shows what it will change before it changes anything. Your notes are not touched, your own plugins and settings are kept, and the vault's `.obsidian` folder is copied to a backup first.
 
 ### Syncing with Google Drive (new)
 
@@ -72,9 +78,9 @@ The preview switch above compares real screenshots of the two modes.
 
 Download the installer for your operating system. It checks for Obsidian and installs it if needed (also when an Obsidian you removed has left traces behind), installs or repairs the EB Garamond and Cormorant Garamond fonts (it checks each of the four faces, upright and italic, by itself), then creates a new Scriptorium vault with the Lorem Ipsum sample and opens it in Obsidian with its plugins turned on. Close Obsidian before you run it. If Obsidian was open, or is older than version 1.12, choose **Open folder as vault**, select the folder printed by the installer, and click **Trust author and enable plugins**.
 
-- <a href="{{ '/assets/downloads/Scriptorium-Setup.exe' | relative_url }}?v=b25c52c2" download>Windows installer</a> — open `Scriptorium-Setup.exe`, choose the vault folder and click **Install**. To update, choose your existing Scriptorium vault instead: the installer backs up its settings and updates it in place. To add Scriptorium to a vault of your own, choose that vault's folder and click **Set up**. If Windows says it protected your PC, choose **More info**, then **Run anyway**. Prefer a script? Use the <a href="{{ '/assets/downloads/Install-Scriptorium-Windows.cmd' | relative_url }}?v=2b8016d0" download>command-line installer</a>. The installer is built from its [source on GitHub](https://github.com/william590y/scriptorium) (GPL-3.0); see the [releases](https://github.com/william590y/scriptorium/releases) for checksums.
-- <a href="{{ '/assets/downloads/Install-Scriptorium-macOS.command' | relative_url }}?v=2b8016d0" download>macOS installer</a> — run `bash ~/Downloads/Install-Scriptorium-macOS.command` in Terminal.
-- <a href="{{ '/assets/downloads/Install-Scriptorium-Linux.sh' | relative_url }}?v=2b8016d0" download>Linux installer</a> — run `bash ~/Downloads/Install-Scriptorium-Linux.sh` in Terminal. Requires `curl` and `unzip`. New Linux installs use the official x86-64 or ARM64 AppImage and require AppImage support.
+- <a href="{{ '/assets/downloads/Scriptorium-Setup.exe' | relative_url }}?v=b1a598f6" download>Windows installer</a> — open `Scriptorium-Setup.exe`, choose the vault folder and click **Install**. To update, choose your existing Scriptorium vault instead: the installer backs up its settings and updates it in place. To add Scriptorium to a vault of your own, choose that vault's folder and click **Set up**. If Windows says it protected your PC, choose **More info**, then **Run anyway**. Prefer a script? Use the <a href="{{ '/assets/downloads/Install-Scriptorium-Windows.cmd' | relative_url }}?v=3cef57aa" download>command-line installer</a>. The installer is built from its [source on GitHub](https://github.com/william590y/scriptorium) (GPL-3.0); see the [releases](https://github.com/william590y/scriptorium/releases) for checksums.
+- <a href="{{ '/assets/downloads/Install-Scriptorium-macOS.command' | relative_url }}?v=3cef57aa" download>macOS installer</a> — run `bash ~/Downloads/Install-Scriptorium-macOS.command` in Terminal.
+- <a href="{{ '/assets/downloads/Install-Scriptorium-Linux.sh' | relative_url }}?v=3cef57aa" download>Linux installer</a> — run `bash ~/Downloads/Install-Scriptorium-Linux.sh` in Terminal. Requires `curl` and `unzip`. New Linux installs use the official x86-64 or ARM64 AppImage and require AppImage support.
 
 Restart any running Obsidian windows after installation so newly installed fonts are loaded. If headings ever stand in italics, a font is half installed (only the italic face of Cormorant Garamond is registered): run the installer again and it puts the missing face back; on Windows, `Scriptorium-Setup.exe --check-fonts` shows the state of each face.
 
