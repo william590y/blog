@@ -46,7 +46,14 @@ Use these instructions when the user asks you to install or configure Scriptoriu
    For manual ZIP setup, install the fonts from Google Fonts.
    https://fonts.google.com/specimen/EB+Garamond
    https://fonts.google.com/specimen/Cormorant+Garamond
-8. Open "Lorem Ipsum" in Reading view. Enable the bundled community plugins in Obsidian
+8. The script installers and Setup-Scriptorium-Vault.py also add two community plugins that Lagrange draws
+   diagrams with: TikZJax (id obsidian-tikzjax, MIT) and Excalidraw (id obsidian-excalidraw-plugin, AGPL-3.0).
+   They are not part of Scriptorium: each is downloaded from its own GitHub release, pinned by SHA-256, into
+   .obsidian/plugins/<id>/ and turned on. A copy the vault already has at the same or a newer version, and its
+   settings (data.json), are left alone. If one cannot be downloaded the installer still succeeds and names it:
+   add it in Obsidian from Settings > Community plugins > Browse. Setup-Scriptorium-Vault.py --no-diagram-plugins
+   leaves them out.
+9. Open "Lorem Ipsum" in Reading view. Enable the bundled community plugins in Obsidian
    to use the Scriptorium mode switch.
 
 ## Expected configuration
