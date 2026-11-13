@@ -38,8 +38,11 @@ Use these instructions when the user asks you to install or configure Scriptoriu
    they briefly turn on Obsidian's command-line interface to do it and restore that setting). Otherwise choose
    "Open folder as vault", select the printed vault path, and choose "Trust author and enable plugins".
    The installer opens the vault picker. Complete this step in Obsidian to register the new vault.
-7. The installers detect and install missing EB Garamond and Cormorant Garamond font families
-   for the current user, including roman and italic faces. Restart any running Obsidian windows.
+7. The installers check the four font faces one by one (EB Garamond and Cormorant Garamond, each upright
+   and italic) and install or repair whatever is missing, unregistered or damaged, for the current user.
+   A family with only its italic face shows headings in italics: running the installer again repairs it;
+   on Windows, "Scriptorium-Setup.exe --check-fonts" prints each face's state and "--repair-fonts"
+   repairs without the window. Restart any running Obsidian windows.
    For manual ZIP setup, install the fonts from Google Fonts.
    https://fonts.google.com/specimen/EB+Garamond
    https://fonts.google.com/specimen/Cormorant+Garamond
