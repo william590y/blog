@@ -27,6 +27,9 @@ Use these instructions when the user asks you to install or configure Scriptoriu
    command "Scriptorium: Set up another vault".
 5. The installer detects Obsidian and installs it when missing. It verifies the configuration
    archive and official Obsidian download with SHA-256.
+   Since 1.2.1 only a working Obsidian counts as installed: what an uninstalled Obsidian leaves behind
+   (its obsidian:// link, an app in the Trash, an empty AppImage) does not, and the installer says so
+   plainly if Obsidian could not be installed.
    Windows uses the official per-user installer.
    macOS installs Obsidian.app in ~/Applications.
    Linux installs the official x86-64 or ARM64 AppImage in ~/Applications when needed.

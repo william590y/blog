@@ -85,9 +85,9 @@ $tempPath = Join-Path ([IO.Path]::GetTempPath()) ('obsidian-writing-' + [guid]::
 New-Item -ItemType Directory -Path $tempPath | Out-Null
 try {
     $archive = Join-Path $tempPath 'Writing.zip'
-    Get-ScriptoriumDownload -Uri 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=855ceb85' -OutFile $archive
+    Get-ScriptoriumDownload -Uri 'https://williamliaw.com/assets/downloads/Scriptorium.zip?v=097b1f95' -OutFile $archive
     $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($actualHash -ne '855ceb85e9c3760fbaa956d9845f0b370bab5010dc3fb548a6687b26ada66dd3') { throw 'Package verification failed. Please download the current installer from the Projects page.' }
+    if ($actualHash -ne '097b1f9544bd2e263c817759914ca4f3e967d54111fe39e890838a0f64b57db8') { throw 'Package verification failed. Please download the current installer from the Projects page.' }
     $staging = Join-Path $tempPath 'vault'
     Expand-Archive -LiteralPath $archive -DestinationPath $staging
     if (!(Test-Path -LiteralPath (Join-Path $staging '.obsidian/appearance.json'))) { throw 'Invalid configuration archive.' }
@@ -100,11 +100,16 @@ try {
             }
         }
         $cmd = Get-Command Obsidian.exe -CommandType Application -ErrorAction SilentlyContinue
-        if ($cmd) { return $cmd.Source }
+        if ($cmd -and (Test-Path -LiteralPath $cmd.Source -PathType Leaf)) { return $cmd.Source }
+        # An Obsidian installed elsewhere: the program its obsidian:// links run, if that program is still there.
+        # Obsidian's uninstaller leaves the link in the registry, so the link alone does not mean Obsidian is installed.
+        $command = [string](Get-ItemProperty -LiteralPath 'Registry::HKEY_CLASSES_ROOT\obsidian\shell\open\command' -ErrorAction SilentlyContinue).'(default)'
+        if ($command -match '^\s*"([^"]+\.exe)"' -or $command -match '^\s*(.+?\.exe)(\s|$)') {
+            if (Test-Path -LiteralPath $Matches[1] -PathType Leaf) { return $Matches[1] }
+        }
     }
-    $protocol = 'Registry::HKEY_CLASSES_ROOT\obsidian\shell\open\command'
     $exe = Find-Obsidian
-    if (!$exe -and !(Test-Path -LiteralPath $protocol)) {
+    if (!$exe) {
         Write-Host 'Downloading Obsidian ...'
         $setup = Join-Path $tempPath 'Obsidian-Setup.exe'
         Get-ScriptoriumDownload -Uri 'https://github.com/obsidianmd/obsidian-releases/releases/download/v1.15.0/Obsidian-1.15.0.exe' -OutFile $setup
@@ -119,9 +124,10 @@ try {
         } finally {
             Write-Progress -Activity 'Installing Obsidian' -Completed
         }
-        if ($process.ExitCode -ne 0) { throw "Obsidian setup exited with code $($process.ExitCode)." }
+        if ($process.ExitCode -ne 0) { throw "Obsidian's installer failed (exit code $($process.ExitCode)), so Obsidian was not installed. Install Obsidian from https://obsidian.md, then run this again." }
         $exe = Find-Obsidian
-        if (!$exe -and !(Test-Path -LiteralPath $protocol)) { throw 'Obsidian setup did not complete.' }
+        if (!$exe) { throw "Obsidian's installer ran, but Obsidian is still not on this computer (Obsidian.exe was not found). Install Obsidian from https://obsidian.md, then run this again." }
+        Write-Host "Installed Obsidian ($exe)"
     }
     # Install missing font families for this user, including roman and italic faces.
     Add-Type -AssemblyName System.Drawing
@@ -402,7 +408,7 @@ Remove-Item -LiteralPath $(& $quote $watchSource) -ErrorAction SilentlyContinue
         Write-Host 'Open Lorem Ipsum in Reading view. Review the bundled community plugins before enabling them.'
         Write-Host "In Obsidian, choose Open folder as vault and select $destination"
         if ($exe) { Start-Process -FilePath $exe -ArgumentList 'obsidian://choose-vault' }
-        else { Start-Process 'obsidian://choose-vault' }
+        else { Write-Host 'Obsidian is not installed on this computer: install it from https://obsidian.md first.' }
     }
 } finally {
     Remove-Item -LiteralPath $tempPath -Recurse -Force -ErrorAction SilentlyContinue

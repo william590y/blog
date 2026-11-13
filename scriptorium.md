@@ -20,7 +20,7 @@ A fancy and sophisticated obsidian configuration for the typographically incline
 
 Bookish serif typography, warm paper, centered small-cap headings, italic subtitles, ornamental Yinit drop caps, and floral scene breaks. Includes the Typewriter theme, a custom manuscript stylesheet, and writing plugins.
 
-<a href="{{ '/assets/downloads/Scriptorium.zip' | relative_url }}?v=855ceb85" download>Download the Obsidian configuration</a>
+<a href="{{ '/assets/downloads/Scriptorium.zip' | relative_url }}?v=097b1f95" download>Download the Obsidian configuration</a>
 
 ### Lagrange
 
@@ -35,7 +35,7 @@ Bookish serif typography, warm paper, centered small-cap headings, italic subtit
 Lagrange is Scriptorium's writing companion. Click the **pen-nib icon** to open it beside your note and type.
 
 - **It answers and it edits.** A question gets an answer. A request for a change ("fix the grammar", "tighten the second paragraph", "add the equation for kinetic energy") is carried out in the note.
-- **Edits are made by pen.** The old words are struck through and the new ones written in by hand, with a thin trail of ink behind the nib. An equation is typeset and drawn symbol by symbol. Code is typed on a small typewriter.
+- **Edits are made by pen.** The old words are struck through and the new ones written in by hand where they will stand in the note, with a thin trail of ink behind the nib; a long edit is written for three lines and the rest set down at once. An equation is drawn symbol by symbol in its place. Code is typed on a small typewriter.
 - **Nothing is lost.** One Undo takes back all the edits of a request, and the arrows at the head of the panel undo and redo Lagrange's edits run by run, keeping anything you typed since. The small clock beside each of your messages rewinds the conversation, and the note, to that point.
 - **Your model.** It uses your Claude subscription by default (through Claude Code), or a ChatGPT subscription (through Codex), an Anthropic or OpenAI API key, or a local model. Choose the model and how hard it thinks at the foot of the panel. **Demo (offline)** needs no account.
 
@@ -47,7 +47,7 @@ Chapters open with an ornamental Yinit initial. **Settings → Scriptorium → D
 
 ### A vault you already have
 
-Scriptorium can be added to any vault, or to a folder of notes, in one step. In a Scriptorium vault run **Scriptorium: Set up another vault**; on Windows open the installer, choose the vault's folder and click **Set up**; on any system run <a href="{{ '/assets/downloads/Setup-Scriptorium-Vault.py' | relative_url }}?v=020626b5" download>Setup-Scriptorium-Vault.py</a> with Python (`python3 Setup-Scriptorium-Vault.py /path/to/vault`). Each shows what it will change before it changes anything. Your notes are not touched, your own plugins and settings are kept, and the vault's `.obsidian` folder is copied to a backup first.
+Scriptorium can be added to any vault, or to a folder of notes, in one step. In a Scriptorium vault run **Scriptorium: Set up another vault**; on Windows open the installer, choose the vault's folder and click **Set up**; on any system run <a href="{{ '/assets/downloads/Setup-Scriptorium-Vault.py' | relative_url }}?v=2e396cfb" download>Setup-Scriptorium-Vault.py</a> with Python (`python3 Setup-Scriptorium-Vault.py /path/to/vault`). Each shows what it will change before it changes anything. Your notes are not touched, your own plugins and settings are kept, and the vault's `.obsidian` folder is copied to a backup first.
 
 ### Backing up to Google Drive (experimental)
 
@@ -65,11 +65,11 @@ The preview switch above compares real screenshots of the two modes.
 
 ### Easy setup
 
-Download the installer for your operating system. It checks for Obsidian and installs it if needed, installs missing EB Garamond and Cormorant Garamond fonts, then creates a new Scriptorium vault with the Lorem Ipsum sample and opens it in Obsidian with its plugins turned on. Close Obsidian before you run it. If Obsidian was open, or is older than version 1.12, choose **Open folder as vault**, select the folder printed by the installer, and click **Trust author and enable plugins**.
+Download the installer for your operating system. It checks for Obsidian and installs it if needed (also when an Obsidian you removed has left traces behind), installs missing EB Garamond and Cormorant Garamond fonts, then creates a new Scriptorium vault with the Lorem Ipsum sample and opens it in Obsidian with its plugins turned on. Close Obsidian before you run it. If Obsidian was open, or is older than version 1.12, choose **Open folder as vault**, select the folder printed by the installer, and click **Trust author and enable plugins**.
 
-- <a href="{{ '/assets/downloads/Scriptorium-Setup.exe' | relative_url }}?v=5bafacc1" download>Windows installer</a> — open `Scriptorium-Setup.exe`, choose the vault folder and click **Install**. To update, choose your existing Scriptorium vault instead: the installer backs up its settings and updates it in place. To add Scriptorium to a vault of your own, choose that vault's folder and click **Set up**. If Windows says it protected your PC, choose **More info**, then **Run anyway**. Prefer a script? Use the <a href="{{ '/assets/downloads/Install-Scriptorium-Windows.cmd' | relative_url }}" download>command-line installer</a>. The installer is built from its [source on GitHub](https://github.com/william590y/scriptorium) (GPL-3.0); see the [releases](https://github.com/william590y/scriptorium/releases) for checksums.
-- <a href="{{ '/assets/downloads/Install-Scriptorium-macOS.command' | relative_url }}" download>macOS installer</a> — run `bash ~/Downloads/Install-Scriptorium-macOS.command` in Terminal.
-- <a href="{{ '/assets/downloads/Install-Scriptorium-Linux.sh' | relative_url }}" download>Linux installer</a> — run `bash ~/Downloads/Install-Scriptorium-Linux.sh` in Terminal. Requires `curl` and `unzip`. New Linux installs use the official x86-64 or ARM64 AppImage and require AppImage support.
+- <a href="{{ '/assets/downloads/Scriptorium-Setup.exe' | relative_url }}?v=760b49e9" download>Windows installer</a> — open `Scriptorium-Setup.exe`, choose the vault folder and click **Install**. To update, choose your existing Scriptorium vault instead: the installer backs up its settings and updates it in place. To add Scriptorium to a vault of your own, choose that vault's folder and click **Set up**. If Windows says it protected your PC, choose **More info**, then **Run anyway**. Prefer a script? Use the <a href="{{ '/assets/downloads/Install-Scriptorium-Windows.cmd' | relative_url }}?v=097b1f95" download>command-line installer</a>. The installer is built from its [source on GitHub](https://github.com/william590y/scriptorium) (GPL-3.0); see the [releases](https://github.com/william590y/scriptorium/releases) for checksums.
+- <a href="{{ '/assets/downloads/Install-Scriptorium-macOS.command' | relative_url }}?v=097b1f95" download>macOS installer</a> — run `bash ~/Downloads/Install-Scriptorium-macOS.command` in Terminal.
+- <a href="{{ '/assets/downloads/Install-Scriptorium-Linux.sh' | relative_url }}?v=097b1f95" download>Linux installer</a> — run `bash ~/Downloads/Install-Scriptorium-Linux.sh` in Terminal. Requires `curl` and `unzip`. New Linux installs use the official x86-64 or ARM64 AppImage and require AppImage support.
 
 Restart any running Obsidian windows after installation so newly installed fonts are loaded.
 
