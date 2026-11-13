@@ -229,7 +229,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--text); font-weigh
    line of it is a line. It takes no drop cap and no small-capped first line; where it stands right under a heading
    it is marked .sc-opens as well, and the first ordinary paragraph after it opens the chapter (the rules above).
    "::: center dropcap" asks for the initial on the aligned text itself: a standing initial, on the first line. */
-.post p.sc-align.sc-align { text-indent: 0; hyphens: manual; -webkit-hyphens: manual; }
+.post p.sc-align.sc-align { text-indent: 0; margin-block: 1em; hyphens: manual; -webkit-hyphens: manual; }
 .post p.sc-align.sc-align-center { text-align: center; }
 .post p.sc-align.sc-align-right { text-align: right; }
 .post p.sc-align.sc-align:not(.sc-align-dropcap)::first-letter {
