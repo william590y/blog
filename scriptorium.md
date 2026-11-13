@@ -25,7 +25,7 @@ Bookish serif typography, warm paper, centered small-cap headings, italic subtit
 ### Lagrange
 
 <figure style="margin:1rem 0 1.5rem;">
-  <video controls muted loop playsinline preload="none" poster="{{ '/assets/images/lagrange-poster.png' | relative_url }}?v=lg051" width="1180" height="760" style="display:block;width:100%;height:auto;border:1px solid var(--border);" aria-label="Lagrange at work in Obsidian: a typed request, the pen striking out and writing in handwriting, an equation drawn, code typed by a typewriter, then undo, redo and a rewind">
+  <video controls muted loop playsinline preload="none" poster="{{ '/assets/images/lagrange-poster.png' | relative_url }}?v=lg051" width="1180" height="760" style="display:block;width:100%;height:auto;border:1px solid var(--border);" aria-label="Lagrange at work in Obsidian: the page with its subtitle and drop cap, a typed request, the pen striking out and writing in handwriting, a reply with mathematics, code and a figure, and the pen drawing a diagram into the note">
     <source src="{{ '/assets/images/lagrange.mp4' | relative_url }}?v=lg051" type="video/mp4">
     <a href="{{ '/assets/images/lagrange.gif' | relative_url }}?v=lg051">Watch Lagrange at work (GIF)</a>
   </video>
@@ -37,6 +37,9 @@ Lagrange is Scriptorium's writing companion. Click the **pen-nib icon** to open 
 - **It answers and it edits.** A question gets an answer. A request for a change ("fix the grammar", "tighten the second paragraph", "add the equation for kinetic energy") is carried out in the note.
 - **Edits are made by pen.** The old words are struck through and the new ones written in by hand where they will stand in the note, with a thin trail of ink behind the nib; a long edit is written for three lines and the rest set down at once. An equation is drawn symbol by symbol in its place. Code is typed on a small typewriter.
 - **It keeps out of your way.** The handwriting is on the page itself, so it scrolls with the note, and the note stays where you were looking when the pen has finished. Click in the note or start typing and the pen stops at once, with the rest of its edits set down (or turn on **Let me edit while the pen writes** to write alongside it).
+- **It draws diagrams.** Ask for a figure and Lagrange writes it into the note and the pen draws it line by line, its labels last: technical figures in TikZ (the TikZJax plugin), free-form sketches as Excalidraw drawings. The installers add both plugins, each from its own release. *New in 1.4.0.*
+- **The chat is typeset too.** Replies, and your own messages, show code with its colours and a copy button, mathematics, Mermaid and TikZ figures, as a note would; a figure that cannot be drawn shows its source and says why. *New in 1.4.0.*
+- **Attach things.** Paste or drop a picture, a video or a file onto the panel and it goes with your message, in the form your provider takes. *New in 1.4.0.*
 - **It writes what the page shows.** The handwriting has the words, not their Markdown marks, and a reply's edits may build on one another. *New in 1.3.1.*
 - **Several pens at once.** When the edits of a request stand far enough apart on the page, up to three pens write them together; edits close together still take turns, and it is still one undo. *New in 1.3.0.*
 - **It can look at the page.** Lagrange can ask to see the note as it is set (drop caps, alignment, margins, mathematics): a picture where your provider takes pictures, measurements in words everywhere. Only the part it asks for is sent, only to the provider you chose, and you can turn it off. *New in 1.3.0.*
@@ -51,7 +54,7 @@ Centre a poem or set a signature to the right by putting it between two plain ma
 
 ### Drop caps
 
-Chapters open with an ornamental Yinit initial. **Settings → Scriptorium → Drop cap** offers other sets (Goudy Initialen, Kanzlei, Deutsche Zierschrift, and the picture initials gwern.net made), a plain capital, or none, and one note can have its own: run **Scriptorium: Choose the drop cap for this note**. You can add your own set, images or a font of initials, with **Scriptorium: Add a set of drop caps**; one-colour images take the page's accent colour in the light and the dark theme. Lagrange can draw an initial for you (**Lagrange: Draw a drop cap**) through your Claude or ChatGPT subscription; drawing with OpenAI's image model is experimental. **Export to PDF** keeps the title and the drop caps.
+Chapters open with an ornamental Yinit initial. **Settings → Scriptorium → Drop cap** offers other sets (Goudy Initialen, Kanzlei, Deutsche Zierschrift, and the picture initials gwern.net made), a plain capital, or none, and one note can have its own: run **Scriptorium: Choose the drop cap for this note**. You can add your own set, images or a font of initials, with **Scriptorium: Add a set of drop caps**; one-colour images take the page's accent colour in the light and the dark theme. Lagrange can draw an initial for you (**Lagrange: Draw a drop cap**) through your Claude or ChatGPT subscription; drawing with OpenAI's image model is experimental. **Export to PDF** keeps the title and the drop caps. Drop caps show in Reading view and in the PDF; to see them while you write as well, turn on **Settings → Scriptorium → Show drop caps while editing (Live Preview)** (off by default, *new in 1.4.0*): the editor then sets the opening paragraph exactly as the page does, and the initial is still the letter you typed.
 
 ### A vault you already have
 
