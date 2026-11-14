@@ -51,8 +51,8 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-PACKAGE_URL = "https://williamliaw.com/assets/downloads/Scriptorium.zip?v=bdee444b"
-PACKAGE_SHA256 = "bdee444b38250ef0c846d123aee8def623fd2453b3c1fb7a4877c212356ed8e8"   # the same pin as the installers'
+PACKAGE_URL = "https://williamliaw.com/assets/downloads/Scriptorium.zip?v=103c21c4"
+PACKAGE_SHA256 = "103c21c4b320bd1f2b4f6d41e12ec58e7e8ab11d5adf3e32467961904193b069"   # the same pin as the installers'
 
 OBS = ".obsidian"
 BACKUP_PREFIX = "scriptorium-backup-"
