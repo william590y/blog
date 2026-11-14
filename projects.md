@@ -18,3 +18,15 @@ Scriptorium comes with **Lagrange**, a writing companion that lives beside the n
 New in 1.2: a drop cap of its own for any note, from several sets or your own images; one-step setup in a vault you already have; and an experimental backup of a vault to Google Drive.
 
 [See the preview and download Scriptorium →]({{ '/scriptorium' | relative_url }})
+
+---
+
+## [Cornell connector — campus data for Claude]({{ '/cornell' | relative_url }})
+
+A connector that lets Claude look up live Cornell and Ithaca information
+
+Ask Claude what the dining halls are serving, how busy the gyms are, when a class meets or whether a library is open, and it looks up the answer. The connector covers dining, gyms, the Class Roster, library hours and study-room availability, campus events, TCAT buses, the weather, the academic calendar, the campus map and CUGIR geodata, and, once its key is added, bird sightings from eBird. It reads public sources only and never signs in: for a study room it can show what is free and hand you the link to book it yourself.
+
+To add it to Claude, open **Settings → Connectors → Add custom connector** and enter `https://williamliaw.com/mcp`.
+
+[See what it covers and how to add it →]({{ '/cornell' | relative_url }})

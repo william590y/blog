@@ -206,7 +206,11 @@ export async function gymOccupancy(args = {}) {
       count,
       capacity: cap || null,
       percent_full: pct,
-      level: closed && count === 0 ? 'closed' : level(pct),
+      // A closed gym keeps its last reading in the feed: do not report that as a crowd level.
+      level: closed && (count === 0 || !updated || now - updated > 30 * 60000) ? 'closed' : level(pct),
+      ...(closed && count > 0 && updated && now - updated > 30 * 60000
+        ? { note: 'Closed; the count is the last reading before closing.' }
+        : {}),
       ...(hours ? { open_now: hours.open_now, hours_today: hours.today, ...pick(hours, ['closes', 'opens']) } : {}),
       ...(updated ? { last_updated: fmtTime(updated), minutes_since_update: minutesBetween(updated, now) } : {}),
     };
