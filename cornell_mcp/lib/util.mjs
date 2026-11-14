@@ -7,18 +7,87 @@ export const TZ = 'America/New_York';
 /** A problem with what the caller asked for (not with the data source). */
 export class InputError extends Error {}
 
-const USER_AGENT = 'cornell-campus-mcp/0.1 (+https://williamliaw.com/mcp)';
+// Generic on purpose: requests to outside services carry no personal or site details.
+const USER_AGENT = 'cornell-campus-mcp/0.3';
+
+/** An upstream HTTP failure; `status` lets callers turn a 404 into a helpful message. */
+export class HttpError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Fetching with a small in-memory cache (and stale fallback if a source is down)
 // ---------------------------------------------------------------------------
 
 const cache = new Map();
+const MAX_ENTRIES = 300;
 
-export async function cachedFetch(url, { ttlMs, as = 'json', timeoutMs = 20000 }) {
+// Optional second layer: Cloudflare's Cache API, shared by every isolate in a data centre. It only
+// exists on Workers; under Node (tests) `caches.default` is undefined and this is a no-op.
+const edgeKey = (url) => `https://edge-cache.invalid/v1?u=${encodeURIComponent(url)}`;
+
+async function edgeGet(url, ttlMs) {
+  try {
+    const store = globalThis.caches?.default;
+    if (!store) return null;
+    const res = await store.match(edgeKey(url));
+    if (!res) return null;
+    const at = Number(res.headers.get('x-fetched-at'));
+    if (!at || Date.now() - at >= ttlMs) return null;
+    return { text: await res.text(), at };
+  } catch {
+    return null;
+  }
+}
+
+async function edgePut(url, text, ttlMs) {
+  try {
+    const store = globalThis.caches?.default;
+    if (!store) return;
+    await store.put(
+      edgeKey(url),
+      new Response(text, {
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+          'cache-control': `public, max-age=${Math.max(1, Math.ceil(ttlMs / 1000))}`,
+          'x-fetched-at': String(Date.now()),
+        },
+      }),
+    );
+  } catch {
+    // Caching is best effort.
+  }
+}
+
+/**
+ * GET `url`, cached for `ttlMs`. Options: `as` 'json' | 'text'; `headers` extra request headers (never
+ * part of the cache key, so do not vary a response on them); `edge` also use the Cache API;
+ * `timeoutMs`. On failure a stale in-memory copy is returned with `stale: true` when there is one.
+ */
+export async function cachedFetch(url, { ttlMs, as = 'json', timeoutMs = 20000, headers = null, edge = false }) {
   const hit = cache.get(url);
   if (hit && Date.now() - hit.at < ttlMs) {
     return { data: hit.data, fetchedAt: hit.at, stale: false };
+  }
+  const parse = (text) => (as === 'json' ? JSON.parse(text) : text);
+  const remember = (data, at) => {
+    if (cache.size >= MAX_ENTRIES) cache.delete(cache.keys().next().value);
+    cache.set(url, { at, data });
+  };
+  if (edge) {
+    const e = await edgeGet(url, ttlMs);
+    if (e) {
+      try {
+        const data = parse(e.text);
+        remember(data, e.at);
+        return { data, fetchedAt: e.at, stale: false };
+      } catch {
+        // A corrupt cache entry: fall through to the network.
+      }
+    }
   }
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -28,21 +97,59 @@ export async function cachedFetch(url, { ttlMs, as = 'json', timeoutMs = 20000 }
       headers: {
         'user-agent': USER_AGENT,
         accept: as === 'json' ? 'application/json' : 'text/html,application/xhtml+xml',
+        ...(headers || {}),
       },
       signal: ctrl.signal,
     });
-    if (!res.ok) throw new Error(`${host} returned HTTP ${res.status}`);
-    const data = as === 'json' ? await res.json() : await res.text();
-    cache.set(url, { at: Date.now(), data });
+    if (!res.ok) throw new HttpError(`${host} returned HTTP ${res.status}`, res.status);
+    const text = await res.text();
+    let data;
+    try {
+      data = parse(text);
+    } catch {
+      throw new Error(`${host} returned something that is not JSON`);
+    }
+    remember(data, Date.now());
+    if (edge) await edgePut(url, text, ttlMs);
     return { data, fetchedAt: Date.now(), stale: false };
   } catch (err) {
-    if (hit) return { data: hit.data, fetchedAt: hit.at, stale: true };
+    if (hit && !(err instanceof HttpError && err.status === 404)) return { data: hit.data, fetchedAt: hit.at, stale: true };
     if (err.name === 'AbortError') throw new Error(`Timed out reaching ${host}`);
     if (err.cause?.code) throw new Error(`Could not reach ${host} (${err.cause.code})`);
     throw err;
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Tests only: forget everything cached in memory. */
+export function _resetCache() {
+  cache.clear();
+}
+
+/** Clamp an optional integer argument, with a default. */
+export function intArg(value, def, min, max) {
+  const n = Number(value);
+  if (value === undefined || value === null || value === '' || !Number.isFinite(n)) return def;
+  return Math.min(max, Math.max(min, Math.round(n)));
+}
+
+/** Cut text at a word boundary to at most `max` characters. */
+export function truncate(text, max) {
+  const t = String(text ?? '').replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const sp = cut.lastIndexOf(' ');
+  return `${(sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s,;:.]+$/, '')}…`;
+}
+
+/** Great-circle distance in km. */
+export function distanceKm(lat1, lng1, lat2, lng2) {
+  const rad = (d) => (d * Math.PI) / 180;
+  const a =
+    Math.sin(rad(lat2 - lat1) / 2) ** 2 +
+    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lng2 - lng1) / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(a));
 }
 
 // ---------------------------------------------------------------------------
