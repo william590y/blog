@@ -22,8 +22,6 @@ To add it to Claude, go to Settings → Connectors → Add custom connector and 
 | `classes_subjects` | subject codes and names for a term |
 | `classes_rosters` | the terms the Class Roster has, the default one and the one in session |
 | `library_hours` | library hours for a day, what is open now, service desks, a library's week |
-| `library_catalog_search` | search the library catalog: title, author, format, call number, availability |
-| `library_catalog_item` | one catalog record: holdings by library, item status, due dates, online links |
 | `events_search` | campus events by date range, keyword, type, department or place |
 | `events_detail` | one event in full: description, dates, place, cost, links |
 | `events_categories` | the event type, department and theme names used for filtering |
@@ -47,7 +45,6 @@ To add it to Claude, go to Settings → Connectors → Add custom connector and 
 | Gyms | goboardapi.azurewebsites.net (headcounts), scl.cornell.edu (hours, classes) | 1 min, 30 min |
 | Classes | classes.cornell.edu/api/2.0 (documented public API; asks for at most 1 request a second) | 10 min; terms and subjects 6 h |
 | Library hours | api3.libcal.com, institution 973 (the feed behind the hours on library.cornell.edu) | 15 min |
-| Library catalog | catalog.library.cornell.edu `catalog.json` and `/catalog/<id>/raw` (Blacklight) | 10 min |
 | Events | events.cornell.edu/api/2 (Localist) | 10 min; filters 12 h |
 | CUGIR | cugir.library.cornell.edu `catalog.json` and `/catalog/<id>/raw` (GeoBlacklight) | 1 h |
 | eBird | api.ebird.org/v2 (needs a key, below) | 5 min; hotspots and taxonomy 24 h |
@@ -58,10 +55,14 @@ To add it to Claude, go to Settings → Connectors → Add custom connector and 
 
 Results are cached in memory per Worker isolate and, for the newer sources, in Cloudflare's Cache
 API as well, so repeated questions do not reach the source. Requests carry a generic User-Agent
-(`cornell-campus-mcp/0.3`) and nothing about the person asking. The catalog, CUGIR and Class Roster
-sites ask crawlers (robots.txt) to stay out of their search pages; this server is not a crawler: it
+(`cornell-campus-mcp/0.3`) and nothing about the person asking. The CUGIR and Class Roster sites ask
+crawlers (robots.txt) to stay out of their search and API paths; this server is not a crawler: it
 makes one cached request when someone asks a question. If a source's owner objects, remove its
 tools from `TOOLS` in `functions/mcp.js`.
+
+Not included, on purpose: the library catalog (its robots.txt disallows everything and it answers
+Cloudflare's network with a challenge page, not JSON) and eCommons (its firewall rate-limits after
+two requests).
 
 Instructor NetIDs in the Class Roster feed are dropped (names only), and eBird sightings at
 personal locations are reported without the location's name.

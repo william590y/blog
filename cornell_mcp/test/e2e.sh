@@ -41,7 +41,7 @@ echo "Server: $URL"
 check initialize "$(post '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"e2e","version":"1"}}}')" \
   "j.result.serverInfo.version === '0.3.0' && j.result.protocolVersion === '2025-06-18' && /classes_search/.test(j.result.instructions)"
 check tools/list "$(post '{"jsonrpc":"2.0","id":2,"method":"tools/list"}')" \
-  "j.result.tools.length === 28 && ['dining_menus','gym_occupancy','classes_course','library_hours','library_catalog_search','events_search','cugir_dataset','ebird_recent_observations','tcat_departures','weather_ithaca','academic_calendar','campus_place_search'].every((n) => j.result.tools.some((x) => x.name === n))"
+  "j.result.tools.length === 26 && ['dining_menus','gym_occupancy','classes_course','library_hours','events_search','cugir_dataset','ebird_recent_observations','tcat_departures','weather_ithaca','academic_calendar','campus_place_search'].every((n) => j.result.tools.some((x) => x.name === n))"
 STATUS=$(curl -sS -m 30 -o /dev/null -w '%{http_code}' "$URL")
 if [ "$STATUS" = 405 ]; then PASS=$((PASS + 1)); echo "  ok    GET answers 405"; else FAIL=$((FAIL + 1)); echo "  FAIL  GET answered $STATUS"; fi
 
@@ -60,8 +60,6 @@ call classes_search '{"subject":"CS","roster":"current","level":2000,"limit":5}'
 sleep 1
 call classes_course '{"subject":"CS","number":"2110","roster":"current"}' "d.sections.length > 0 && d.course === 'CS 2110'"
 call library_hours '{"library":"Olin"}' "d.libraries[0].name === 'Olin Library' && typeof d.libraries[0].hours === 'string'"
-call library_catalog_search '{"query":"Middlemarch","field":"title","limit":3}' "d.count > 0 && !!d.results[0].id"
-call library_catalog_item '{"id":"857387"}' "/rainbow/i.test(d.title) && d.holdings.length > 0"
 call events_search '{"days":14,"limit":5}' "d.total > 0 && !!d.events[0].title"
 EVENT_ID=$(post '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"events_search","arguments":{"days":14,"limit":1}}}' | node -e 'let s="";process.stdin.on("data",(d)=>(s+=d)).on("end",()=>{try{console.log(JSON.parse(JSON.parse(s).result.content[0].text).events[0].id)}catch{console.log("0")}})')
 call events_detail "{\"id\":\"$EVENT_ID\"}" "!!d.title && !!d.url"

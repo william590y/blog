@@ -1,9 +1,10 @@
-// Cornell University Library: hours (the LibCal feed behind the hours on library.cornell.edu,
-// institution 973) and catalog search (the Blacklight catalog's JSON view). Read-only and
-// anonymous: nothing here touches patron accounts.
+// Cornell University Library hours: the LibCal feed behind the hours on library.cornell.edu
+// (institution 973). Read-only and anonymous: nothing here touches patron accounts.
+//
+// Catalog search is deliberately absent: catalog.library.cornell.edu disallows all robots and
+// answers requests from Cloudflare's network with a challenge page instead of JSON.
 
 import {
-  HttpError,
   InputError,
   cachedFetch,
   easternDate,
@@ -11,18 +12,14 @@ import {
   easternToEpoch,
   fmtDayTime,
   fmtTime,
-  intArg,
   matchScore,
   normalize,
   parseTimeOfDay,
   resolveDate,
-  truncate,
 } from './util.mjs';
 
 const LIBCAL_GRID = 'https://api3.libcal.com/api_hours_grid.php?iid=973&format=json&systemTime=0';
-const CATALOG = 'https://catalog.library.cornell.edu';
 const HOURS_TTL_MS = 15 * 60 * 1000;
-const CATALOG_TTL_MS = 10 * 60 * 1000;
 const HOURS_PAGE = 'https://www.library.cornell.edu/libraries/';
 
 // ---------------------------------------------------------------------------
@@ -197,165 +194,4 @@ export async function libraryHours(args = {}, nowMs = Date.now()) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Catalog
-// ---------------------------------------------------------------------------
-
-const SEARCH_FIELDS = {
-  all: 'all_fields',
-  title: 'title',
-  author: 'author',
-  subject: 'subject',
-  'call number': 'lc_callnum',
-  callnumber: 'lc_callnum',
-  isbn: 'isbnissn',
-  issn: 'isbnissn',
-  publisher: 'publisher',
-  series: 'series',
-};
-
-const FORMATS = ['Book', 'Journal/Periodical', 'Manuscript/Archive', 'Musical Score', 'Musical Recording', 'Video', 'Map', 'Thesis', 'Database', 'Non-musical Recording', 'Image', 'Computer File', 'Microform', 'Newspaper'];
-
-const first = (v) => (Array.isArray(v) ? v[0] : v) ?? null;
-const list = (v) => (Array.isArray(v) ? v : v == null ? [] : [v]);
-const parseJson = (s) => {
-  try {
-    return typeof s === 'string' ? JSON.parse(s) : s ?? null;
-  } catch {
-    return null;
-  }
-};
-
-function availability(doc) {
-  const a = parseJson(doc.availability_json);
-  if (!a) return null;
-  const places = (o) => Object.entries(o || {}).map(([where, call]) => (call ? `${where}: ${call}` : where));
-  return {
-    available: a.available === true,
-    ...(a.availAt ? { available_at: places(a.availAt) } : {}),
-    ...(a.unavailAt ? { unavailable_at: places(a.unavailAt) } : {}),
-    ...(a.online ? { online: true } : {}),
-  };
-}
-
-function onlineLinks(doc) {
-  return list(doc.url_access_json)
-    .map(parseJson)
-    .filter((u) => u?.url)
-    .slice(0, 3)
-    .map((u) => ({ url: u.url, ...(u.description ? { note: truncate(u.description, 140) } : {}) }));
-}
-
-function catalogSummary(doc) {
-  const avail = availability(doc);
-  const links = onlineLinks(doc);
-  return {
-    id: String(doc.id),
-    title: doc.fulltitle_display || doc.title_display || '(untitled)',
-    ...(doc.author_display ? { author: doc.author_display } : {}),
-    format: list(doc.format).join(', ') || null,
-    ...(first(doc.pub_info_display) ? { published: first(doc.pub_info_display) } : {}),
-    ...(first(doc.edition_display) ? { edition: first(doc.edition_display) } : {}),
-    access: list(doc.online).join(', ') || null,
-    ...(avail ? { availability: avail } : {}),
-    ...(links.length ? { online_access: 'Cornell login may be required', links: links.slice(0, 1) } : {}),
-    url: `${CATALOG}/catalog/${doc.id}`,
-  };
-}
-
-function holdings(doc) {
-  const h = parseJson(doc.holdings_json) || {};
-  const items = parseJson(doc.items_json) || {};
-  return Object.entries(h)
-    .filter(([, v]) => v && v.active !== false)
-    .slice(0, 15)
-    .map(([hid, v]) => {
-      const its = items[hid] || [];
-      const statuses = {};
-      for (const it of its) {
-        const st = it.status?.status || 'Unknown';
-        statuses[st] = (statuses[st] || 0) + 1;
-      }
-      const due = its.map((it) => it.status?.due).filter(Boolean).sort()[0];
-      return {
-        location: v.location?.name || 'Unknown location',
-        ...(v.call ? { call_number: v.call } : {}),
-        ...(v.copy ? { copy: v.copy } : {}),
-        ...(Object.keys(statuses).length ? { items: statuses } : v.items ? { items: { count: v.items.count } } : {}),
-        ...(due ? { earliest_due: easternDate(due * 1000) } : {}),
-        ...(v.circ === false ? { circulates: false } : {}),
-        ...(v.notes?.length ? { notes: v.notes.slice(0, 2).map((n) => truncate(n, 120)) } : {}),
-      };
-    });
-}
-
-function catalogDetail(doc) {
-  const s = catalogSummary(doc);
-  const links = onlineLinks(doc);
-  return {
-    ...s,
-    ...(list(doc.title_responsibility_display).length ? { responsibility: first(doc.title_responsibility_display) } : {}),
-    ...(first(doc.description_display) ? { physical: first(doc.description_display) } : {}),
-    ...(list(doc.language_display).length ? { language: list(doc.language_display).join(' ') } : {}),
-    ...(list(doc.subject_display).length ? { subjects: list(doc.subject_display).slice(0, 12) } : {}),
-    ...(list(doc.summary_display).length ? { summary: truncate(list(doc.summary_display).join(' '), 900) } : {}),
-    ...(list(doc.contents_display).length ? { contents: truncate(list(doc.contents_display).join(' -- '), 700) } : {}),
-    ...(list(doc.notes_display).length ? { notes: list(doc.notes_display).slice(0, 4).map((n) => truncate(n, 200)) } : {}),
-    ...(list(doc.isbn_display).length ? { isbn: list(doc.isbn_display).slice(0, 4) } : {}),
-    ...(list(doc.oclc_id_display).length ? { oclc: first(doc.oclc_id_display) } : {}),
-    ...(links.length ? { links } : {}),
-    holdings: holdings(doc),
-    note: 'Availability is from the catalog index and can lag by some hours; requests and renewals need a Cornell login on the catalog page.',
-  };
-}
-
-export async function libraryCatalogSearch(args = {}) {
-  const query = String(args.query ?? '').trim();
-  if (!query) throw new InputError('query is required, e.g. a title, author or topic.');
-  const fieldKey = normalize(args.field || 'all');
-  const field = SEARCH_FIELDS[fieldKey];
-  if (!field) throw new InputError(`field must be one of: ${Object.keys(SEARCH_FIELDS).filter((k) => k !== 'callnumber' && k !== 'issn').join(', ')}.`);
-  const limit = intArg(args.limit, 10, 1, 25);
-  const page = intArg(args.page, 1, 1, 200);
-  const params = new URLSearchParams({ q: query, search_field: field, per_page: String(limit), page: String(page) });
-  if (args.format) {
-    const f = FORMATS.find((x) => normalize(x) === normalize(args.format)) || FORMATS.find((x) => matchScore(args.format, x) >= 40);
-    if (!f) throw new InputError(`Unknown format "${args.format}". Formats: ${FORMATS.join(', ')}.`);
-    params.append('f[format][]', f);
-  }
-  if (args.online_only) params.append('f[online][]', 'Online');
-  if (args.library) params.append('f[location][]', String(args.library));
-  const { data } = await cachedFetch(`${CATALOG}/catalog.json?${params}`, { ttlMs: CATALOG_TTL_MS, edge: true, timeoutMs: 25000 });
-  const docs = data?.response?.document;
-  if (!Array.isArray(docs)) throw new Error('Unexpected catalog reply (no document list).');
-  return {
-    query,
-    field: fieldKey,
-    page,
-    count: docs.length,
-    results: docs.map(catalogSummary),
-    ...(docs.length === limit ? { more: `There may be more: ask for page ${page + 1}.` } : {}),
-    ...(docs.length ? {} : { note: 'Nothing found. Try fewer words, another field, or drop the filters.' }),
-    search_url: `${CATALOG}/catalog?${new URLSearchParams({ q: query, search_field: field })}`,
-    source: 'Cornell University Library catalog',
-  };
-}
-
-export async function libraryCatalogItem(args = {}) {
-  const id = String(args.id ?? '').trim();
-  if (!/^\d{1,12}$/.test(id)) throw new InputError('id must be the catalog record number from library_catalog_search, e.g. "857387".');
-  let doc;
-  try {
-    ({ data: doc } = await cachedFetch(`${CATALOG}/catalog/${id}/raw`, { ttlMs: CATALOG_TTL_MS, edge: true, timeoutMs: 25000 }));
-  } catch (err) {
-    // The catalog answers an unknown record with 404 or, for some ids, 500.
-    if (err instanceof HttpError && (err.status === 404 || err.status === 500)) {
-      throw new InputError(`No catalog record ${id}. Use library_catalog_search to find the record id.`);
-    }
-    throw err;
-  }
-  if (!doc || typeof doc !== 'object' || !doc.id) throw new InputError(`No catalog record ${id}.`);
-  return catalogDetail(doc);
-}
-
-export const _internal = { parseGrid, dayView, intervals, catalogSummary, catalogDetail, holdings, matchLibraries };
+export const _internal = { parseGrid, dayView, intervals, matchLibraries };

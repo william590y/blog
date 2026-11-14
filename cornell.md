@@ -17,7 +17,7 @@ In Claude, open **Settings → Connectors → Add custom connector** and enter t
 - **Dining.** What is open now or at a given time, every dining hall's menu by station, one eatery's hours and menu, and where a dish is being served.
 - **Gyms.** The live headcount and percent full at each fitness center, posted hours, and the day's group fitness classes.
 - **Classes.** The Class Roster for any term: classes in a subject by keyword, level or instructor, and one course's description, prerequisites, sections, meeting times, instructors and whether each section is open, closed or waitlisted.
-- **Libraries.** Hours for each library and its service desks, what is open now, and the catalog: titles, call numbers, which library holds a copy and whether it is on the shelf.
+- **Libraries.** Hours for each library and its service desks, what is open now, and a library's hours for the week ahead.
 - **Events.** The university events calendar by date, keyword, type, department or place.
 - **Buses.** The next TCAT departures at a stop with live estimates, the stops nearest a building, and current detours.
 - **Weather.** Current conditions, the National Weather Service forecast and any active alerts for Ithaca.
@@ -28,10 +28,10 @@ In Claude, open **Settings → Connectors → Add custom connector** and enter t
 
 ### What it does not do
 
-It cannot see anything behind a Cornell login. It does not look up people, read your schedule, enroll you in a class, or request or renew a book. The Class Roster's public listing has no seat counts and no rooms, the campus map has parking lots but not whether they are full, and gym hours are the regular semester hours as posted.
+It cannot see anything behind a Cornell login. It does not look up people, read your schedule, enroll you in a class or search the library catalog. The Class Roster's public listing has no seat counts and no rooms, the campus map has parking lots but not whether they are full, and gym hours are the regular semester hours as posted.
 
 ### Sources
 
-Cornell Dining, Cornell Fitness Centers, the [Class Roster](https://classes.cornell.edu), [Cornell University Library](https://www.library.cornell.edu) and its [catalog](https://catalog.library.cornell.edu), the [events calendar](https://events.cornell.edu), [CUGIR](https://cugir.library.cornell.edu), [eBird](https://ebird.org), [TCAT](https://tcatbus.com), the [National Weather Service](https://www.weather.gov), the [Registrar](https://registrar.cornell.edu/academic-calendar) and the [campus map](https://www.cornell.edu/about/maps/). Answers are fetched when asked and cached for a few minutes.
+Cornell Dining, Cornell Fitness Centers, the [Class Roster](https://classes.cornell.edu), [Cornell University Library](https://www.library.cornell.edu), the [events calendar](https://events.cornell.edu), [CUGIR](https://cugir.library.cornell.edu), [eBird](https://ebird.org), [TCAT](https://tcatbus.com), the [National Weather Service](https://www.weather.gov), the [Registrar](https://registrar.cornell.edu/academic-calendar) and the [campus map](https://www.cornell.edu/about/maps/). Answers are fetched when asked and cached for a few minutes.
 
 The code and the list of tools are [on GitHub](https://github.com/william590y/blog/tree/gh-pages/cornell_mcp).

@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { onRequest } from '../../functions/mcp.js';
 import { _resetCache, easternToEpoch } from '../lib/util.mjs';
 import { classesCourse, classesRosters, classesSearch, classesSubjects, _internal as classesInt } from '../lib/classes.mjs';
-import { libraryCatalogItem, libraryCatalogSearch, libraryHours } from '../lib/library.mjs';
+import { libraryHours } from '../lib/library.mjs';
 import { eventsCategories, eventsDetail, eventsSearch } from '../lib/events.mjs';
 import { cugirDataset, cugirSearch, _internal as cugirInt } from '../lib/cugir.mjs';
 import { EBIRD_NOT_CONFIGURED, ebirdHotspots, ebirdRecentObservations, ebirdSpecies, _internal as ebirdInt } from '../lib/ebird.mjs';
@@ -82,9 +82,6 @@ const ROUTES = [
   ['subject=MATH', () => new Response(JSON.stringify({ status: 'error', message: 'Not Found' }), { status: 404 })],
   ['classes.cornell.edu/api/2.0/search/classes.json', 'classes_search.json'],
   ['api3.libcal.com/api_hours_grid.php', 'libcal_grid.json'],
-  ['catalog.library.cornell.edu/catalog.json', 'catalog_search.json'],
-  ['catalog.library.cornell.edu/catalog/857387/raw', 'catalog_raw.json'],
-  ['catalog.library.cornell.edu/catalog/', () => new Response('Internal Server Error', { status: 500 })],
   ['events.cornell.edu/api/2/events/filters', 'events_filters.json'],
   ['events.cornell.edu/api/2/events/36798930780424', 'events_event.json'],
   ['events.cornell.edu/api/2/events/123', () => new Response('{"status":"error","code":"not_found"}', { status: 404 })],
@@ -222,30 +219,6 @@ async function unitTests() {
     ok(/No library matches/.test(r.error) && r.libraries.length > 3);
     await throwsInput(() => libraryHours({ date: '2026-11-01' }, NOW), /today and future/);
     await throwsInput(() => libraryHours({ date: '2028-01-01' }, NOW), /six months/);
-  });
-  await test('library_catalog_search: availability, online links, filters in the URL', async () => {
-    const r = await libraryCatalogSearch({ query: "gravity's rainbow", field: 'title', format: 'book', online_only: true, limit: 2 });
-    eq(r.count, 2);
-    eq(r.results[0].id, '857387');
-    eq(r.results[0].availability.available, true);
-    ok(r.results[0].availability.unavailable_at[0].startsWith('Olin Library'));
-    ok(r.results[1].links?.[0]?.url, 'online record should carry a link');
-    const u = requests.at(-1).url;
-    ok(u.includes('search_field=title') && u.includes('f[format][]=Book') && u.includes('f[online][]=Online') && u.includes('per_page=2'), u);
-    await throwsInput(() => libraryCatalogSearch({ query: '' }), /query is required/);
-    await throwsInput(() => libraryCatalogSearch({ query: 'x', field: 'colour' }), /field must be/);
-    await throwsInput(() => libraryCatalogSearch({ query: 'x', format: 'hologram' }), /Unknown format/);
-  });
-  await test('library_catalog_item: holdings with status and due date; unknown id', async () => {
-    const r = await libraryCatalogItem({ id: '857387' });
-    eq(r.title, "Gravity's rainbow");
-    const olin = r.holdings.find((h) => h.location === 'Olin Library');
-    eq(olin.items, { 'Checked out': 1 });
-    ok(/^\d{4}-\d{2}-\d{2}$/.test(olin.earliest_due));
-    ok(r.holdings.some((h) => h.circulates === false));
-    ok(!JSON.stringify(r).includes('barcode'));
-    await throwsInput(() => libraryCatalogItem({ id: '424242' }), /No catalog record/);
-    await throwsInput(() => libraryCatalogItem({ id: 'abc' }), /record number/);
   });
 
   // ---- Events ----
@@ -456,14 +429,14 @@ async function unitTests() {
     stubFetch();
     _resetCache();
   });
-  await test('server: initialize, tools/list (28 tools, closed schemas), unknown tool, errors', async () => {
+  await test('server: initialize, tools/list (26 tools, closed schemas), unknown tool, errors', async () => {
     const init = await rpc('initialize', { protocolVersion: '2025-06-18' });
     eq(init.result.serverInfo.version, '0.3.0');
     ok(/classes_search/.test(init.result.instructions) && /eBird/.test(init.result.instructions));
     const list = await rpc('tools/list');
     const names = list.result.tools.map((t) => t.name);
-    eq(names.length, 28);
-    eq(new Set(names).size, 28);
+    eq(names.length, 26);
+    eq(new Set(names).size, 26);
     for (const old of ['dining_open_now', 'dining_menus', 'dining_eatery', 'dining_menu_search', 'dining_list_eateries', 'gym_occupancy', 'gym_schedule']) {
       ok(names.includes(old), `existing tool ${old} must stay`);
     }
@@ -591,17 +564,6 @@ async function liveTests() {
     const one = await call('library_hours', { library: 'Mann', date: 'tomorrow' });
     eq(one.libraries[0].name, 'Mann Library');
   });
-  let bib;
-  await test('library_catalog_search', async () => {
-    const r = await call('library_catalog_search', { query: 'Middlemarch', field: 'title', format: 'Book', limit: 3 });
-    ok(r.count > 0 && r.results[0].id && r.results[0].title, JSON.stringify(r).slice(0, 200));
-    bib = r.results[0].id;
-  });
-  await test('library_catalog_item', async () => {
-    const r = await call('library_catalog_item', { id: bib || '857387' });
-    ok(r.title && Array.isArray(r.holdings));
-  });
-
   // Events
   let eventId;
   await test('events_search', async () => {
@@ -706,7 +668,6 @@ async function liveTests() {
   await test('live input errors read well', async () => {
     const cases = [
       ['classes_course', { subject: 'CS', number: '9999' }, /not offered/],
-      ['library_catalog_item', { id: '99999999999' }, /No catalog record/],
       ['events_detail', { id: '123' }, /No event with id/],
       ['cugir_dataset', { id: 'cugir-999999' }, /No CUGIR dataset/],
       ['tcat_departures', { stop: 'no such stop anywhere' }, /No TCAT stop/],

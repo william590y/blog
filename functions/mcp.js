@@ -1,5 +1,5 @@
 // Cornell campus MCP server: live Cornell Dining hours and menus, gym crowding and hours, the Class
-// Roster, library hours and catalog, the events calendar, CUGIR geodata, eBird sightings, TCAT buses,
+// Roster, library hours, the events calendar, CUGIR geodata, eBird sightings, TCAT buses,
 // Ithaca weather, the academic calendar and the campus map. A Cloudflare Pages Function
 // served at https://williamliaw.com/mcp, speaking MCP's Streamable HTTP transport statelessly: every
 // POST carries JSON-RPC and gets a JSON reply, with no sessions and no SSE stream. Add it in Claude
@@ -19,7 +19,7 @@ import {
 } from '../cornell_mcp/lib/dining.mjs';
 import { gymOccupancy, gymSchedule } from '../cornell_mcp/lib/gym.mjs';
 import { classesCourse, classesRosters, classesSearch, classesSubjects } from '../cornell_mcp/lib/classes.mjs';
-import { libraryCatalogItem, libraryCatalogSearch, libraryHours } from '../cornell_mcp/lib/library.mjs';
+import { libraryHours } from '../cornell_mcp/lib/library.mjs';
 import { eventsCategories, eventsDetail, eventsSearch } from '../cornell_mcp/lib/events.mjs';
 import { cugirDataset, cugirSearch } from '../cornell_mcp/lib/cugir.mjs';
 import { ebirdHotspots, ebirdRecentObservations, ebirdSpecies } from '../cornell_mcp/lib/ebird.mjs';
@@ -41,7 +41,7 @@ const INSTRUCTIONS = `Live Cornell University and Ithaca data: dining, gyms, cla
 - Menus: for "what's for dinner" or "what's on the menu", call dining_menus once (every dining hall, by station); dining_eatery for one place; dining_menu_search only to find where a specific dish is.
 - Summarize menus (main entrees, stations, notable vegetarian items) unless the full menu is asked for. Lead with the answer and keep it short.
 - Classes: the Class Roster searches one subject at a time, so a subject is required (classes_subjects finds the code). roster defaults to the one Cornell's site shows by default, usually the next term once it is published; pass "current" for the term in session, or a code such as FA26. classes_search to browse or filter; classes_course for one course's sections, times, instructors and open/closed/waitlist status. There are no seat counts or rooms in the feed.
-- Libraries: library_hours for hours and what is open now (Olin, Uris, Mann and the unit libraries, with service desks); library_catalog_search then library_catalog_item for holdings, call numbers and availability. No account features: requests and renewals happen on the catalog page.
+- Libraries: library_hours for hours and what is open now (Olin, Uris, Mann and the unit libraries, with service desks). There is no catalog search here: for books, point to https://catalog.library.cornell.edu.
 - Events: events_search by dates, keyword, type, department or place; events_detail for one event; events_categories lists the type and department names.
 - Buses: tcat_departures takes a stop name or id and gives the next buses with live estimates; tcat_stop_search finds stops (near "lat,lng" from campus_place_search if needed); tcat_alerts for detours.
 - Dates such as breaks, add/drop deadlines, exams and enrollment: academic_calendar. Weather: weather_ithaca. Where a building or parking lot is: campus_place_search.
@@ -248,31 +248,6 @@ const TOOLS = [
     }),
     run: (a) => libraryHours(a),
   },
-  {
-    name: 'library_catalog_search',
-    title: 'Search the library catalog',
-    description:
-      'Search the Cornell University Library catalog (books, journals, scores, recordings, videos, maps, theses, e-resources). Returns title, author, format, call number locations and whether a copy is available or online. Use for "does the library have Gravity\'s Rainbow", "books by Hannah Arendt".',
-    inputSchema: obj(
-      {
-        query: { type: 'string', description: 'Title, author, topic, ISBN or call number' },
-        field: { type: 'string', description: 'Where to search (default all)', enum: ['all', 'title', 'author', 'subject', 'call number', 'isbn', 'publisher', 'series'] },
-        format: { type: 'string', description: 'e.g. "Book", "Journal/Periodical", "Musical Score", "Video", "Map", "Thesis"' },
-        online_only: { type: 'boolean', description: 'Only items available online' },
-        limit: { type: 'integer', description: 'Max results, 1-25 (default 10)', minimum: 1, maximum: 25 },
-        page: { type: 'integer', description: 'Results page (default 1)', minimum: 1 },
-      },
-      ['query'],
-    ),
-    run: (a) => libraryCatalogSearch(a),
-  },
-  {
-    name: 'library_catalog_item',
-    title: 'One catalog record: holdings',
-    description: 'One library catalog record by id (from library_catalog_search): every holding with library, call number, item status and due date, plus subjects, summary and online links.',
-    inputSchema: obj({ id: { type: 'string', description: 'Catalog record id, e.g. "857387"', pattern: '^\\d{1,12}$' } }, ['id']),
-    run: (a) => libraryCatalogItem(a),
-  },
   // ---- Events ----
   {
     name: 'events_search',
@@ -466,8 +441,7 @@ const FALLBACKS = {
   dining: DINING_GYM_FALLBACK,
   gym: DINING_GYM_FALLBACK,
   classes: 'Fallback page: https://classes.cornell.edu',
-  library_hours: 'Fallback page: https://www.library.cornell.edu/libraries/',
-  library_catalog: 'Fallback page: https://catalog.library.cornell.edu',
+  library: 'Fallback page: https://www.library.cornell.edu/libraries/',
   events: 'Fallback page: https://events.cornell.edu',
   cugir: 'Fallback page: https://cugir.library.cornell.edu',
   ebird: 'Fallback page: https://ebird.org/region/US-NY-109',
