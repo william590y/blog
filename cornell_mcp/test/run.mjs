@@ -17,7 +17,7 @@ import { _resetCache, easternToEpoch } from '../lib/util.mjs';
 import { classesCourse, classesRosters, classesSearch, classesSubjects, _internal as classesInt } from '../lib/classes.mjs';
 import { libraryHours } from '../lib/library.mjs';
 import { NOT_BOOKED, libraryRoomBookingLink, libraryRoomsAvailability, libraryRoomsList } from '../lib/rooms.mjs';
-import { NOT_REQUESTED, campusRoomBookingLink, campusRoomsAvailability, campusRoomsSearch } from '../lib/spaces25.mjs';
+import { NOT_REQUESTED, campusRoomBookingLink } from '../lib/spaces25.mjs';
 import { eventsCategories, eventsDetail, eventsSearch } from '../lib/events.mjs';
 import { cugirDataset, cugirSearch, _internal as cugirInt } from '../lib/cugir.mjs';
 import { EBIRD_NOT_CONFIGURED, ebirdHotspots, ebirdRecentObservations, ebirdSpecies, _internal as ebirdInt } from '../lib/ebird.mjs';
@@ -87,11 +87,6 @@ const ROUTES = [
   ['spaces.library.cornell.edu/allspaces', 'libcal_allspaces.html'],
   ['spaces.library.cornell.edu/spaces/availability/grid', 'libcal_roomgrid.json'],
   ['spaces.library.cornell.edu/space/', 'libcal_space.html'],
-  ['25live/data/cornell/run/spaces.json?scope=list&name=zzzz', () => new Response('{"list":{"engine":"accl","total_results":0}}')],
-  ['25live/data/cornell/run/spaces.json', 'l25_search.json'],
-  ['25live/data/cornell/run/space.json?space_id=333', 'l25_space.json'],
-  ['25live/data/cornell/run/space.json', () => new Response('{"results":{"error":{"msg":"Space not found"}}}', { status: 404 })],
-  ['25live/data/cornell/run/availability/availabilitydata.json', 'l25_availability.json'],
   ['events.cornell.edu/api/2/events/filters', 'events_filters.json'],
   ['events.cornell.edu/api/2/events/36798930780424', 'events_event.json'],
   ['events.cornell.edu/api/2/events/123', () => new Response('{"status":"error","code":"not_found"}', { status: 404 })],
@@ -295,48 +290,20 @@ async function unitTests() {
     await throwsInput(() => libraryRoomBookingLink({ room: 'Olin 302', date: '2026-11-01' }, MON), /today or a future date/);
   });
 
-  // ---- Rooms: 25Live ----
-  await test('campus_rooms_search: details, no editor NetID, word match', async () => {
-    const r = await campusRoomsSearch({ query: 'Gates Hall G01' });
-    eq(r.count, 1);
-    eq(r.spaces[0].space_id, 333);
-    eq(r.spaces[0].name, 'Gates Hall G01');
-    eq(r.spaces[0].capacity, 154);
-    ok(r.spaces[0].features.includes('ADA - Wheelchair Accessible'));
-    ok(!r.spaces[0].categories.some((c) => /^Campus - |^COVID/.test(c)));
-    ok(!/last_mod_user/.test(JSON.stringify(r)));
-    eq((await campusRoomsSearch({ query: 'zzzz' })).count, 0);
-    await throwsInput(() => campusRoomsSearch({}), /Give a space/);
-  });
-  await test('campus_rooms_availability: blocks merged across cross-listings, string hours, gaps', async () => {
-    const r = await campusRoomsAvailability({ space: 'GTSG01', date: '2026-11-16', start: '5pm', duration_minutes: 60 }, MON);
-    const sp = r.spaces[0];
-    eq(sp.scheduled.length, 9);
-    eq(sp.scheduled[0], { time: '9:05am-9:55am', what: 'INFO 3350 001 CS 2937 / INFO 6350 001 CS 2937' });
-    eq(sp.scheduled.at(-1).time, '7:30pm-9:25pm');
-    eq(sp.free_for_wanted_time, false);
-    ok(sp.conflicts.some((c) => c.startsWith('4:25pm-5:15pm')) && sp.conflicts.some((c) => c.startsWith('5:30pm-6:30pm')), JSON.stringify(sp.conflicts));
-    eq(sp.unscheduled_between_7am_and_11pm.at(-1), '9:25pm-11:00pm');
-    eq(sp.unscheduled_between_7am_and_11pm[0], '7:00am-9:05am');
-    const free = await campusRoomsAvailability({ space: '333', date: '2026-11-16', start: '9:30pm', duration_minutes: 60 }, MON);
-    eq(free.spaces[0].free_for_wanted_time, true);
-    ok(/not a guarantee/.test(free.reminder));
-  });
-  await test('campus_room_booking_link: a link and steps, never a request', async () => {
+  // ---- Rooms: 25Live hand-off ----
+  await test('campus_room_booking_link: steps only, no request to 25Live at all', async () => {
     const before = requests.length;
-    const r = await campusRoomBookingLink({ space: '333', date: '2026-11-16', start: '9:30pm' }, MON);
+    const r = await campusRoomBookingLink({ space: 'Gates Hall G01', date: '2026-11-16', start: '9:30pm', duration_minutes: 90 }, MON);
     eq(r.status, NOT_REQUESTED);
-    ok(/^NOT BOOKED/.test(r.status));
-    eq(r.link, 'https://25live.collegenet.com/pro/cornell#!/home/location/333/details');
-    ok(/^Nothing is scheduled/.test(r.availability_check));
+    ok(/^NOT BOOKED/.test(r.status) && /has not checked/.test(r.status));
+    eq(r.link, 'https://25live.collegenet.com/pro/cornell');
+    eq(r.request, { space: 'Gates Hall G01', date: '2026-11-16', time: '9:30pm-11:00pm' });
+    ok(/^Not checked/.test(r.availability_check));
     ok(/Prepared, not requested/.test(r.summary) && r.steps.some((x) => /NetID/.test(x)));
-    ok(/^NOT free/.test((await campusRoomBookingLink({ space: '333', date: '2026-11-16', start: '10am' }, MON)).availability_check));
-    for (const q of requests.slice(before)) {
-      eq(q.method, 'GET', 'only reads');
-      ok(!/login|shibboleth|event\.json|events\.json/.test(q.url), `unexpected request ${q.url}`);
-    }
-    await throwsInput(() => campusRoomBookingLink({ space: 'zzzz', date: '2026-11-16' }, MON), /No 25Live space/);
-    await throwsInput(() => campusRoomBookingLink({ space: '333', date: '2026-11-01' }, MON), /today or a future date/);
+    eq(requests.length, before, '25Live sits behind Cornell sign-in: the server must not call it');
+    await throwsInput(() => campusRoomBookingLink({ date: '2026-11-16' }, MON), /space is required/);
+    await throwsInput(() => campusRoomBookingLink({ space: 'x', date: '2026-11-01' }, MON), /today or a future date/);
+    await throwsInput(() => campusRoomBookingLink({ space: 'x', date: '2026-11-16', start: 'teatime' }, MON), /Could not understand start/);
   });
 
   // ---- Events ----
@@ -547,14 +514,14 @@ async function unitTests() {
     stubFetch();
     _resetCache();
   });
-  await test('server: initialize, tools/list (32 tools, closed schemas), unknown tool, errors', async () => {
+  await test('server: initialize, tools/list (30 tools, closed schemas), unknown tool, errors', async () => {
     const init = await rpc('initialize', { protocolVersion: '2025-06-18' });
     eq(init.result.serverInfo.version, '0.3.0');
     ok(/classes_search/.test(init.result.instructions) && /eBird/.test(init.result.instructions));
     const list = await rpc('tools/list');
     const names = list.result.tools.map((t) => t.name);
-    eq(names.length, 32);
-    eq(new Set(names).size, 32);
+    eq(names.length, 30);
+    eq(new Set(names).size, 30);
     for (const old of ['dining_open_now', 'dining_menus', 'dining_eatery', 'dining_menu_search', 'dining_list_eateries', 'gym_occupancy', 'gym_schedule']) {
       ok(names.includes(old), `existing tool ${old} must stay`);
     }
@@ -569,6 +536,7 @@ async function unitTests() {
       ok(/WITHOUT/.test(t.description) && /never (books|requests)/.test(t.description) && /does not book/.test(t.title), `${t.name} must say it does not book`);
     }
     ok(/cannot book/.test(init.result.instructions) && /never say a room is booked/.test(init.result.instructions));
+    ok(!/25live\.collegenet\.com\/25live\/data/.test(JSON.stringify(list)), 'no 25Live data endpoint');
     const sent = JSON.stringify(list.result.tools.map((t) => t.inputSchema));
     ok(!/password|netid_password|cookie|duo|token/i.test(sent), 'no tool may accept credentials');
     const bad = await rpc('tools/call', { name: 'nope', arguments: {} });
@@ -709,20 +677,9 @@ async function liveTests() {
     const html = await page.text();
     ok(page.ok && html.includes(`initialDate: '${r.request.date.replace(/-/g, '\\u002D')}'`), 'the booking page should open on the requested date');
   });
-  let spaceId;
-  await test('campus_rooms_search', async () => {
-    const r = await call('campus_rooms_search', { query: 'Gates' });
-    ok(r.count > 0 && r.spaces.every((x) => x.space_id && x.name), JSON.stringify(r).slice(0, 200));
-    ok(!/last_mod_user|Hidden from general users/.test(JSON.stringify(r)));
-    spaceId = r.spaces.find((x) => x.code === 'GTSG01')?.space_id ?? r.spaces[0].space_id;
-  });
-  await test('campus_rooms_availability', async () => {
-    const r = await call('campus_rooms_availability', { space: String(spaceId), date: 'monday', start: '10:30am' });
-    ok(r.spaces.length === 1 && Array.isArray(r.spaces[0].scheduled) && typeof r.spaces[0].free_for_wanted_time === 'boolean');
-  });
   await test('campus_room_booking_link', async () => {
-    const r = await call('campus_room_booking_link', { space: String(spaceId), date: 'monday', start: '8pm' });
-    ok(/^NOT BOOKED/.test(r.status) && r.link.startsWith('https://25live.collegenet.com/pro/cornell#!/home/location/'));
+    const r = await call('campus_room_booking_link', { space: 'Gates Hall G01', date: 'monday', start: '8pm' });
+    ok(/^NOT BOOKED/.test(r.status) && r.link === 'https://25live.collegenet.com/pro/cornell' && /^Not checked/.test(r.availability_check));
   });
 
   // Events
@@ -831,7 +788,6 @@ async function liveTests() {
       ['classes_course', { subject: 'CS', number: '9999' }, /not offered/],
       ['events_detail', { id: '123' }, /No event with id/],
       ['library_room_booking_link', { room: 'no such room' }, /No bookable library room/],
-      ['campus_room_booking_link', { space: 'zzqqzzqq' }, /No 25Live space/],
       ['cugir_dataset', { id: 'cugir-999999' }, /No CUGIR dataset/],
       ['tcat_departures', { stop: 'no such stop anywhere' }, /No TCAT stop/],
     ];

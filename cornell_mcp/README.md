@@ -25,9 +25,7 @@ To add it to Claude, go to Settings → Connectors → Add custom connector and 
 | `library_rooms_list` | bookable library study rooms: library, category, capacity, description |
 | `library_rooms_availability` | live free times of library study rooms on a date, or rooms free at a wanted time |
 | `library_room_booking_link` | a link to the library's booking page for a room and date, with the steps; books nothing |
-| `campus_rooms_search` | classrooms and event spaces in 25Live: capacity, categories, features |
-| `campus_rooms_availability` | what is scheduled in a 25Live space on a date, and the gaps |
-| `campus_room_booking_link` | a link to the space's 25Live page, with the steps to request it; requests nothing |
+| `campus_room_booking_link` | a link to 25Live with the steps to request a room; checks and requests nothing |
 | `events_search` | campus events by date range, keyword, type, department or place |
 | `events_detail` | one event in full: description, dates, place, cost, links |
 | `events_categories` | the event type, department and theme names used for filtering |
@@ -52,7 +50,6 @@ To add it to Claude, go to Settings → Connectors → Add custom connector and 
 | Classes | classes.cornell.edu/api/2.0 (documented public API; asks for at most 1 request a second) | 10 min; terms and subjects 6 h |
 | Library hours | api3.libcal.com, institution 973 (the feed behind the hours on library.cornell.edu) | 15 min |
 | Library rooms | spaces.library.cornell.edu (LibCal): the room list in `/allspaces` and the booking grid's own `/spaces/availability/grid` | grid 2 min; rooms 6 h |
-| Campus rooms | 25live.collegenet.com `25live/data/cornell/run` (the anonymous view of Scheduling@Cornell) | calendar 5 min; spaces 24 h |
 | Events | events.cornell.edu/api/2 (Localist) | 10 min; filters 12 h |
 | CUGIR | cugir.library.cornell.edu `catalog.json` and `/catalog/<id>/raw` (GeoBlacklight) | 1 h |
 | eBird | api.ebird.org/v2 (needs a key, below) | 5 min; hotspots and taxonomy 24 h |
@@ -77,19 +74,21 @@ personal locations are reported without the location's name.
 
 ## Rooms: availability yes, booking no
 
-The room tools read what an anonymous visitor to the booking sites sees: the library's free/busy
-grid (LibCal) and the public calendar of each 25Live space. The server is unauthenticated and open
-to anyone, so by design it never signs in, never holds or accepts a NetID, password, cookie or Duo
-code, and never submits a reservation. `library_room_booking_link` and `campus_room_booking_link`
-return a link to the official page plus the remaining steps, and their results begin with
-"NOT BOOKED". The library link opens the room's page on the requested date
-(`/space/<id>?date=YYYY-MM-DD`; LibCal has no parameter for the time). The 25Live link opens the
-space's page (25Live takes no date or time in a link).
+The library room tools read what an anonymous visitor to the library's booking site sees: the room
+list and the free/busy grid (LibCal). The server is unauthenticated and open to anyone, so by
+design it never signs in, never holds or accepts a NetID, password, cookie or Duo code, and never
+submits a reservation. `library_room_booking_link` returns a link to the official page plus the
+remaining steps, and its result begins "NOT BOOKED". The link opens the room's page on the
+requested date (`/space/<id>?date=YYYY-MM-DD`; LibCal has no parameter for the time).
 
 The LibCal grid endpoint only answers requests that carry the booking page as their Referer, so
-the request names that page, as the page's own script does. Instructors' and editors' NetIDs that
-appear in the 25Live feed are dropped, and spaces the scheduling office marks "Hidden from general
-users" are left out.
+the request names that page, as the page's own script does.
+
+25Live (Scheduling@Cornell) is different: its site sends every visitor to Cornell's sign-in before
+showing anything. Its data service does answer some requests without a session, but the server
+does not use that, because the site's own front door asks for a NetID. So there is no 25Live room
+search or calendar here; `campus_room_booking_link` returns the 25Live address and the steps, and
+says that availability was not checked.
 
 ## eBird key
 

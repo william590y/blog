@@ -1,5 +1,5 @@
 // Cornell campus MCP server: live Cornell Dining hours and menus, gym crowding and hours, the Class
-// Roster, library hours and study-room availability, 25Live room calendars, the events calendar, CUGIR geodata, eBird sightings, TCAT buses,
+// Roster, library hours and study-room availability, the events calendar, CUGIR geodata, eBird sightings, TCAT buses,
 // Ithaca weather, the academic calendar and the campus map. A Cloudflare Pages Function
 // served at https://williamliaw.com/mcp, speaking MCP's Streamable HTTP transport statelessly: every
 // POST carries JSON-RPC and gets a JSON reply, with no sessions and no SSE stream. Add it in Claude
@@ -21,7 +21,7 @@ import { gymOccupancy, gymSchedule } from '../cornell_mcp/lib/gym.mjs';
 import { classesCourse, classesRosters, classesSearch, classesSubjects } from '../cornell_mcp/lib/classes.mjs';
 import { libraryHours } from '../cornell_mcp/lib/library.mjs';
 import { libraryRoomBookingLink, libraryRoomsAvailability, libraryRoomsList } from '../cornell_mcp/lib/rooms.mjs';
-import { campusRoomBookingLink, campusRoomsAvailability, campusRoomsSearch } from '../cornell_mcp/lib/spaces25.mjs';
+import { campusRoomBookingLink } from '../cornell_mcp/lib/spaces25.mjs';
 import { eventsCategories, eventsDetail, eventsSearch } from '../cornell_mcp/lib/events.mjs';
 import { cugirDataset, cugirSearch } from '../cornell_mcp/lib/cugir.mjs';
 import { ebirdHotspots, ebirdRecentObservations, ebirdSpecies } from '../cornell_mcp/lib/ebird.mjs';
@@ -44,7 +44,7 @@ const INSTRUCTIONS = `Live Cornell University and Ithaca data: dining, gyms, cla
 - Summarize menus (main entrees, stations, notable vegetarian items) unless the full menu is asked for. Lead with the answer and keep it short.
 - Classes: the Class Roster searches one subject at a time, so a subject is required (classes_subjects finds the code). roster defaults to the one Cornell's site shows by default, usually the next term once it is published; pass "current" for the term in session, or a code such as FA26. classes_search to browse or filter; classes_course for one course's sections, times, instructors and open/closed/waitlist status. There are no seat counts or rooms in the feed.
 - Libraries: library_hours for hours and what is open now (Olin, Uris, Mann and the unit libraries, with service desks). There is no catalog search here: for books, point to https://catalog.library.cornell.edu.
-- Rooms: library study rooms are library_rooms_list / library_rooms_availability (live free times); classrooms and event spaces in 25Live are campus_rooms_search / campus_rooms_availability. Availability is live, but this connector cannot book, sign in or hold anyone's credentials. library_room_booking_link and campus_room_booking_link only prepare a link to the official page: say plainly that nothing is booked yet, give the link and the remaining steps (open it, sign in with a Cornell NetID, confirm), and never say a room is booked, reserved or requested.
+- Rooms: library study rooms are library_rooms_list / library_rooms_availability (live free times from the library's booking grid). This connector cannot book, sign in or hold anyone's credentials. library_room_booking_link only prepares a link to the library's booking page: say plainly that nothing is booked yet, give the link and the remaining steps (open it, pick the time, sign in with a Cornell NetID, confirm), and never say a room is booked or reserved. Classrooms and event spaces are in 25Live, which shows nothing without a Cornell sign-in: campus_room_booking_link gives the link and steps only, with no availability.
 - Events: events_search by dates, keyword, type, department or place; events_detail for one event; events_categories lists the type and department names.
 - Buses: tcat_departures takes a stop name or id and gives the next buses with live estimates; tcat_stop_search finds stops (near "lat,lng" from campus_place_search if needed); tcat_alerts for detours.
 - Dates such as breaks, add/drop deadlines, exams and enrollment: academic_calendar. Weather: weather_ithaca. Where a building or parking lot is: campus_place_search.
@@ -251,7 +251,7 @@ const TOOLS = [
     }),
     run: (a) => libraryHours(a),
   },
-  // ---- Rooms: library study rooms (LibCal) and campus spaces (25Live) ----
+  // ---- Rooms: library study rooms (LibCal); a hand-off link for 25Live ----
   {
     name: 'library_rooms_list',
     title: 'Library study rooms',
@@ -300,44 +300,13 @@ const TOOLS = [
     run: (a) => libraryRoomBookingLink(a),
   },
   {
-    name: 'campus_rooms_search',
-    title: 'Find campus rooms (25Live)',
-    description:
-      'Find classrooms, meeting rooms and event spaces in Scheduling@Cornell (25Live) by building, name or room code: capacity, categories and features (AV, seating, accessibility). Use for "rooms in Gates Hall", "how many seats in Klarman KG70". Read-only public view.',
-    inputSchema: obj(
-      {
-        query: { type: 'string', description: 'Building, room name or code, e.g. "Gates", "Gates Hall G01", "GTSG01", "Willard Straight"' },
-        min_capacity: { type: 'integer', description: 'Only spaces that hold at least this many people', minimum: 1, maximum: 5000 },
-        limit: { type: 'integer', description: 'Max spaces, 1-14 (default 8)', minimum: 1, maximum: 14 },
-      },
-      ['query'],
-    ),
-    run: (a) => campusRoomsSearch(a),
-  },
-  {
-    name: 'campus_rooms_availability',
-    title: 'What is scheduled in a campus room (25Live)',
-    description:
-      'What is scheduled in a campus room on a date according to Scheduling@Cornell (25Live): classes and events with their times, and the unscheduled gaps; give start (and duration_minutes) to check one time. Use for "is Gates G01 free Monday at 5pm". Read-only: an unscheduled time is not a reservation and requests need approval.',
-    inputSchema: obj(
-      {
-        space: { type: 'string', description: 'Room name, code or space_id from campus_rooms_search, e.g. "Gates G01", "GTSG01", "333"' },
-        date: DATE,
-        start: { type: 'string', description: 'Wanted start time, e.g. "5pm"' },
-        duration_minutes: { type: 'integer', description: 'Wanted length in minutes (default 60)', minimum: 15, maximum: 960 },
-      },
-      ['space'],
-    ),
-    run: (a) => campusRoomsAvailability(a),
-  },
-  {
     name: 'campus_room_booking_link',
-    title: 'Link to request a campus room (does not book)',
+    title: 'Link to request a campus room in 25Live (does not book)',
     description:
-      'Prepares a 25Live space request WITHOUT submitting it: returns a link to the room\'s page in Scheduling@Cornell, a check of whether anything is scheduled at the wanted time, and the steps the person must do themselves (sign in with their Cornell NetID, fill in the event form, wait for the scheduler\'s approval). This tool never requests or books anything; never tell the person the room is booked.',
+      'Prepares a request for a classroom, meeting room or event space in Scheduling@Cornell (25Live) WITHOUT submitting it and without checking availability (25Live shows calendars only after a Cornell sign-in, which this server never does). Returns the 25Live link and the steps the person must do themselves: sign in with their Cornell NetID, check the room, fill in the event form, wait for the scheduler. This tool never requests or books anything; never tell the person the room is booked or that it is free.',
     inputSchema: obj(
       {
-        space: { type: 'string', description: 'Room name, code or space_id from campus_rooms_search' },
+        space: { type: 'string', description: 'The room wanted, e.g. "Gates Hall G01"' },
         date: DATE,
         start: { type: 'string', description: 'Wanted start time, e.g. "5pm"' },
         duration_minutes: { type: 'integer', description: 'Wanted length in minutes (default 60)', minimum: 15, maximum: 960 },

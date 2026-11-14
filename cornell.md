@@ -19,7 +19,7 @@ In Claude, open **Settings → Connectors → Add custom connector** and enter t
 - **Classes.** The Class Roster for any term: classes in a subject by keyword, level or instructor, and one course's description, prerequisites, sections, meeting times, instructors and whether each section is open, closed or waitlisted.
 - **Libraries.** Hours for each library and its service desks, what is open now, and a library's hours for the week ahead.
 - **Study rooms.** The library's bookable rooms with their free times for a day, and, for a room and time you choose, a link that opens the library's booking page on that date for you to sign in and confirm.
-- **Campus rooms.** Classrooms and event spaces in 25Live: capacity, equipment, what is scheduled in a room on a day, and a link to its page for requesting it.
+- **Campus rooms.** For classrooms and event spaces, which are requested through 25Live, the link and the steps to make the request yourself. 25Live shows its calendars only after a Cornell sign-in, so the connector cannot tell whether such a room is free.
 - **Events.** The university events calendar by date, keyword, type, department or place.
 - **Buses.** The next TCAT departures at a stop with live estimates, the stops nearest a building, and current detours.
 - **Weather.** Current conditions, the National Weather Service forecast and any active alerts for Ithaca.
@@ -30,7 +30,7 @@ In Claude, open **Settings → Connectors → Add custom connector** and enter t
 
 ### What it does not do
 
-It cannot see anything behind a Cornell login, and it never signs in for you. It shows which rooms are free but does not book one: it hands you a link, and the room is yours only after you sign in and confirm on the library's or 25Live's own page. It does not look up people, read your schedule, enroll you in a class or search the library catalog. The Class Roster's public listing has no seat counts and no rooms, the campus map has parking lots but not whether they are full, and gym hours are the regular semester hours as posted.
+It cannot see anything behind a Cornell login, and it never signs in for you. It shows which library study rooms are free but does not book one: it hands you a link, and the room is yours only after you sign in and confirm on the library's own page. It does not look up people, read your schedule, enroll you in a class or search the library catalog. The Class Roster's public listing has no seat counts and no rooms, the campus map has parking lots but not whether they are full, and gym hours are the regular semester hours as posted.
 
 ### Sources
 
