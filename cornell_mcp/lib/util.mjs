@@ -64,21 +64,24 @@ async function edgePut(url, text, ttlMs) {
 
 /**
  * GET `url`, cached for `ttlMs`. Options: `as` 'json' | 'text'; `headers` extra request headers (never
- * part of the cache key, so do not vary a response on them); `edge` also use the Cache API;
+ * part of the cache key, so do not vary a response on them); `edge` also use the Cache API; `body`
+ * a form-encoded body, sent as a POST;
  * `timeoutMs`. On failure a stale in-memory copy is returned with `stale: true` when there is one.
  */
-export async function cachedFetch(url, { ttlMs, as = 'json', timeoutMs = 20000, headers = null, edge = false }) {
-  const hit = cache.get(url);
+export async function cachedFetch(url, { ttlMs, as = 'json', timeoutMs = 20000, headers = null, edge = false, body = null }) {
+  // A form body makes this a POST (for read-only endpoints that only take POST); it is part of the cache key.
+  const key = body ? `${url}#${body}` : url;
+  const hit = cache.get(key);
   if (hit && Date.now() - hit.at < ttlMs) {
     return { data: hit.data, fetchedAt: hit.at, stale: false };
   }
   const parse = (text) => (as === 'json' ? JSON.parse(text) : text);
   const remember = (data, at) => {
     if (cache.size >= MAX_ENTRIES) cache.delete(cache.keys().next().value);
-    cache.set(url, { at, data });
+    cache.set(key, { at, data });
   };
   if (edge) {
-    const e = await edgeGet(url, ttlMs);
+    const e = await edgeGet(key, ttlMs);
     if (e) {
       try {
         const data = parse(e.text);
@@ -94,9 +97,11 @@ export async function cachedFetch(url, { ttlMs, as = 'json', timeoutMs = 20000, 
   const host = new URL(url).host;
   try {
     const res = await fetch(url, {
+      ...(body ? { method: 'POST', body } : {}),
       headers: {
         'user-agent': USER_AGENT,
         accept: as === 'json' ? 'application/json' : 'text/html,application/xhtml+xml',
+        ...(body ? { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8' } : {}),
         ...(headers || {}),
       },
       signal: ctrl.signal,
@@ -111,7 +116,7 @@ export async function cachedFetch(url, { ttlMs, as = 'json', timeoutMs = 20000, 
       throw new Error(`${host} returned something that is not JSON${title ? ` (a page titled "${title}")` : ''}`);
     }
     remember(data, Date.now());
-    if (edge) await edgePut(url, text, ttlMs);
+    if (edge) await edgePut(key, text, ttlMs);
     return { data, fetchedAt: Date.now(), stale: false };
   } catch (err) {
     if (hit && !(err instanceof HttpError && err.status === 404)) return { data: hit.data, fetchedAt: hit.at, stale: true };

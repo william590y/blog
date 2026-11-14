@@ -22,6 +22,12 @@ To add it to Claude, go to Settings → Connectors → Add custom connector and 
 | `classes_subjects` | subject codes and names for a term |
 | `classes_rosters` | the terms the Class Roster has, the default one and the one in session |
 | `library_hours` | library hours for a day, what is open now, service desks, a library's week |
+| `library_rooms_list` | bookable library study rooms: library, category, capacity, description |
+| `library_rooms_availability` | live free times of library study rooms on a date, or rooms free at a wanted time |
+| `library_room_booking_link` | a link to the library's booking page for a room and date, with the steps; books nothing |
+| `campus_rooms_search` | classrooms and event spaces in 25Live: capacity, categories, features |
+| `campus_rooms_availability` | what is scheduled in a 25Live space on a date, and the gaps |
+| `campus_room_booking_link` | a link to the space's 25Live page, with the steps to request it; requests nothing |
 | `events_search` | campus events by date range, keyword, type, department or place |
 | `events_detail` | one event in full: description, dates, place, cost, links |
 | `events_categories` | the event type, department and theme names used for filtering |
@@ -45,6 +51,8 @@ To add it to Claude, go to Settings → Connectors → Add custom connector and 
 | Gyms | goboardapi.azurewebsites.net (headcounts), scl.cornell.edu (hours, classes) | 1 min, 30 min |
 | Classes | classes.cornell.edu/api/2.0 (documented public API; asks for at most 1 request a second) | 10 min; terms and subjects 6 h |
 | Library hours | api3.libcal.com, institution 973 (the feed behind the hours on library.cornell.edu) | 15 min |
+| Library rooms | spaces.library.cornell.edu (LibCal): the room list in `/allspaces` and the booking grid's own `/spaces/availability/grid` | grid 2 min; rooms 6 h |
+| Campus rooms | 25live.collegenet.com `25live/data/cornell/run` (the anonymous view of Scheduling@Cornell) | calendar 5 min; spaces 24 h |
 | Events | events.cornell.edu/api/2 (Localist) | 10 min; filters 12 h |
 | CUGIR | cugir.library.cornell.edu `catalog.json` and `/catalog/<id>/raw` (GeoBlacklight) | 1 h |
 | eBird | api.ebird.org/v2 (needs a key, below) | 5 min; hotspots and taxonomy 24 h |
@@ -66,6 +74,22 @@ two requests).
 
 Instructor NetIDs in the Class Roster feed are dropped (names only), and eBird sightings at
 personal locations are reported without the location's name.
+
+## Rooms: availability yes, booking no
+
+The room tools read what an anonymous visitor to the booking sites sees: the library's free/busy
+grid (LibCal) and the public calendar of each 25Live space. The server is unauthenticated and open
+to anyone, so by design it never signs in, never holds or accepts a NetID, password, cookie or Duo
+code, and never submits a reservation. `library_room_booking_link` and `campus_room_booking_link`
+return a link to the official page plus the remaining steps, and their results begin with
+"NOT BOOKED". The library link opens the room's page on the requested date
+(`/space/<id>?date=YYYY-MM-DD`; LibCal has no parameter for the time). The 25Live link opens the
+space's page (25Live takes no date or time in a link).
+
+The LibCal grid endpoint only answers requests that carry the booking page as their Referer, so
+the request names that page, as the page's own script does. Instructors' and editors' NetIDs that
+appear in the 25Live feed are dropped, and spaces the scheduling office marks "Hidden from general
+users" are left out.
 
 ## eBird key
 
