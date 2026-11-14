@@ -107,7 +107,8 @@ export async function cachedFetch(url, { ttlMs, as = 'json', timeoutMs = 20000, 
     try {
       data = parse(text);
     } catch {
-      throw new Error(`${host} returned something that is not JSON`);
+      const title = /<title[^>]*>([^<]{1,80})/i.exec(text)?.[1]?.trim();
+      throw new Error(`${host} returned something that is not JSON${title ? ` (a page titled "${title}")` : ''}`);
     }
     remember(data, Date.now());
     if (edge) await edgePut(url, text, ttlMs);
