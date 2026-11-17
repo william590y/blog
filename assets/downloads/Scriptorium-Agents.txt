@@ -88,6 +88,11 @@ Use these instructions when the user asks you to install or configure Scriptoriu
   also has the commands revise selection, proofread note and draw a drop cap. It needs a provider chosen in
   Settings > Lagrange: a Claude or ChatGPT subscription through Claude Code or Codex (desktop), an API key, a local
   OpenAI-compatible server, or the offline demo. Never enter keys or sign in on the user's behalf.
+- Lagrange 0.7.0 (Scriptorium 1.5.0) adds, all off until the user turns them on in Settings > Lagrange: Voice
+  (dictation and speaking to Lagrange; the speech goes to OpenAI or the user's own transcription server; never turn
+  on the microphone or enter a transcription key for the user) and Autocorrect as I write (the pen corrects slips of
+  typing, from the system's spelling dictionary or the model). Diagrams may be Mermaid (drawn by Obsidian; the pen
+  draws them), and the commands "Draw the diagram again" and "Turn this Mermaid diagram into an Excalidraw drawing".
 - New: "Scriptorium: Sync this vault with Google Drive", "Sync now with Google Drive" and "Retrieve a vault from
   Google Drive" keep a vault and a folder of the user's own Google Drive the same by running rclone (found on the
   computer, or downloaded with the user's consent and checked by SHA-256). The user signs in to Google in their
